@@ -18,12 +18,12 @@
 *.scvd
 *.iex
 
-#Doesn't exist .uvopt .uvgui .uvgui.; Keep .uvoptx, .uvguix. files 
+#Doesn't exist .uvopt .uvgui .uvgui.; Keep .uvoptx, files 
 #*.uvopt 
 #*.uvoptx
 #*.uvgui
 #*.uvgui.*
-#*.uvguix.*
+*.uvguix.*
 
 # C - https://github.com/github/gitignore/blob/master/C.gitignore
 #modified: comment out *.lib
