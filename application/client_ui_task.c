@@ -17,10 +17,13 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "referee.h"
 #include "referee_usart_task.h"
 #include "detect_task.h"
+#include "bsp_usart.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
 #endif
+
+static void UI_DMA_refresh(void);
 
 extern uint8_t turboMode;
 extern uint8_t swing_flag;
@@ -29,6 +32,11 @@ extern shoot_control_t shoot_control;
 extern miniPC_info_t miniPC_info;
 extern supercap_can_msg_id_e current_superCap;
 extern wulieCap_info_t wulie_Cap_info;
+
+//DMA发送 全局变量 缓冲区
+uint8_t srv_DMA_comm_buf[SERVER_DMA_COMM_BUF_SIZE]; //SERVER_DMA_COMM_BUF_SIZE server_DMA_comm_buf
+uint32_t srv_comm_buf_index=0;
+uint8_t* srv_comm_buf_pointer;
 
 unsigned char UI_Seq;     //包序号
 //uint32_t temp_time_check_RTOS = 0;
@@ -110,6 +118,7 @@ void client_ui_task(void const *pvParameters)
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
 		//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
 		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+		UI_DMA_refresh();
 	  //UI 初始创建 + 发送结束
 		
 		//记得注释
@@ -245,6 +254,8 @@ void client_ui_task(void const *pvParameters)
 				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
 				//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
 				UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+				
+				UI_DMA_refresh();//所有的实际DMA发送
 				
 				//定时创建一次动态的--------------
 				if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
@@ -496,6 +507,8 @@ void ui_dynamic_crt_send_fuc()
 		UI_ReFresh(2, fProjSLim, fDis);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
 		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+		
+		UI_DMA_refresh();
 }
 
 ////先开始删除 图层4 5 6 7
@@ -512,13 +525,39 @@ void ui_dynamic_crt_send_fuc()
 //			  delLayer.Layer = 7;
 //				Delete_ReFresh(delLayer);
 
+/****************************************DMA发送一次*************************************/
+static void UI_DMA_refresh()
+{
+	//上次的DMA请求未完成时, 放弃并推出
+	if(0)//usart6_tx_dma_previous_reques_complete_flag())
+	{
+		return;
+	}
+	else
+	{
+		//使能DMA发送
+		usart6_tx_dma_enable(&srv_DMA_comm_buf[0], srv_comm_buf_index+1);
+		
+		//重置index计数
+		srv_comm_buf_index = 0;
+	}
+}
+
+static void UI_DMA_refresh_enforce_complete()
+{
+	//使能DMA发送
+	usart6_tx_dma_enable(&srv_DMA_comm_buf[srv_comm_buf_index], srv_comm_buf_index+1);
+		
+	//重置index计数
+	srv_comm_buf_index = 0;
+}
 
 /****************************************串口驱动映射************************************/
 void UI_SendByte(unsigned char ch)
 {
 //   USART_SendData(USART3,ch);
 //   while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);	
-	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,999);
+//	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,999); //------------------------------------
 //	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
 //	{
 //		vTaskDelay(1);
@@ -529,6 +568,17 @@ void UI_SendByte(unsigned char ch)
 //	{
 //		vTaskDelay(1);
 //	}
+	
+	//检查index数值, 确保不会指针越界
+	if(srv_comm_buf_index >= SERVER_DMA_COMM_BUF_SIZE)
+	{//放弃当前片段写入, 使能一次DMA发送, 清空缓冲区数据
+		UI_DMA_refresh();
+		return;
+	}
+	
+	//刷新到DMA发送缓冲区
+	srv_DMA_comm_buf[srv_comm_buf_index] = ch;
+	srv_comm_buf_index++;
 }
 
 /********************************************删除操作*************************************

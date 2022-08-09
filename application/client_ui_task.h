@@ -15,6 +15,8 @@ frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,Õû°üÐ£Ñ
 
 #include "struct_typedef.h"
 
+#define SERVER_DMA_COMM_BUF_SIZE 2048
+
 #pragma pack(1)                           //°´1×Ö½Ú¶ÔÆë
 
 #define NULL 0
