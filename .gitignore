@@ -1,11 +1,14 @@
 #RoboGrinder; github; .gitignore files
-#Other file types; the following 5 lines from UIUC iRM 
+#Other file types, operating system
 *.DS_Store
 *.osx.project
 .project
 .cproject
 .mxproject
 
+#Debuger local files
+JLinkLog.txt
+JLinkSettings.ini
 
 #Keil project IDE files uVision files
 *.crf
