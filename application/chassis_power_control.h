@@ -80,7 +80,7 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 ...
 #define ENERGY_BUFF_OUTPUT_CUTOFF_POINT 3.0f
 */
-#define WARNING_ENERGY_BUFF  35.0f //40.0f 
+#define WARNING_ENERGY_BUFF  30.0f//35.0f //40.0f 
 #define MINIMUM_ENERGY_BUFF  10.0f //10.0f //设定缓冲能量 危险值
 #define MAX_POWER_VALUE 400.0f //300.0f//220.0f
 

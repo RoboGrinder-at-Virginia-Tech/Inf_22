@@ -698,8 +698,8 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
 
 #if USE_SpeedAdaptiveChassisPowerControl
 		//calculate pid and power control
-//		speed_adaptive_chassis_power_control(chassis_move_control_loop);
-		superCap_speed_adaptive_chassis_power_control(chassis_move_control_loop);
+		speed_adaptive_chassis_power_control(chassis_move_control_loop);
+//		superCap_speed_adaptive_chassis_power_control(chassis_move_control_loop);
 		
 #else
     //calculate pid
@@ -713,7 +713,7 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
     //功率控制power control
     chassis_power_control(chassis_move_control_loop);
 #endif
-		
+
     //赋值电流值
     for (i = 0; i < 4; i++)
     {
