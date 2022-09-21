@@ -1,4 +1,3 @@
-
 /**
   ****************************(C) COPYRIGHT 2019 DJI****************************
   * @file       chassis.c/h
@@ -184,6 +183,9 @@ typedef enum
 {
   CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW,   //chassis will follow yaw gimbal motor relative angle.底盘会跟随云台相对角度
   CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW,  //chassis will have yaw angle(chassis_yaw) close-looped control.底盘有底盘角度控制闭环
+	
+	CHASSIS_VECTOR_SPIN, // chassis spining function. 底盘小陀螺 不跟随云台朝向
+	
   CHASSIS_VECTOR_NO_FOLLOW_YAW,       //chassis will have rotation speed control. 底盘有旋转速度控制
   CHASSIS_VECTOR_RAW,                 //control-current will be sent to CAN bus derectly.
 
