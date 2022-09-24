@@ -90,6 +90,7 @@ typedef enum
   CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW,   //chassis will follow gimbal, usually in infantry,正常步兵底盘跟随云台
   
 	CHASSIS_SPIN, //chassis spiing function, 小陀螺 底盘此时不跟随云台
+	CHASSIS_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW, // when recover from chassis follow gimbal yaw
 	
 	CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW,  //chassis will follow chassis yaw angle, usually in engineer,
                                         //because chassis does have gyro sensor, its yaw angle is calculed by gyro in gimbal and gimbal motor angle,
@@ -104,6 +105,14 @@ typedef enum
 
 #define CHASSIS_OPEN_RC_SCALE 10 // in CHASSIS_OPEN mode, multiply the value. 在chassis_open 模型下，遥控器乘以该比例发送到can上
 
+/* This is the struct for chassis_behaviour related values
+continue dev
+*/
+typedef struct
+{
+	 uint32_t spin_rec_tick_start;
+	
+} chassis_behaviour_t; //chassis_beh
 
 
 /**
