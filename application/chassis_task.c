@@ -605,7 +605,7 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         
 			  //set ratation speed
         //小陀螺 模式下 设置旋转角速度
-				chassis_move_control->wz_set = 1.0f;//SPIN_SPEED; //---测试-----------------------------------------
+				chassis_move_control->wz_set = 0.5f;//SPIN_SPEED; //---测试-----------------------------------------
 		
 
 			  //speed limit

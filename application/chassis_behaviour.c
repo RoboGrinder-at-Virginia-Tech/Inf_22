@@ -314,7 +314,7 @@ void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
 					chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;
 				}
 				
-				if(user_lib_is_timeout(xTaskGetTickCount(), chassis_beh.spin_rec_tick_start, 1000))//TIMEOUT
+				if(user_lib_is_timeout(xTaskGetTickCount(), chassis_beh.spin_rec_tick_start, user_lib_MAX_delay)) //1000))//TIMEOUT
 				{//待在底盘恢复模式过长
 					//stay in chassis recover for too long; time out occur
 					chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;
