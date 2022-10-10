@@ -87,8 +87,6 @@
 
 #include "gimbal_behaviour.h"
 
-#include "user_lib.h"
-
 /**
   * @brief          when chassis behaviour mode is CHASSIS_ZERO_FORCE, the function is called
   *                 and chassis control mode is raw. The raw chassis control mode means set value
@@ -155,11 +153,6 @@ static void chassis_infantry_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_se
  * @brief chassis_spin_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
  */
 static void chassis_spin_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, chassis_move_t *chassis_move_rc_to_vector);
-
-/**
- * @brief chassis_spin_recover_to_follow_gimbal_yaw_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
- */
-static void chassis_spin_recover_to_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, chassis_move_t *chassis_move_rc_to_vector);
 
 /**
   * @brief          when chassis behaviour mode is CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW, chassis control mode is speed control mode.
@@ -232,16 +225,6 @@ uint8_t swing_flag=0;
 //highlight, the variable chassis behaviour mode 
 //留意，这个底盘行为模式变量
 chassis_behaviour_e chassis_behaviour_mode = CHASSIS_ZERO_FORCE;
-chassis_behaviour_e last_chassis_behaviour_mode = CHASSIS_ZERO_FORCE;
-
-chassis_behaviour_t chassis_beh;
-
-/**
-  * @brief          Add init for chassis behaviour
-  * @retval         none
-	* 代码待完成
-  */
-
 
 
 /**
@@ -293,36 +276,11 @@ void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
 				}
 				else if(swing_flag == 0)//启动时 默认状态
 				{
-					  chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;			
-						//1) Judge to switch into chassis spin recover
-						if(last_chassis_behaviour_mode == CHASSIS_SPIN && chassis_behaviour_mode == CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW)
-						{
-							 chassis_behaviour_mode = CHASSIS_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW;
-							 chassis_beh.spin_rec_tick_start = xTaskGetTickCount();
-						}
-				}
-				
-		}
-		
-    //add your own logic to enter the new mode
-    //添加自己的逻辑判断进入新模式
-		//2)Based on sensors or timeout - judge to switch out of chassis spin recover; that is switch to chassis follow gimbal yaw
-		if(chassis_behaviour_mode == CHASSIS_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW)
-		{
-				if(chassis_move_mode->chassis_yaw_motor->relative_angle < 0.01f) //judge for fp32 == 0
-				{//Chassis orrientation is recovered to follow gimbal
-					chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;
-				}
-				
-				if(user_lib_is_timeout(xTaskGetTickCount(), chassis_beh.spin_rec_tick_start, user_lib_MAX_delay)) //1000))//TIMEOUT
-				{//待在底盘恢复模式过长
-					//stay in chassis recover for too long; time out occur
-					chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;
+
+					  chassis_behaviour_mode = CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW;
 				}
 		}
-		
-		
-		
+
     //when gimbal in some mode, such as init mode, chassis must's move
     //当云台在某些模式下，像初始化， 底盘不动
     if (gimbal_cmd_to_chassis_stop())
@@ -333,7 +291,11 @@ void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
 				//然后 再切换到 CHASSIS_ZERO_FORCE
     }
 
-		
+
+    //add your own logic to enter the new mode
+    //添加自己的逻辑判断进入新模式
+
+
     //accord to beheviour mode, choose chassis control mode
     //根据行为模式选择一个底盘控制模式
     if (chassis_behaviour_mode == CHASSIS_ZERO_FORCE)
@@ -352,10 +314,6 @@ void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
 		{
 			  chassis_move_mode->chassis_mode = CHASSIS_VECTOR_SPIN;
 		}
-		else if (chassis_behaviour_mode == CHASSIS_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW)
-		{
-				chassis_move_mode->chassis_mode = CHASSIS_VECTOR_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW;
-		}
     else if (chassis_behaviour_mode == CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW)
     {
         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW;
@@ -368,11 +326,6 @@ void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode)
     {
         chassis_move_mode->chassis_mode = CHASSIS_VECTOR_RAW;
     }
-		
-		
-		
-		//Update chassis_behaviour_mode and last_chassis_behaviour_mode
-		last_chassis_behaviour_mode = chassis_behaviour_mode;
 }
 
 
@@ -418,10 +371,6 @@ void chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, 
 		{
 			  //chassis_move_mode->chassis_mode = CHASSIS_VECTOR_SPIN;
 			  chassis_spin_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
-		}
-		else if (chassis_behaviour_mode == CHASSIS_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW)
-		{
-				chassis_spin_recover_to_follow_gimbal_yaw_control(vx_set, vy_set, angle_set, chassis_move_rc_to_vector);
 		}
     else if (chassis_behaviour_mode == CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW)
     {
@@ -587,29 +536,6 @@ static void chassis_spin_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, ch
     
     *angle_set = 0; //chassis_move_rc_to_vector->chassis_yaw_motor->relative_angle;//小陀螺时不会有底盘跟随角度环
 		
-		
-		/*
-		swing_flag是小陀螺状态机
-		swing_flag = 0 无小陀螺
-		swing_flag = 1 有小陀螺
-		*/
-}
-
-/**
- * chassis orientation recover to gimbal yaw control - 此时还在旋转, 旋转恢复, 所以还在旋转
- */
-static void chassis_spin_recover_to_follow_gimbal_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, chassis_move_t *chassis_move_rc_to_vector)
-{
-	  if (vx_set == NULL || vy_set == NULL || angle_set == NULL || chassis_move_rc_to_vector == NULL)
-    {
-        return;
-    }
-		
-		//channel value and keyboard value change to speed set-point, in general
-    //遥控器的通道值以及键盘按键 得出 一般情况下的速度设定值
-    chassis_rc_to_control_vector(vx_set, vy_set, chassis_move_rc_to_vector);
-    
-    *angle_set = 0; //chassis_move_rc_to_vector->chassis_yaw_motor->relative_angle;//小陀螺时不会有底盘跟随角度环
 		
 		/*
 		swing_flag是小陀螺状态机

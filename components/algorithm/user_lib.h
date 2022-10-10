@@ -2,8 +2,6 @@
 #define USER_LIB_H
 #include "struct_typedef.h"
 
-#define user_lib_MAX_delay 0xFFFFFFFFU
-
 typedef __packed struct
 {
     fp32 input;        //输入数据
@@ -20,10 +18,6 @@ typedef __packed struct
     fp32 num[1];       //滤波参数
     fp32 frame_period; //滤波的时间间隔 单位 s
 } first_order_filter_type_t;
-
-//判断超时
-uint8_t user_lib_is_timeout(uint32_t current_tick, uint32_t tick_start, uint32_t timeout);
-
 //快速开方
 extern fp32 invSqrt(fp32 num);
 

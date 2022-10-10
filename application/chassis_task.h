@@ -186,9 +186,6 @@ typedef enum
 	
 	CHASSIS_VECTOR_SPIN, // chassis spining function. 底盘小陀螺 不跟随云台朝向
 	
-	//when the chassis spining function is turned off, it recovers to gimbal follow yaw
-	CHASSIS_VECTOR_SPIN_RECOVER_TO_FOLLOW_GIMBAL_YAW, 
-	
   CHASSIS_VECTOR_NO_FOLLOW_YAW,       //chassis will have rotation speed control. 底盘有旋转速度控制
   CHASSIS_VECTOR_RAW,                 //control-current will be sent to CAN bus derectly.
 

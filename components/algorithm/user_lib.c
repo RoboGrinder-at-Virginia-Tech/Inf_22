@@ -1,29 +1,6 @@
 #include "user_lib.h"
 #include "arm_math.h"
 
-/**
-  * @brief          Judge for time out
-  * @author         Zelin Shen
-  * @param[in]      current_tick
-  * @param[in]      tick_start
-  * @param[in]      timeout
-  * @param[in]      
-  * @retval         false=0: NO time out yse
-	*									true =1: time out
-  */
-uint8_t user_lib_is_timeout(uint32_t current_tick, uint32_t tick_start, uint32_t timeout)
-{
-	if(timeout != user_lib_MAX_delay)
-  {
-		if((current_tick - tick_start) > timeout || (timeout == 0U))
-		{
-			return 1;
-		}
-	}
-	
-	return 0;
-}
-
 //快速开方
 fp32 invSqrt(fp32 num)
 {
