@@ -214,6 +214,10 @@ int16_t shoot_control_loop(void)
 		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
+	 //-----10-28展示时使用 之后记得删除----------------------------------------------
+	 shoot_control.currentLIM_shoot_speed_17mm = 4.5f;
+	 //---------------------------------------------------
+	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
         //设置拨弹轮的速度
