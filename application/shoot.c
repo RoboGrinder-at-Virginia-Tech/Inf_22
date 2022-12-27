@@ -214,9 +214,6 @@ int16_t shoot_control_loop(void)
 		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
-	 //-----10-28展示时使用 之后记得删除----------------------------------------------
-	 shoot_control.currentLIM_shoot_speed_17mm = 4.5f;
-	 //---------------------------------------------------
 	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
@@ -281,11 +278,16 @@ int16_t shoot_control_loop(void)
         shoot_laser_on(); //激光开启
 			
 				
-				//6-17增加串级PID----
+				//6-17未来可能增加串级PID----
 				
         //计算拨弹轮电机PID
         PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
-        shoot_control.given_current = (int16_t)(shoot_control.trigger_motor_pid.out);
+        
+#if TRIG_MOTOR_TURN
+				shoot_control.given_current = -(int16_t)(shoot_control.trigger_motor_pid.out);
+#else
+				shoot_control.given_current = (int16_t)(shoot_control.trigger_motor_pid.out);
+#endif
         if(shoot_control.shoot_mode < SHOOT_READY_BULLET)
         {
             shoot_control.given_current = 0;
@@ -496,9 +498,9 @@ static void shoot_set_mode(void)
 			miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;
 		}
-
 		//X按键计数以及相关检测结束
 		
+		//10-某一天-2022修改
 		//连续发弹判断; 发射机构断电时, shoot_mode状态机不会被置为发射相关状态
     if(shoot_control.shoot_mode > SHOOT_READY_FRIC && shoot_control.trigger_motor_17mm_is_online)
     {
@@ -575,10 +577,17 @@ static void shoot_feedback_update(void)
     static const fp32 fliter_num[3] = {1.725709860247969f, -0.75594777109163436f, 0.030237910843665373f};
 
     //二阶低通滤波
+#if TRIG_MOTOR_TURN
     speed_fliter_1 = speed_fliter_2;
+    speed_fliter_2 = speed_fliter_3;
+    speed_fliter_3 = speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] - (shoot_control.shoot_motor_measure->speed_rpm * MOTOR_RPM_TO_SPEED) * fliter_num[2];
+    shoot_control.speed = speed_fliter_3;
+#else
+		speed_fliter_1 = speed_fliter_2;
     speed_fliter_2 = speed_fliter_3;
     speed_fliter_3 = speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] + (shoot_control.shoot_motor_measure->speed_rpm * MOTOR_RPM_TO_SPEED) * fliter_num[2];
     shoot_control.speed = speed_fliter_3;
+#endif
 		
 		//电机是否离线检测
 		/*只扫描一次按键这个思路*/
@@ -620,9 +629,13 @@ static void shoot_feedback_update(void)
 		
 		//添加了码盘值积分后 对拨弹盘angle的计算 SZL 5-19
 		//之前的转了几圈 + 当前的编码器值 将其转换为弧度制 马盘值里程计
+#if TRIG_MOTOR_TURN
+		shoot_control.angle = -(shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->delta_ecd) * MOTOR_ECD_TO_ANGLE;
+#else
 		shoot_control.angle = (shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->delta_ecd) * MOTOR_ECD_TO_ANGLE;
 		//shoot_control.angle = (shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->ecd) * MOTOR_ECD_TO_ANGLE;
-		
+#endif
+
 		//其实可以把所有按键相关状态机放到这里 从set mode中移到这里面 虽然会有耦合
 		
 		//按键V记时, V只是记录了上一次状态, 但是没有计数
