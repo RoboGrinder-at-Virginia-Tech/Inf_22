@@ -26,7 +26,7 @@
 #include "chassis_task.h"
 #include "main.h"
 
-#define USE_SpeedAdaptiveChassisPowerControl 1
+#define USE_SpeedAdaptiveChassisPowerControl 0
 //#define HERO_CHASSIS_POWER_CONTROL
 #define INFANTRY_CHASSIS_POWER_CONTROL
 

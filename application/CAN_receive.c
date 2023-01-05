@@ -34,6 +34,7 @@
 extern superCap_info_t superCap_info;
 extern wulieCap_info_t wulie_Cap_info;
 extern supercap_can_msg_id_e current_superCap;
+extern sCap23_info_t sCap23_info; //新的超级电容控制板
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -472,6 +473,34 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							debug_r2.data[3] = rx_data_debug[0];
 							
 							detect_hook(SUPERCAP_TOE);
+							break;
+					}
+					case sCap23_ID:
+					{
+							current_superCap = sCap23_ID;
+						
+//							uint16_t data[4];
+//							data[0] = (uint16_t)(Vin_f * 100.0f);
+//							data[1] = (uint16_t)(Vbank_f * 100.0f);
+//							data[2] = (uint16_t)(Vchassis_f * 100.0f);
+//							data[3] = (uint16_t)(Ichassis_f * 100.0f);
+//							HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, (FDCAN_TxHeaderTypeDef *)&Can_tx_Header, (uint8_t *)&data);
+						
+						  uint16_t* pPowerdata = (uint16_t *) rx_data;//------------------------------------
+							sCap23_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
+							sCap23_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
+							sCap23_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
+							sCap23_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
+						
+							sCap23_info.Vin_f = sCap23_info.PowerData[0]; //输入电压
+							sCap23_info.Vbank_f = sCap23_info.PowerData[1];//电容电压
+							sCap23_info.Vchassis_f = sCap23_info.PowerData[2];//给底盘电压
+							sCap23_info.Ichassis_f = sCap23_info.PowerData[3];//底盘电流
+						
+							//计算容量
+							sCap23_info.EBank = 0.5f * sCap23_info.Vbank_f * sCap23_info.Vbank_f * CAPACITY_23_CAP;//CAPACITY=6
+						  sCap23_info.EBPct = (sCap23_info.Vbank_f * sCap23_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
+							detect_hook(SCAP_23_TOR);
 							break;
 					}
 					case wulie_Cap_CAN_ID:

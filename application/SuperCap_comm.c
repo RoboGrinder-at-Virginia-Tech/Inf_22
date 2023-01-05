@@ -17,14 +17,20 @@ void superCap_offline_proc(void);
 //static CAN_TxHeaderTypeDef  superCap_tx_message;
 static uint8_t              superCap_can_send_data[8];
 static uint8_t              wulieCap_can_send_data[8];
+static uint8_t              sCap23_can_send_data[8];
+
 superCap_info_t superCap_info1;
 superCap_info_t superCap_info2;
 superCap_info_t superCap_info3;//<----越界指针边界 大致位置
 superCap_info_t superCap_info4;
 superCap_info_t superCap_info;//用的这一个 3 4和这个是正常的
 wulieCap_info_t wulie_Cap_info;//雾列超级电容控制板的结构体
+sCap23_info_t sCap23_info; //新的超级电容控制板
+
 CAN_TxHeaderTypeDef  superCap_tx_message;
 CAN_TxHeaderTypeDef  wulie_Cap_tx_message;
+CAN_TxHeaderTypeDef  sCap23_tx_message;
+
 supercap_can_msg_id_e current_superCap; //表明当前使用的是哪一个超级电容
 
 uint8_t debug_max_pwr;
@@ -58,7 +64,7 @@ void superCap_comm_bothway_init()
 	superCap_info.b = 0;
 	superCap_info.c = 0;
 	
-	current_superCap = SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
+	current_superCap = sCap23_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
 }
 
 uint16_t temp_pwr_command=0;
@@ -149,7 +155,29 @@ void superCap_control_loop()
 				
 			CAN_command_superCap(superCap_info.max_charge_pwr_command, superCap_info.fail_safe_charge_pwr_command);	
 		}
-		else
+		else if(current_superCap == sCap23_ID)
+		{//sCap23易林超级电容控制板
+			//计算max_charge_pwr_from_ref
+			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
+			
+			if(sCap23_info.max_charge_pwr_from_ref > MAX_REASONABLE_CHARGE_PWR)//101.0f)
+			{
+				sCap23_info.max_charge_pwr_from_ref = 40;
+			}
+			
+			//Only for Debug
+			sCap23_info.max_charge_pwr_from_ref = 41; //66;
+			//--------------------------------------------
+			
+			//计算fail_safe_charge_pwr_ref 修改成用ifelse标定等级标定fail safe, 这个的目的是 比赛中可能有临时的底盘充电增益, fail safe表示当前的一个安全数值
+			sCap23_info.fail_safe_charge_pwr_ref = 40; // 60; // = sCap23_info.max_charge_pwr_from_ref;
+		
+			sCap23_info.charge_pwr_command = sCap23_info.max_charge_pwr_from_ref;
+			sCap23_info.fail_safe_charge_pwr_command = sCap23_info.fail_safe_charge_pwr_ref;
+			
+			CAN_command_sCap23(sCap23_info.charge_pwr_command, sCap23_info.fail_safe_charge_pwr_command);
+		}
+		else //if(current_superCap == wulie_Cap_CAN_ID)
 		{//雾列控制板
 			wulie_Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
 				
@@ -190,6 +218,18 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank)
 		*cap_voltage = temp_cap_voltage;
 		return;
 	}
+	else if(current_superCap == sCap23_ID)
+	{
+		temp_EBank = sCap23_info.EBank;
+		temp_cap_voltage = sCap23_info.Vbank_f;
+		
+		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//确保数据的正确和合理性
+		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 28.5f);
+		
+		*EBank = temp_EBank;
+		*cap_voltage = temp_cap_voltage;
+		return;
+	}
 	else
 	{
 		temp_EBank = wulie_Cap_info.EBank;
@@ -213,6 +253,13 @@ uint16_t get_superCap_charge_pwr()
 	if(current_superCap == SuperCap_ID)
 	{
 		temp_charge_pwr = superCap_info.max_charge_pwr_command;
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, MAX_REASONABLE_CHARGE_PWR);//确保数据的正确和合理性
+		
+		return (uint16_t)temp_charge_pwr;
+	}
+	else if(current_superCap == sCap23_ID)
+	{
+		temp_charge_pwr = sCap23_info.charge_pwr_command;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, MAX_REASONABLE_CHARGE_PWR);//确保数据的正确和合理性
 		
 		return (uint16_t)temp_charge_pwr;
@@ -246,7 +293,26 @@ bool_t all_superCap_is_offline()
 
 /*
 SZL 3-10-2022 下发到SuperCap的数据
+SZL 12-27-2022 新增YiLin超级电容
 */
+void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr)
+{
+		uint32_t send_mail_box;
+    sCap23_tx_message.StdId = RMTypeC_Master_Command_ID;
+    sCap23_tx_message.IDE = CAN_ID_STD;
+    sCap23_tx_message.RTR = CAN_RTR_DATA;
+    sCap23_tx_message.DLC = 0x08;
+    sCap23_can_send_data[0] = max_pwr;
+    sCap23_can_send_data[1] = fail_safe_pwr;
+    sCap23_can_send_data[2] = 0;
+    sCap23_can_send_data[3] = 0;
+    sCap23_can_send_data[4] = 0; 
+    sCap23_can_send_data[5] = 0; 
+    sCap23_can_send_data[6] = 0; 
+    sCap23_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SCAP23_CAN, &sCap23_tx_message, sCap23_can_send_data, &send_mail_box);
+}
+
 void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
 {
 		uint32_t send_mail_box;
@@ -326,6 +392,35 @@ void superCap_solve_data_error_proc()
 //		}
 		return;
 }
+
+//以下为易林超级电容相关
+void sCap23_offline_proc()
+{
+		sCap23_info.status = superCap_offline;
+}
+
+bool_t sCap23_is_data_error_proc()
+{
+		sCap23_info.status = superCap_online;
+		//永远 return 0;
+		return 0;
+//		//ICRA
+//		//只判断EBPct_fromCap，因为只用这个, 这个是0% 这种 并不是0.0 - 100.0
+//		//注意EBPct是可能超过100%的所以暂时把检查数据是否出错改成这个样子 -100.0 ~ 200.0
+//		//下面的superCap_solve_data_error_proc也有更改
+//		if(superCap_info.EBPct_fromCap < -100.0f || superCap_info.EBPct_fromCap > 200.0f)
+//		{
+//			superCap_info.data_EBPct_status = SuperCap_dataIsError;
+//			return 1;
+//			
+//		}
+//		else
+//		{
+//			superCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
+//			return 0;
+//		}
+}
+
 
 //以下为雾列相关的
 void wulie_Cap_offline_proc()
