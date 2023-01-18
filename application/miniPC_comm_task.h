@@ -4,10 +4,20 @@
 #include "main.h"
 #include "struct_typedef.h"
 
-#define MINIPC_COMM_RX_FIFO_BUF_LENGTH 1024
+/*
+Flow of data: software fifo -> DMA buff -> unpack array-ram buffer
+1-17-2023: current data size did not exceed 50 bytes
+*/
+
+//this value is used for fifo - software fifo buffer
+#define MINIPC_COMM_RX_FIFO_BUF_LENGTH 128 //1024
+
+//This is the DMA buff length
+#define MINIPC_COMM_UART_DMA_RX_BUF_LENGHT 50 //512
 
 #define PC_HEADER_SOF 0xAF
-#define PC_PROTOCOL_FRAME_MAX_SIZE   128
+//size for the protocal unpack array - ram buffer
+#define PC_PROTOCOL_FRAME_MAX_SIZE  50 //128
 
 #pragma pack(push, 1)
 
