@@ -93,7 +93,7 @@ void referee_usart_task(void const * argument)
 //			 temp_time_check_HAL = HAL_GetTick();
 //			 //int _temp_a = 0;
 //			 _temp_a++;
-        sendData_Task_EE_To_PC(); //通讯 发送任务
+        //sendData_Task_EE_To_PC(); //通讯 发送任务
         referee_unpack_fifo_data();
         //osDelay(10);
 			
@@ -499,7 +499,7 @@ static void pc_command_unpack(uint8_t *buf, uint16_t len)
 				{
 					miniPC_info.shootCommand = 0x00;
 				}
-			 	detect_hook(MINIPC_TOE);
+//			 	detect_hook(MINIPC_TOE);
 			}
 //			else
 //			{ //if checkSum bad，set all to zero for safty

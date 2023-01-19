@@ -106,73 +106,61 @@ void pc_unpack_fifo_data(void)
         }
       }break;
 			
-			case PC_COMM_STEP_FRAME_LENGTH: //---------------------------------------------------1-17-2023
+			//data_len - uint8_t for pc comm
+			case PC_COMM_STEP_FRAME_LENGTH:
 			{
-			}break;
-      
-      case STEP_LENGTH_LOW:
-      {
-        p_obj->data_len = byte;
-        p_obj->protocol_packet[p_obj->index++] = byte;
-        p_obj->unpack_step = STEP_LENGTH_HIGH;
-      }break;
-      
-      case STEP_LENGTH_HIGH:
-      {
-        p_obj->data_len |= (byte << 8);
-        p_obj->protocol_packet[p_obj->index++] = byte;
-
-        if(p_obj->data_len < (REF_PROTOCOL_FRAME_MAX_SIZE - REF_HEADER_CRC_CMDID_LEN))
+				p_obj->data_len = byte;
+				p_obj->protocol_packet[p_obj->index++] = byte;
+				
+				//check data_len to avoid out of bound array ptr
+				if(p_obj->data_len < (PC_PROTOCOL_FRAME_MAX_SIZE - PC_HEADER_CRC_CMDID_LEN))
         {
-          p_obj->unpack_step = STEP_FRAME_SEQ;
+					//also check current index pos, current index position <-> SOF-sizeof cmdid
+					if(p_obj->index == PC_PROTOCOL_HEADER_SIZE)
+					{
+						p_obj->unpack_step = PC_COMM_STEP_CMDID; //PC_COMM_STEP_END_CRC16; //PC_COMM_STEP_CMDID;
+					}
+					else
+					{
+						p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+						p_obj->index = 0;
+					}
         }
         else
         {
-          p_obj->unpack_step = STEP_HEADER_SOF;
+          p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
           p_obj->index = 0;
         }
-      }break;
-      case STEP_FRAME_SEQ:
-      {
-        p_obj->protocol_packet[p_obj->index++] = byte;
-        p_obj->unpack_step = STEP_HEADER_CRC8;
-      }break;
-
-      case STEP_HEADER_CRC8:
-      {
-        p_obj->protocol_packet[p_obj->index++] = byte;
-
-        if (p_obj->index == REF_PROTOCOL_HEADER_SIZE)
+			}break;
+			
+			//no seq info, unpack cmdid here
+			case PC_COMM_STEP_CMDID:
+			{
+				p_obj->cmd_id = byte;
+				p_obj->protocol_packet[p_obj->index++] = byte;
+				
+				p_obj->unpack_step = PC_COMM_STEP_END_CRC16;
+			}break;
+			
+			case PC_COMM_STEP_END_CRC16:
+			{
+				if (p_obj->index < (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len)) //(REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
         {
-          if ( verify_CRC8_check_sum(p_obj->protocol_packet, REF_PROTOCOL_HEADER_SIZE) )
-          {
-            p_obj->unpack_step = STEP_DATA_CRC16;
-          }
-          else
-          {
-            p_obj->unpack_step = STEP_HEADER_SOF;
-            p_obj->index = 0;
-          }
-        }
-      }break;  
-      
-      case STEP_DATA_CRC16:
-      {
-        if (p_obj->index < (REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
-        {
+					 //copy data from(pop) fifo and put into unpack array-ram buffer
            p_obj->protocol_packet[p_obj->index++] = byte;  
         }
-        if (p_obj->index >= (REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+        if (p_obj->index >= (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len))
         {
           p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
           p_obj->index = 0;
 
-          if ( verify_CRC16_check_sum(p_obj->protocol_packet, REF_HEADER_CRC_CMDID_LEN + p_obj->data_len) )
+          if ( verify_CRC16_check_sum(p_obj->protocol_packet, PC_HEADER_CRC_CMDID_LEN + p_obj->data_len) )
           {
-            referee_data_solve(p_obj->protocol_packet);
+            pc_comm_data_solve(p_obj->protocol_packet); //solve the data with detail data sturct
+						//detect_hook(PC_TOE); in the above func
           }
         }
-      }break;
+			}break;
 
       default:
       {
@@ -182,5 +170,3 @@ void pc_unpack_fifo_data(void)
     }
   }
 }
-	
-	

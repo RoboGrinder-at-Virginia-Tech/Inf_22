@@ -367,7 +367,7 @@ void ui_coord_update()
 	 }
 	 
 	 //CV状态机掉线提示
-	 if(toe_is_error(MINIPC_TOE))
+	 if(toe_is_error(PC_TOE))
 	 {
 		 ui_info.ui_cv_feedback_sts = cvOFF;
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X;

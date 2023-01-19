@@ -529,7 +529,7 @@ static void gimbal_behavour_set(gimbal_control_t *gimbal_mode_set)
 //				{
 //					gimbal_behaviour = GIMBAL_MINIPC_AUTOAIM_LOCK;
 //				}
-				if(toe_is_error(MINIPC_TOE))
+				if(toe_is_error(PC_TOE))
 				{
 					gimbal_behaviour = GIMBAL_ABSOLUTE_ANGLE;
 				}
@@ -733,7 +733,7 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
     rc_deadband_limit(gimbal_control_set->gimbal_rc_ctrl->rc.ch[PITCH_CHANNEL], pitch_channel, RC_DEADBAND);
   
 		//掉线 数据保护
-		if(toe_is_error(MINIPC_TOE))
+		if(toe_is_error(PC_TOE))
 		{
 			miniPC_info.yawMove_aid = 0;
 			miniPC_info.pitchMove_aid = 0;
