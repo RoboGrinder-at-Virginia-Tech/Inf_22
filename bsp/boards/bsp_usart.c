@@ -8,9 +8,12 @@ extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart6_rx;
 extern DMA_HandleTypeDef hdma_usart6_tx;
 
+/*
+USART 1 - miniPC comm
+USART 6 - referee
+*/
 
 //PR test 2021/3/13
-
 void usart1_tx_dma_init(void)
 {
 
@@ -136,12 +139,7 @@ void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
     __HAL_DMA_ENABLE(&hdma_usart6_tx);
 }
 
- /*
-    PRtest 2021/2/27ͨѶ
-
-
-*/
-
+/*PRtest 2021/2/27ͨѶ*/
 void usart1_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
 {
 
@@ -195,8 +193,38 @@ void usart1_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
     }
 
     hdma_usart1_tx.Instance->PAR = (uint32_t) & (USART1->DR);
-
 }
 
+/*
+SZL 1-20-2023
+Board support package for DMA uart send
 
+HAL_DMA_STATE_READY
+
+usart1_get_tx_dma_tc_state() = 0 trans not completed; = 1 completed
+*/
+uint8_t usart1_get_tx_dma_tc_state(void)
+{
+		//HAL_DMA_GetState(&hdma_usart1_rx) == HAL_DMA_STATE_READY;
+	  if(__HAL_DMA_GET_FLAG(&hdma_usart1_rx, DMA_FLAG_TCIF3_7) == SET)
+		{
+			__HAL_DMA_CLEAR_FLAG(&hdma_usart1_rx, DMA_FLAG_TCIF3_7);
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	
+//    if(DMA_GetFlagStatus(DMA1_FLAG_TC4) == SET)
+//    {
+//        DMA_ClearFlag(DMA1_FLAG_TC4);
+//        
+//        return true;
+//    }
+//    else
+//    {
+//        return false;
+//    }
+} 
 

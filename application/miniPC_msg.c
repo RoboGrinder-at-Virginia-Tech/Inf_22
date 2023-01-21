@@ -121,7 +121,7 @@ void cmd_process_pc_ui_msg(void) //TODO添加数据合理性判断
 
 void pc_comm_data_solve(uint8_t *frame)
 {
-		detect_hook(PC_TOE); //for target of evaluation
+		//detect_hook(PC_TOE); //for target of evaluation
 	
     uint16_t cmd_id = 0;
 

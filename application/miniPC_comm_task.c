@@ -44,6 +44,15 @@
 uint32_t miniPC_comm_task_high_water;
 #endif
 
+extern UART_HandleTypeDef huart1;
+
+//DMA related
+extern DMA_HandleTypeDef hdma_usart1_tx;
+//DMA_HandleTypeDef hdma_usart1_rx;
+//DMA_HandleTypeDef hdma_usart3_rx;
+//DMA_HandleTypeDef hdma_usart6_rx;
+//DMA_HandleTypeDef hdma_usart6_tx;
+
 void pc_unpack_fifo_data(void);
 	
 fifo_s_t pc_comm_fifo;
@@ -157,7 +166,7 @@ void pc_unpack_fifo_data(void)
           if ( verify_CRC16_check_sum(p_obj->protocol_packet, PC_HEADER_CRC_CMDID_LEN + p_obj->data_len) )
           {
             pc_comm_data_solve(p_obj->protocol_packet); //solve the data with detail data sturct
-						//detect_hook(PC_TOE); in the above func
+						//detect_hook(PC_TOE); in the other func
           }
         }
 			}break;
@@ -169,4 +178,91 @@ void pc_unpack_fifo_data(void)
       }break;
     }
   }
+}
+
+/*
+Summer 2022 SZL 更改了几个对 flag的识别方式
+Spring 2023 SZL upgrades miniPC comm, IRQ also need to handle tx 
+*/
+void USART1_IRQHandler(void)
+{		
+		//SZL 1-20-23 IRQ need to handle DMA tx
+		if((__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE)) || (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TC)))
+		{
+				HAL_UART_IRQHandler(&huart1);
+		}
+		
+		if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))//huart1.Instance->SR & UART_FLAG_RXNE)//data msg received
+    {
+        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+				__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
+    }
+    else if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
+    {
+        static uint16_t this_time_rx_len = 0;
+
+        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+				__HAL_UART_CLEAR_IDLEFLAG(&huart1);
+			
+        if ((huart1.hdmarx->Instance->CR & DMA_SxCR_CT) == RESET)
+        {
+            /* Current memory buffer used is Memory 0 */
+
+            //disable DMA
+            //失效DMA
+            __HAL_DMA_DISABLE(huart1.hdmarx);
+            //get receive data length, length = set_data_length - remain_length
+            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+            this_time_rx_len = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+
+            //reset set_data_lenght
+            //重新设定数据长度
+            huart1.hdmarx->Instance->NDTR = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT;
+
+            //set memory buffer 1
+            //设定缓冲区1
+            huart1.hdmarx->Instance->CR |= DMA_SxCR_CT;
+            
+            //enable DMA
+            //使能DMA
+            __HAL_DMA_ENABLE(huart1.hdmarx);
+						
+						//SZL 1-20 removed this func
+						//HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[0], this_time_rx_len);
+						//pc_command_unpack((uint8_t*)pc_rx_buf[0], this_time_rx_len);
+						fifo_s_puts(&pc_comm_fifo, (char*)pc_comm_usart1_buf[0], this_time_rx_len);
+						detect_hook(PC_TOE); 
+        }
+        else
+        {
+            /* Current memory buffer used is Memory 1 */
+            //disable DMA
+            //失效DMA
+            __HAL_DMA_DISABLE(huart1.hdmarx);
+
+            //get receive data length, length = set_data_length - remain_length
+            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+		  			//MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - huart1.hdmarx->Instance->NDTR; //SZL change calc on RHS
+            this_time_rx_len = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+
+            //reset set_data_lenght
+            //重新设定数据长度
+            huart1.hdmarx->Instance->NDTR = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT;
+
+            //set memory buffer 0
+            //设定缓冲区0
+            DMA2_Stream5->CR &= ~(DMA_SxCR_CT);
+            
+            //enable DMA
+            //使能DMA
+            __HAL_DMA_ENABLE(huart1.hdmarx);
+
+						//SZL 1-20 removed this func
+						//HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[1], this_time_rx_len);
+						//pc_command_unpack((uint8_t*)pc_rx_buf[1], this_time_rx_len);
+						fifo_s_puts(&pc_comm_fifo, (char*)pc_comm_usart1_buf[1], this_time_rx_len);
+						detect_hook(PC_TOE); 
+        }
+    } 	
+		//HAL_UART_IRQHandler(&huart1);
 }

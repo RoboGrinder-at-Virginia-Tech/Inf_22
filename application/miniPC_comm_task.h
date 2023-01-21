@@ -7,7 +7,7 @@
 /* 
 Path for the comm and Flow of data: 
 miniPC UART -> UART wires -> Embedded UART Peripherals with DMA-> DMA buff (interupt)-> software fifo -> unpack array-ram buffer
-1-17-2023: current data size did not exceed 50 bytes
+note 1-17-2023: current data size did not exceed 50 bytes
 */
 
 //this value is used for fifo - software fifo buffer
