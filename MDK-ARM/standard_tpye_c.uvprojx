@@ -708,6 +708,26 @@
               <FileType>5</FileType>
               <FilePath>..\application\client_ui_coordinate_info.h</FilePath>
             </File>
+            <File>
+              <FileName>miniPC_comm_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\miniPC_comm_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>miniPC_comm_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\miniPC_comm_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>miniPC_msg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\miniPC_msg.c</FilePath>
+            </File>
+            <File>
+              <FileName>miniPC_msg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\miniPC_msg.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
