@@ -66,7 +66,6 @@ extern void userCallback_CAN2_FIFO1_IT(CAN_HandleTypeDef *hcan);
 
 extern void xPortSysTickHandler(void);
 
-extern void referee_USART1_IRQ_handler(void);
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/

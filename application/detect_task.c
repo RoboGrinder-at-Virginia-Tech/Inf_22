@@ -263,8 +263,8 @@ extern void OLED_com_reset(void);
 extern void superCap_offline_proc(void);
 extern bool_t superCap_is_data_error_proc(void);
 extern void superCap_solve_data_error_proc(void);
-extern void miniPC_offline_proc(void);
-extern bool_t miniPC_is_data_error_proc(void);
+extern void pc_offline_proc(void);
+extern bool_t pc_is_data_error_proc(void);
 
 static void detect_init(uint32_t time)
 {
@@ -334,9 +334,9 @@ static void detect_init(uint32_t time)
 		error_list[WULIE_CAP_TOE].solve_data_error_fun = NULL;
 		
 		//miniPC 相关掉线函数
-		error_list[MINIPC_TOE].data_is_error_fun = miniPC_is_data_error_proc;
-		error_list[MINIPC_TOE].solve_lost_fun = miniPC_offline_proc;
-		error_list[MINIPC_TOE].solve_data_error_fun = NULL;
+		error_list[PC_TOE].data_is_error_fun = pc_is_data_error_proc; //miniPC_is_data_error_proc;
+		error_list[PC_TOE].solve_lost_fun = pc_offline_proc;
+		error_list[PC_TOE].solve_data_error_fun = NULL;
 
 //    error_list[DBUSTOE].dataIsErrorFun = RC_data_is_error;
 //    error_list[DBUSTOE].solveLostFun = slove_RC_lost;

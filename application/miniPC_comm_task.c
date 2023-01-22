@@ -25,23 +25,63 @@
 
 #include "miniPC_comm_task.h"
 #include "main.h"
-#include "cmsis_os.h"
 #include <stdio.h>
 #include <string.h>
+#include "cmsis_os.h"
+#include "stm32f4xx_hal.h"
+
+#include "bsp_usart.h"
 #include "detect_task.h"
+#include "CRC8_CRC16.h"
+#include "fifo.h"
+#include "detect_task.h"
+#include "arm_math.h"
+#include "user_lib.h"
+
+#include "miniPC_msg.h"
 	
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t miniPC_comm_task_high_water;
 #endif
+
+extern UART_HandleTypeDef huart1;
+
+//DMA related
+extern DMA_HandleTypeDef hdma_usart1_tx;
+//DMA_HandleTypeDef hdma_usart1_rx;
+//DMA_HandleTypeDef hdma_usart3_rx;
+//DMA_HandleTypeDef hdma_usart6_rx;
+//DMA_HandleTypeDef hdma_usart6_tx;
+
+void pc_unpack_fifo_data(void);
 	
-void client_ui_task(void const *pvParameters)
+fifo_s_t pc_comm_fifo;
+uint8_t pc_comm_fifo_buf[MINIPC_COMM_RX_FIFO_BUF_LENGTH];
+uint8_t pc_comm_usart1_buf[2][MINIPC_COMM_UART_DMA_RX_BUF_LENGHT];
+pc_comm_unpack_data_t pc_comm_unpack_data_obj;
+
+//data after process
+//miniPC_info_t miniPC_info;
+
+void pc_communication_task(void const *pvParameters)
 {
+	init_miniPC_comm_struct_data();
+	fifo_s_init(&pc_comm_fifo, pc_comm_fifo_buf, MINIPC_COMM_RX_FIFO_BUF_LENGTH);
+	usart1_init(pc_comm_usart1_buf[0], pc_comm_usart1_buf[1], MINIPC_COMM_UART_DMA_RX_BUF_LENGHT);
+	
+	//miniPC_info.miniPC_connection_status = miniPC_offline;//init connection status
+	
 	while(1)
 	{
 		
 		//PC-->Embeded; received data unpack
-		
+		pc_unpack_fifo_data();
 		//Embeded-->PC; send data to PC
+		
+		//osDelay(10);
+		//osDelay(4);
+		//osDelay(100);
+		vTaskDelay(100);
 		
 		//record high water mark
 #if INCLUDE_uxTaskGetStackHighWaterMark
@@ -49,5 +89,180 @@ void client_ui_task(void const *pvParameters)
 #endif
 	}
 }
-	
-	
+
+
+void pc_unpack_fifo_data(void)
+{
+  uint8_t byte = 0;
+  uint8_t sof = PC_HEADER_SOF;
+  pc_comm_unpack_data_t *p_obj = &pc_comm_unpack_data_obj;
+
+  while ( fifo_s_used(&pc_comm_fifo) )
+  {
+    byte = fifo_s_get(&pc_comm_fifo);
+    switch(p_obj->unpack_step)
+    {
+      case PC_COMM_STEP_HEADER_SOF:
+      {
+        if(byte == sof)
+        {
+          p_obj->unpack_step = PC_COMM_STEP_FRAME_LENGTH;
+          p_obj->protocol_packet[p_obj->index++] = byte;
+        }
+        else
+        {
+          p_obj->index = 0;
+        }
+      }break;
+			
+			//data_len - uint8_t for pc comm
+			case PC_COMM_STEP_FRAME_LENGTH:
+			{
+				p_obj->data_len = byte;
+				p_obj->protocol_packet[p_obj->index++] = byte;
+				
+				//check data_len to avoid out of bound array ptr
+				if(p_obj->data_len < (PC_PROTOCOL_FRAME_MAX_SIZE - PC_HEADER_CRC_CMDID_LEN))
+        {
+					//also check current index pos, current index position <-> SOF-sizeof cmdid
+					if(p_obj->index == PC_PROTOCOL_HEADER_SIZE)
+					{
+						p_obj->unpack_step = PC_COMM_STEP_CMDID; //PC_COMM_STEP_END_CRC16; //PC_COMM_STEP_CMDID;
+					}
+					else
+					{
+						p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+						p_obj->index = 0;
+					}
+        }
+        else
+        {
+          p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+          p_obj->index = 0;
+        }
+			}break;
+			
+			//no seq info, unpack cmdid here
+			case PC_COMM_STEP_CMDID:
+			{
+				p_obj->cmd_id = byte;
+				p_obj->protocol_packet[p_obj->index++] = byte;
+				
+				p_obj->unpack_step = PC_COMM_STEP_END_CRC16;
+			}break;
+			
+			case PC_COMM_STEP_END_CRC16:
+			{
+				if (p_obj->index < (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len)) //(REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+        {
+					 //copy data from(pop) fifo and put into unpack array-ram buffer
+           p_obj->protocol_packet[p_obj->index++] = byte;  
+        }
+        if (p_obj->index >= (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+        {
+          p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+          p_obj->index = 0;
+
+          if ( verify_CRC16_check_sum(p_obj->protocol_packet, PC_HEADER_CRC_CMDID_LEN + p_obj->data_len) )
+          {
+            pc_comm_data_solve(p_obj->protocol_packet); //solve the data with detail data sturct
+						//detect_hook(PC_TOE); in the other func
+          }
+        }
+			}break;
+
+      default:
+      {
+        p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+        p_obj->index = 0;
+      }break;
+    }
+  }
+}
+
+/*
+Summer 2022 SZL 更改了几个对 flag的识别方式
+Spring 2023 SZL upgrades miniPC comm, IRQ also need to handle tx 
+*/
+void USART1_IRQHandler(void)
+{		
+		//SZL 1-20-23 IRQ need to handle DMA tx
+		if((__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TXE)) || (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_TC)))
+		{
+				HAL_UART_IRQHandler(&huart1);
+		}
+		
+		if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))//huart1.Instance->SR & UART_FLAG_RXNE)//data msg received
+    {
+        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+				__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
+    }
+    else if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
+    {
+        static uint16_t this_time_rx_len = 0;
+
+        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+				__HAL_UART_CLEAR_IDLEFLAG(&huart1);
+			
+        if ((huart1.hdmarx->Instance->CR & DMA_SxCR_CT) == RESET)
+        {
+            /* Current memory buffer used is Memory 0 */
+
+            //disable DMA
+            //失效DMA
+            __HAL_DMA_DISABLE(huart1.hdmarx);
+            //get receive data length, length = set_data_length - remain_length
+            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+            this_time_rx_len = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+
+            //reset set_data_lenght
+            //重新设定数据长度
+            huart1.hdmarx->Instance->NDTR = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT;
+
+            //set memory buffer 1
+            //设定缓冲区1
+            huart1.hdmarx->Instance->CR |= DMA_SxCR_CT;
+            
+            //enable DMA
+            //使能DMA
+            __HAL_DMA_ENABLE(huart1.hdmarx);
+						
+						//SZL 1-20 removed this func
+						//HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[0], this_time_rx_len);
+						//pc_command_unpack((uint8_t*)pc_rx_buf[0], this_time_rx_len);
+						fifo_s_puts(&pc_comm_fifo, (char*)pc_comm_usart1_buf[0], this_time_rx_len);
+						detect_hook(PC_TOE); 
+        }
+        else
+        {
+            /* Current memory buffer used is Memory 1 */
+            //disable DMA
+            //失效DMA
+            __HAL_DMA_DISABLE(huart1.hdmarx);
+
+            //get receive data length, length = set_data_length - remain_length
+            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+		  			//MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - huart1.hdmarx->Instance->NDTR; //SZL change calc on RHS
+            this_time_rx_len = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+
+            //reset set_data_lenght
+            //重新设定数据长度
+            huart1.hdmarx->Instance->NDTR = MINIPC_COMM_UART_DMA_RX_BUF_LENGHT;
+
+            //set memory buffer 0
+            //设定缓冲区0
+            DMA2_Stream5->CR &= ~(DMA_SxCR_CT);
+            
+            //enable DMA
+            //使能DMA
+            __HAL_DMA_ENABLE(huart1.hdmarx);
+
+						//SZL 1-20 removed this func
+						//HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[1], this_time_rx_len);
+						//pc_command_unpack((uint8_t*)pc_rx_buf[1], this_time_rx_len);
+						fifo_s_puts(&pc_comm_fifo, (char*)pc_comm_usart1_buf[1], this_time_rx_len);
+						detect_hook(PC_TOE); 
+        }
+    } 	
+		//HAL_UART_IRQHandler(&huart1);
+}

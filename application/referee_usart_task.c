@@ -93,7 +93,7 @@ void referee_usart_task(void const * argument)
 //			 temp_time_check_HAL = HAL_GetTick();
 //			 //int _temp_a = 0;
 //			 _temp_a++;
-        sendData_Task_EE_To_PC(); //通讯 发送任务
+        //sendData_Task_EE_To_PC(); //通讯 发送任务
         referee_unpack_fifo_data();
         //osDelay(10);
 			
@@ -499,7 +499,7 @@ static void pc_command_unpack(uint8_t *buf, uint16_t len)
 				{
 					miniPC_info.shootCommand = 0x00;
 				}
-			 	detect_hook(MINIPC_TOE);
+//			 	detect_hook(MINIPC_TOE);
 			}
 //			else
 //			{ //if checkSum bad，set all to zero for safty
@@ -568,93 +568,93 @@ static void pc_command_unpack(uint8_t *buf, uint16_t len)
 
 */	
 
-//串口中断
-/*SZL 更改了几个对 flag的识别方式*/
-void USART1_IRQHandler(void)
-{
-    if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))//huart1.Instance->SR & UART_FLAG_RXNE)//接收到数据
-    {
-        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
-				__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
-    }
-    else if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
-    {
-        static uint16_t this_time_rx_len = 0;
+////串口中断
+///*SZL 更改了几个对 flag的识别方式*/
+//void USART1_IRQHandler(void)
+//{
+//    if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))//huart1.Instance->SR & UART_FLAG_RXNE)//接收到数据
+//    {
+//        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+//				__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
+//    }
+//    else if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
+//    {
+//        static uint16_t this_time_rx_len = 0;
 
-        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
-				__HAL_UART_CLEAR_IDLEFLAG(&huart1);
-			
-        if ((huart1.hdmarx->Instance->CR & DMA_SxCR_CT) == RESET)
-        {
-            /* Current memory buffer used is Memory 0 */
+//        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+//				__HAL_UART_CLEAR_IDLEFLAG(&huart1);
+//			
+//        if ((huart1.hdmarx->Instance->CR & DMA_SxCR_CT) == RESET)
+//        {
+//            /* Current memory buffer used is Memory 0 */
 
-            //disable DMA
-            //失效DMA
-            __HAL_DMA_DISABLE(huart1.hdmarx);
-            //get receive data length, length = set_data_length - remain_length
-            //获取接收数据长度,长度 = 设定长度 - 剩余长度
-            this_time_rx_len = PC_RX_BUF_NUM - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
+//            //disable DMA
+//            //失效DMA
+//            __HAL_DMA_DISABLE(huart1.hdmarx);
+//            //get receive data length, length = set_data_length - remain_length
+//            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+//            this_time_rx_len = PC_RX_BUF_NUM - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
 
-            //reset set_data_lenght
-            //重新设定数据长度
-            huart1.hdmarx->Instance->NDTR = PC_RX_BUF_NUM;
+//            //reset set_data_lenght
+//            //重新设定数据长度
+//            huart1.hdmarx->Instance->NDTR = PC_RX_BUF_NUM;
 
-            //set memory buffer 1
-            //设定缓冲区1
-            huart1.hdmarx->Instance->CR |= DMA_SxCR_CT;
-            
-            //enable DMA
-            //使能DMA
-            __HAL_DMA_ENABLE(huart1.hdmarx);
+//            //set memory buffer 1
+//            //设定缓冲区1
+//            huart1.hdmarx->Instance->CR |= DMA_SxCR_CT;
+//            
+//            //enable DMA
+//            //使能DMA
+//            __HAL_DMA_ENABLE(huart1.hdmarx);
 
-						HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[0], this_time_rx_len);
-						pc_command_unpack((uint8_t*)pc_rx_buf[0], this_time_rx_len);
-						//记录数据接收时间
-						//detect_hook(DBUS_TOE);
-            
-        }
-        else
-        {
-            /* Current memory buffer used is Memory 1 */
-            //disable DMA
-            //失效DMA
-            __HAL_DMA_DISABLE(huart1.hdmarx);
+//						HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[0], this_time_rx_len);
+//						pc_command_unpack((uint8_t*)pc_rx_buf[0], this_time_rx_len);
+//						//记录数据接收时间
+//						//detect_hook(DBUS_TOE);
+//            
+//        }
+//        else
+//        {
+//            /* Current memory buffer used is Memory 1 */
+//            //disable DMA
+//            //失效DMA
+//            __HAL_DMA_DISABLE(huart1.hdmarx);
 
-            //get receive data length, length = set_data_length - remain_length
-            //获取接收数据长度,长度 = 设定长度 - 剩余长度
-            this_time_rx_len = PC_RX_BUF_NUM - huart1.hdmarx->Instance->NDTR;
+//            //get receive data length, length = set_data_length - remain_length
+//            //获取接收数据长度,长度 = 设定长度 - 剩余长度
+//            this_time_rx_len = PC_RX_BUF_NUM - huart1.hdmarx->Instance->NDTR;
 
-            //reset set_data_lenght
-            //重新设定数据长度
-            huart1.hdmarx->Instance->NDTR = PC_RX_BUF_NUM;
+//            //reset set_data_lenght
+//            //重新设定数据长度
+//            huart1.hdmarx->Instance->NDTR = PC_RX_BUF_NUM;
 
-            //set memory buffer 0
-            //设定缓冲区0
-            DMA2_Stream5->CR &= ~(DMA_SxCR_CT);
-            
-            //enable DMA
-            //使能DMA
-            __HAL_DMA_ENABLE(huart1.hdmarx);
+//            //set memory buffer 0
+//            //设定缓冲区0
+//            DMA2_Stream5->CR &= ~(DMA_SxCR_CT);
+//            
+//            //enable DMA
+//            //使能DMA
+//            __HAL_DMA_ENABLE(huart1.hdmarx);
 
-						
-						HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[1], this_time_rx_len);
-						pc_command_unpack((uint8_t*)pc_rx_buf[1], this_time_rx_len);
-						//记录数据接收时间
-						//detect_hook(DBUS_TOE);
-        }
-    } 
-		
-		//HAL_UART_IRQHandler(&huart1);
-}
+//						
+//						HAL_UART_Receive_DMA(&huart1,(uint8_t*)pc_rx_buf[1], this_time_rx_len);
+//						pc_command_unpack((uint8_t*)pc_rx_buf[1], this_time_rx_len);
+//						//记录数据接收时间
+//						//detect_hook(DBUS_TOE);
+//        }
+//    } 
+//		
+//		//HAL_UART_IRQHandler(&huart1);
+//}
 
-void miniPC_offline_proc()
-{
-		miniPC_info.miniPC_connection_status = miniPC_offline;
-}
+//void miniPC_offline_proc()
+//{
+//		miniPC_info.miniPC_connection_status = miniPC_offline;
+//}
 
-bool_t miniPC_is_data_error_proc()
-{
-		miniPC_info.miniPC_connection_status = miniPC_online;
-		return 0;
-}
+//bool_t miniPC_is_data_error_proc()
+//{
+//		miniPC_info.miniPC_connection_status = miniPC_online;
+//		return 0;
+//}
 
