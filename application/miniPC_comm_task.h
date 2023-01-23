@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "struct_typedef.h"
+#include "fifo.h"
 
 /* 
 Path for the comm and Flow of data: 
@@ -71,5 +72,29 @@ typedef struct
 } pc_comm_unpack_data_t;
 
 #pragma pack(pop)
+
+/* -------------------------------- USART SEND -------------------------------- */
+//this value is used for fifo - software fifo buffer
+#define MINIPC_COMM_TX_FIFO_BUF_LENGTH 128 //1024
+
+//This is the DMA buff length
+#define MINIPC_COMM_UART_DMA_TX_BUF_LENGHT 128 //512
+
+typedef struct
+{
+	//环形缓冲区模块
+	fifo_s_t tx_fifo; //embed send ring buffer
+	
+	uint8_t status;	//msg send sts
+	
+	uint8_t* tx_dma_buf; //ptr to send dma
+	uint16_t tx_dma_buf_size; //the size of the send dma array
+	
+	uint32_t debug_fifo_size;
+	uint32_t debug_UartTxCount;
+	
+} pc_comm_embed_send_data_t;
+
+/* -------------------------------- USART SEND END-------------------------------- */
 
 #endif

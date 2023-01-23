@@ -60,8 +60,11 @@ uint8_t pc_comm_fifo_buf[MINIPC_COMM_RX_FIFO_BUF_LENGTH];
 uint8_t pc_comm_usart1_buf[2][MINIPC_COMM_UART_DMA_RX_BUF_LENGHT];
 pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
-//data after process
-//miniPC_info_t miniPC_info;
+//send related var
+pc_comm_embed_send_data_t embed_send;
+uint8_t embed_send_fifo_buf[MINIPC_COMM_TX_FIFO_BUF_LENGTH];
+//uint8_t embed_send_usart1_buf[2][MINIPC_COMM_UART_DMA_TX_BUF_LENGHT];
+uint8_t embed_send_usart1_buf[MINIPC_COMM_UART_DMA_TX_BUF_LENGHT];
 
 void pc_communication_task(void const *pvParameters)
 {
@@ -70,6 +73,14 @@ void pc_communication_task(void const *pvParameters)
 	usart1_init(pc_comm_usart1_buf[0], pc_comm_usart1_buf[1], MINIPC_COMM_UART_DMA_RX_BUF_LENGHT);
 	
 	//miniPC_info.miniPC_connection_status = miniPC_offline;//init connection status
+	
+	//send msg data struct init
+	
+	fifo_s_init(&embed_send.tx_fifo, embed_send_fifo_buf, MINIPC_COMM_TX_FIFO_BUF_LENGTH);
+	//usart1_tx_dma_init was called in main
+	embed_send.tx_dma_buf = &embed_send_usart1_buf[0];
+	embed_send.tx_dma_buf_size = sizeof(embed_send_usart1_buf);
+	embed_send.status = 0;
 	
 	while(1)
 	{
@@ -266,3 +277,72 @@ void USART1_IRQHandler(void)
     } 	
 		//HAL_UART_IRQHandler(&huart1);
 }
+
+/* -------------------------------- USART SEND -------------------------------- */
+
+/**
+ * @brief  串口dma发送完成中断处理 Serial port dma sending completes interrupt isr
+ * @param  
+ * @retval 
+ */
+void uart1_tx_dma_done_isr()
+{
+ 	embed_send.status = 0;	//DMA send in idle
+}
+
+/**
+ * @brief  循环从串口发送fifo读出数据，放置于dma发送缓存，并启动dma传输
+ *					The loop sends the fifo read-out data from the serial port, 
+ *					places it in the dma send cache, and initiates the dma transfer.
+ *
+ * @param  
+ * @retval 
+ */
+void uart1_poll_dma_tx()
+{
+	uint16_t size = 0;
+	
+	if (embed_send.status == 0x01)
+  {
+        return;
+  }
+//	size = fifo_read(&s_uart_dev[uart_id].tx_fifo, s_uart_dev[uart_id].dmatx_buf,
+//					 s_uart_dev[uart_id].dmatx_buf_size);
+	
+	size = fifo_s_gets(&embed_send.tx_fifo, (char *)embed_send.tx_dma_buf, embed_send.tx_dma_buf_size);
+	embed_send.debug_fifo_size = size; //update debug buff size cnt
+	
+	if (size != 0)
+	{	
+    embed_send.debug_UartTxCount += size; //update tx count
+		
+		/* DMA发送状态,必须在使能DMA传输前置位，否则有可能DMA已经传输并进入中断 */
+		embed_send.status = 0x01;
+		usart1_tx_dma_enable(embed_send.tx_dma_buf, size);
+		
+	}
+}
+
+/**
+ * @brief  串口驱动映射 Serial drive overwrite
+ * overwrite to put msg in fifo, producer will call this function in their function
+ * @param  
+ * @retval 
+ */
+void uart1_embed_send_byte(uint8_t ch) //(unsigned char ch)
+{
+	fifo_s_puts(&embed_send.tx_fifo, (char*)&ch, 1);
+}
+
+/**
+ * @brief 串口设备初始化 The serial port device is init
+ * not used, init process in task
+ * @param  
+ * @retval 
+ */
+void uart1_app_tx_init()
+{
+	return;
+}
+
+/* -------------------------------- USART SEND END-------------------------------- */

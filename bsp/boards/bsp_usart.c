@@ -8,12 +8,13 @@ extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart6_rx;
 extern DMA_HandleTypeDef hdma_usart6_tx;
 
-/*
-USART 1 - miniPC comm
-USART 6 - referee
-*/
 
 //PR test 2021/3/13
+/*
+USART 1 - miniPC comm
+USART 6 - referee */
+
+/* ---------------------------------------------- USART 1 ---------------------------------------------- */
 
 /*
 SZL 1-21-2023 modified for miniPC comm uart dma send
@@ -63,89 +64,6 @@ void usart1_tx_dma_enable(uint8_t *data, uint16_t len)
 		//是否需要等待 DMA数据流有效
 }
 
-
-
-
-
-void usart6_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
-{
-
-    //enable the DMA transfer for the receiver and tramsmit request
-    //使能DMA串口接收和发送
-    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAR);
-    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAT);
-
-    //enalbe idle interrupt
-    //使能空闲中断
-    __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);
-
-
-
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart6_rx);
-    
-    while(hdma_usart6_rx.Instance->CR & DMA_SxCR_EN)
-    {
-        __HAL_DMA_DISABLE(&hdma_usart6_rx);
-    }
-
-    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_rx, DMA_LISR_TCIF1);
-
-    hdma_usart6_rx.Instance->PAR = (uint32_t) & (USART6->DR);
-    //memory buffer 1
-    //内存缓冲区1
-    hdma_usart6_rx.Instance->M0AR = (uint32_t)(rx1_buf);
-    //memory buffer 2
-    //内存缓冲区2
-    hdma_usart6_rx.Instance->M1AR = (uint32_t)(rx2_buf);
-    //data length
-    //数据长度
-    __HAL_DMA_SET_COUNTER(&hdma_usart6_rx, dma_buf_num);
-
-    //enable double memory buffer
-    //使能双缓冲区
-    SET_BIT(hdma_usart6_rx.Instance->CR, DMA_SxCR_DBM);
-
-    //enable DMA
-    //使能DMA
-    __HAL_DMA_ENABLE(&hdma_usart6_rx);
-		
-		//是否需要等待 DMA数据流有效
-
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart6_tx);
-
-    while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
-    {
-        __HAL_DMA_DISABLE(&hdma_usart6_tx);
-    }
-
-    hdma_usart6_tx.Instance->PAR = (uint32_t) & (USART6->DR);
-
-}
-
-
-
-void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
-{
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart6_tx);
-
-    while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
-    {
-        __HAL_DMA_DISABLE(&hdma_usart6_tx);
-    }
-
-    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
-
-    hdma_usart6_tx.Instance->M0AR = (uint32_t)(data);
-    __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, len);
-
-    __HAL_DMA_ENABLE(&hdma_usart6_tx);
-}
 
 /*PRtest 2021/2/27通讯*/
 void usart1_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
@@ -211,6 +129,86 @@ void usart1_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
     hdma_usart1_tx.Instance->PAR = (uint32_t) & (USART1->DR);
 }
 
+/* ---------------------------------------------- USART 6 ---------------------------------------------- */
+
+void usart6_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
+{
+
+    //enable the DMA transfer for the receiver and tramsmit request
+    //使能DMA串口接收和发送
+    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAR);
+    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAT);
+
+    //enalbe idle interrupt
+    //使能空闲中断
+    __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);
+
+
+
+    //disable DMA
+    //失效DMA
+    __HAL_DMA_DISABLE(&hdma_usart6_rx);
+    
+    while(hdma_usart6_rx.Instance->CR & DMA_SxCR_EN)
+    {
+        __HAL_DMA_DISABLE(&hdma_usart6_rx);
+    }
+
+    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_rx, DMA_LISR_TCIF1);
+
+    hdma_usart6_rx.Instance->PAR = (uint32_t) & (USART6->DR);
+    //memory buffer 1
+    //内存缓冲区1
+    hdma_usart6_rx.Instance->M0AR = (uint32_t)(rx1_buf);
+    //memory buffer 2
+    //内存缓冲区2
+    hdma_usart6_rx.Instance->M1AR = (uint32_t)(rx2_buf);
+    //data length
+    //数据长度
+    __HAL_DMA_SET_COUNTER(&hdma_usart6_rx, dma_buf_num);
+
+    //enable double memory buffer
+    //使能双缓冲区
+    SET_BIT(hdma_usart6_rx.Instance->CR, DMA_SxCR_DBM);
+
+    //enable DMA
+    //使能DMA
+    __HAL_DMA_ENABLE(&hdma_usart6_rx);
+		
+		//是否需要等待 DMA数据流有效
+
+    //disable DMA
+    //失效DMA
+    __HAL_DMA_DISABLE(&hdma_usart6_tx);
+
+    while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
+    {
+        __HAL_DMA_DISABLE(&hdma_usart6_tx);
+    }
+
+    hdma_usart6_tx.Instance->PAR = (uint32_t) & (USART6->DR);
+
+}
+
+void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
+{
+    //disable DMA
+    //失效DMA
+    __HAL_DMA_DISABLE(&hdma_usart6_tx);
+
+    while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
+    {
+        __HAL_DMA_DISABLE(&hdma_usart6_tx);
+    }
+
+    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
+
+    hdma_usart6_tx.Instance->M0AR = (uint32_t)(data);
+    __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, len);
+
+    __HAL_DMA_ENABLE(&hdma_usart6_tx);
+}
+
 /* -------------------------------------------------- New DMA -------------------------------------------------- */
 /*
 SZL 1-20-2023 Board support package for DMA uart send
@@ -222,7 +220,7 @@ usart1_init(...)
 usart1_tx_dual_buff_dma_init_no_enable(...)
 usart1_tx_dma_dual_buff_enable(....)
 
-更具研究 双DMA发送方式并不可取
+更具研究 双DMA发送方式并不可取 以下函数均未使用
 
 */
 
