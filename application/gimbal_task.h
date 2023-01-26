@@ -283,7 +283,7 @@ extern const gimbal_motor_t *get_pitch_motor_point(void);
 /** PR test 2021/4/3, ∑µªÿ‘∆Ã®÷∏’Î
 *
 */
-extern gimbal_control_t *get_gimbal_pointer(void);
+extern const gimbal_control_t *get_gimbal_pointer(void);
 
 /**
   * @brief          gimbal task, osDelay GIMBAL_CONTROL_TIME (1ms) 

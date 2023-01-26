@@ -289,4 +289,6 @@ typedef struct
 extern void shoot_init(void);
 extern int16_t shoot_control_loop(void);
 
+extern const shoot_control_t* get_robot_shoot_control(void);
+
 #endif

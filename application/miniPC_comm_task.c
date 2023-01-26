@@ -54,6 +54,7 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 //DMA_HandleTypeDef hdma_usart6_tx;
 
 void pc_unpack_fifo_data(void);
+
 	
 fifo_s_t pc_comm_fifo;
 uint8_t pc_comm_fifo_buf[MINIPC_COMM_RX_FIFO_BUF_LENGTH];
@@ -87,7 +88,9 @@ void pc_communication_task(void const *pvParameters)
 		
 		//PC-->Embeded; received data unpack
 		pc_unpack_fifo_data();
+		
 		//Embeded-->PC; send data to PC
+		
 		
 		//osDelay(10);
 		//osDelay(4);
@@ -138,7 +141,7 @@ void pc_unpack_fifo_data(void)
 					//also check current index pos, current index position <-> SOF-sizeof cmdid
 					if(p_obj->index == PC_PROTOCOL_HEADER_SIZE)
 					{
-						p_obj->unpack_step = PC_COMM_STEP_CMDID; //PC_COMM_STEP_END_CRC16; //PC_COMM_STEP_CMDID;
+						p_obj->unpack_step = PC_COMM_STEP_SEQ; //PC_COMM_STEP_END_CRC16; //PC_COMM_STEP_CMDID;
 					}
 					else
 					{
@@ -153,12 +156,44 @@ void pc_unpack_fifo_data(void)
         }
 			}break;
 			
-			//no seq info, unpack cmdid here
-			case PC_COMM_STEP_CMDID:
+			//unpack sequence information
+			case PC_COMM_STEP_SEQ:
+			{
+				p_obj->protocol_packet[p_obj->index++] = byte;
+				p_obj->unpack_step = PC_COMM_STEP_CRC8;
+			}break;
+			
+			//check for header CRC8
+			case PC_COMM_STEP_CRC8:
+			{
+				p_obj->protocol_packet[p_obj->index++] = byte;
+
+        if (p_obj->index == PC_PROTOCOL_HEADER_SIZE)
+        {
+          if ( verify_CRC8_check_sum(p_obj->protocol_packet, PC_PROTOCOL_HEADER_SIZE) )
+          {
+            p_obj->unpack_step = PC_COMM_STEP_CMDID_LOW;
+          }
+          else
+          {
+            p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
+            p_obj->index = 0;
+          }
+        }
+			}break;
+			
+			//unpack cmd_id information for debug
+			case PC_COMM_STEP_CMDID_LOW:
 			{
 				p_obj->cmd_id = byte;
 				p_obj->protocol_packet[p_obj->index++] = byte;
-				
+				p_obj->unpack_step = PC_COMM_STEP_CMDID_HIGH;
+			}break;
+			
+			case PC_COMM_STEP_CMDID_HIGH:
+			{
+				p_obj->cmd_id |= (byte << 8);
+        p_obj->protocol_packet[p_obj->index++] = byte;
 				p_obj->unpack_step = PC_COMM_STEP_END_CRC16;
 			}break;
 			
@@ -279,7 +314,6 @@ void USART1_IRQHandler(void)
 }
 
 /* -------------------------------- USART SEND -------------------------------- */
-
 /**
  * @brief  串口dma发送完成中断处理 Serial port dma sending completes interrupt isr
  * @param  
@@ -335,8 +369,18 @@ void uart1_embed_send_byte(uint8_t ch) //(unsigned char ch)
 }
 
 /**
+ * @brief refresh data struct to ring buffer
+ *
+ * @param variable lengthed data
+ */
+void embed_send_refresh(int cnt,...)
+{
+	
+}
+
+/**
  * @brief 串口设备初始化 The serial port device is init
- * not used, init process in task
+ * NOT USED, init process in task
  * @param  
  * @retval 
  */

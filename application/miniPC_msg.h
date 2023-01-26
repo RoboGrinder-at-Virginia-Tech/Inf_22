@@ -3,6 +3,10 @@
 
 #include "main.h"
 #include "struct_typedef.h"
+#include "chassis_task.h"
+#include "INS_task.h"
+#include "gimbal_task.h"
+#include "shoot.h"
 
 /*---------------------------------------------------- Raw Data Msg ----------------------------------------------------*/
 //robot_id_t is defined in referee.h file
@@ -150,11 +154,42 @@ typedef enum
 {
 	PC_OFFLINE,
 	PC_ONLINE
-}pc_connection_status_e;//这两个结构体 不同的超级电容共用
+}pc_connection_status_e;
+
+/*
+Embed to PC
+float EBPct_fromCap; //relative to 0J 0%-100%
+*/
+//SZL 1-25-2023 EE->CV
+struct embed_msg_to_pc_t
+{
+	/* ------------------ sensor & information sent to pc ------------------*/
+	//pointer to original source of information
+	const chassis_move_t* chassis_move_ptr;
+	const gimbal_control_t* gimbal_control_ptr;
+	const fp32* quat_ptr; //const fp32 *get_INS_gimbal_quat(void)
+	const shoot_control_t* shoot_control_ptr;
+	
+	fp32 s_vx_m; // m/s
+	fp32 s_vy_m; // m/s
+	fp32 s_vw_m; // radian/s
+	
+	uint8_t energy_buff_pct; //get_superCap_charge_pwr
+	
+	fp32 yaw_relative_angle; //= rad
+  fp32 pitch_relative_angle;
+
+	fp32 quat[4];
+
+  fp32 shoot_bullet_speed; // = m/s
+
+  uint8_t robot_id;
+	
+	/* ------------------ sensor & information sent to pc END ------------------*/
+};
+
 typedef struct
 {
-	//MiniPC 那边发过来的信息
-	//uint8_t cmd_id;
 	/* -------------------- Var from cv comm -------------------- */
 	//uint8_t cv_chassis_sts;	
 	//int16_t yawCommand; //delta yaw

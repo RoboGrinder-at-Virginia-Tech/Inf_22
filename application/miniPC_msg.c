@@ -25,6 +25,8 @@
 #include "stdio.h"
 #include "CRC8_CRC16.h"
 #include "detect_task.h"
+#include "SuperCap_comm.h"
+#include "referee.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
@@ -40,6 +42,9 @@ pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_aid;
 pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_full;
 //processed cmd
 pc_info_t pc_info; //msg info from pc
+
+//origial information to pc
+struct embed_msg_to_pc_t embed_msg_to_pc;
 
 //Embedded -> miniPC
 embed_chassis_info_t embed_chassis_info;
@@ -58,6 +63,11 @@ void init_miniPC_comm_struct_data(void)
 	memset(&embed_chassis_info, 0, sizeof(embed_chassis_info_t));
 	memset(&embed_gimbal_info, 0, sizeof(embed_gimbal_info_t));
 	
+	//init information pckg
+	embed_msg_to_pc.chassis_move_ptr = get_chassis_pointer();
+	embed_msg_to_pc.gimbal_control_ptr = get_gimbal_pointer();
+	embed_msg_to_pc.quat_ptr = get_INS_gimbal_quat();
+	embed_msg_to_pc.shoot_control_ptr = get_robot_shoot_control();
 }
 
 void cmd_process_pc_cmd_chassis_control(void)
@@ -183,3 +193,70 @@ bool_t pc_is_data_error_proc()
 		pc_info.pc_connection_status = PC_ONLINE;
 		return 0;
 }
+
+/* -------------------------------- USART SEND DATA FILL-------------------------------- */
+void pc_send_header_msg_data_fill(uint8_t frame_length)
+{
+	pc_send_header.SOF = PC_HEADER_SOF;
+	pc_send_header.frame_length = frame_length;
+	pc_send_header.seq = 1;
+	//pc_send_header.seq++;
+	pc_send_header.CRC8 = get_CRC8_check_sum(&(pc_send_header.SOF), 4, 0xFF);
+}
+
+void embed_all_info_update_from_sensor()
+{
+	/*
+	fp32 s_vx_m; // m/s
+	fp32 s_vy_m; // m/s
+	fp32 s_vw_m; // radian/s
+	
+	uint8_t energy_buff_pct; //get_superCap_charge_pwr
+	
+	fp32 yaw_relative_angle; //= rad
+  fp32 pitch_relative_angle;
+
+	fp32 quat[4];
+
+  fp32 shoot_bullet_speed; // = m/s
+
+  uint8_t robot_id;
+	*/
+	embed_msg_to_pc.s_vx_m = embed_msg_to_pc.chassis_move_ptr->vx;
+	embed_msg_to_pc.s_vy_m = embed_msg_to_pc.chassis_move_ptr->vy;
+	embed_msg_to_pc.s_vw_m = embed_msg_to_pc.chassis_move_ptr->wz;
+	embed_msg_to_pc.energy_buff_pct = (uint8_t) get_current_cap_pct();
+	embed_msg_to_pc.yaw_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_yaw_motor.relative_angle;
+	embed_msg_to_pc.pitch_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_pitch_motor.relative_angle;
+	
+	embed_msg_to_pc.quat[0] = embed_msg_to_pc.quat_ptr[0];
+	embed_msg_to_pc.quat[1] = embed_msg_to_pc.quat_ptr[1];
+	embed_msg_to_pc.quat[2] = embed_msg_to_pc.quat_ptr[2];
+	embed_msg_to_pc.quat[3] = embed_msg_to_pc.quat_ptr[3];
+	
+	// = (uint16_t)(shoot_control.predict_shoot_speed*10); //anticipated predicated bullet speed
+	embed_msg_to_pc.shoot_bullet_speed = embed_msg_to_pc.shoot_control_ptr->predict_shoot_speed;
+	embed_msg_to_pc.robot_id = RED_STANDARD_1;
+	
+	
+	
+}
+
+void embed_chassis_info_msg_data_update()
+{
+//	embed_chassis_info.vx_mm = 
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+//	embed_chassis_info
+}
+
+void embed_gimbal_info_msg_data_update()
+{
+}
+
+/* -------------------------------- USART SEND DATA FILL END-------------------------------- */

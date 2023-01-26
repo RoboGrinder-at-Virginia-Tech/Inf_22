@@ -23,11 +23,11 @@ note 1-17-2023: current data size did not exceed 50 bytes
 
 //Information for different packages' size
 #define PC_PROTOCOL_HEADER_SIZE            sizeof(pc_comm_frame_header_t)
-#define PC_PROTOCOL_CMD_SIZE               2   //sizeof(uint16_t)
-#define PC_PROTOCOL_CRC16_SIZE             2   //sizeof(uint16_t)
+#define PC_PROTOCOL_CMD_SIZE               2   //sizeof(uint16_t) size for the cmd_id
+#define PC_PROTOCOL_CRC16_SIZE             2   //sizeof(uint16_t) size for the CRC16
 #define PC_HEADER_CRC_LEN                  (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE)
-#define PC_HEADER_CRC_CMDID_LEN            (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE + sizeof(uint16_t))
-#define PC_HEADER_CMDID_LEN                (PC_PROTOCOL_HEADER_SIZE + sizeof(uint16_t))
+#define PC_HEADER_CRC_CMDID_LEN            (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE + PC_PROTOCOL_CMD_SIZE) //(PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE + sizeof(uint16_t))
+#define PC_HEADER_CMDID_LEN                (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CMD_SIZE) //(PC_PROTOCOL_HEADER_SIZE + sizeof(uint16_t))
 
 #pragma pack(push, 1)
 
@@ -48,15 +48,21 @@ typedef  struct
 {
   uint8_t SOF;
   uint8_t frame_length; //entire frame length
+	uint8_t seq;
+	uint8_t CRC8;
   //uint16_t cmd_id; //cmd_id is related to data package 
+	
 } pc_comm_frame_header_t;
 
 typedef enum
 {
   PC_COMM_STEP_HEADER_SOF  = 0,
   PC_COMM_STEP_FRAME_LENGTH  = 1,
-  PC_COMM_STEP_CMDID   = 2,
-  PC_COMM_STEP_END_CRC16  = 3,
+	PC_COMM_STEP_SEQ = 2,
+	PC_COMM_STEP_CRC8 = 3,
+  PC_COMM_STEP_CMDID_LOW = 4,
+	PC_COMM_STEP_CMDID_HIGH = 5,
+  PC_COMM_STEP_END_CRC16  = 6,
 } pc_comm_unpack_step_e;
 
 typedef struct

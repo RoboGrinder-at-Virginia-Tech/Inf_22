@@ -83,7 +83,7 @@ void referee_usart_task(void const * argument)
     init_referee_struct_data();
     fifo_s_init(&referee_fifo, referee_fifo_buf, REFEREE_FIFO_BUF_LENGTH);
     usart6_init(usart6_buf[0], usart6_buf[1], USART_RX_BUF_LENGHT);
-    pc_control_init();
+//    pc_control_init();
 		
 	  miniPC_info.miniPC_connection_status = miniPC_offline;//初始化
     while(1)
@@ -408,14 +408,13 @@ void sendData_Task_EE_To_PC()
 #define PC_RX_BUF_NUM 50
 __IO uint8_t pc_rx_buf[2][PC_RX_BUF_NUM];
 
- gimbal_control_t* p_gimbal_control = NULL;
+
 
 //struct gimbal_cmd gimbal_cmd_t;
 
 void pc_control_init(void)
 {
     usart1_init((uint8_t*)pc_rx_buf[0], (uint8_t*)pc_rx_buf[1], PC_RX_BUF_NUM);
-	  p_gimbal_control = get_gimbal_pointer(); //SZL 5-31-2022 这个暂时未使用
 }
 
 uint8_t shootCommand = 0x00;//自动开火指令  0x00 = 停火  0xff = 开火

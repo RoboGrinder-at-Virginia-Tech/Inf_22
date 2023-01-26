@@ -773,3 +773,8 @@ static void shoot_bullet_control_17mm(void)
    
 }
 
+const shoot_control_t* get_robot_shoot_control()
+{
+	return &shoot_control;
+}
+

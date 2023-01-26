@@ -638,7 +638,7 @@ const gimbal_motor_t *get_pitch_motor_point(void)
 /** PR test 2021/4/3, ‘∆Ã®÷∏’Î
 *
 */
-gimbal_control_t *get_gimbal_pointer(void)
+const gimbal_control_t *get_gimbal_pointer(void)
  {    
 	   gimbal_control_t * sp= &gimbal_control;
      return sp;

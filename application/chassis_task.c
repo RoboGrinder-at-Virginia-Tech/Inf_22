@@ -739,3 +739,8 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
         chassis_move_control_loop->motor_chassis[i].give_current = (int16_t)(chassis_move_control_loop->motor_speed_pid[i].out);
     }
 }
+
+const chassis_move_t *get_chassis_pointer(void)
+{
+	return &chassis_move;
+}

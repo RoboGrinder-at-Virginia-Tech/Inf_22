@@ -449,3 +449,96 @@ bool_t wulie_Cap_is_data_error_proc()
 //			return 0;
 //		}
 }
+
+//API for UI and other
+fp32 get_current_cap_voltage()
+{
+	//开始整数字相关的东西 即插即用的超级电容控制板 判断
+	 if(current_superCap == SuperCap_ID)
+	 {
+		 if(toe_is_error(SUPERCAP_TOE))
+		 {
+				return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = superCap_info.EBPct_fromCap;
+			 return superCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == sCap23_ID)
+	 {
+		 if(toe_is_error(SCAP_23_TOR))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = sCap23_info.EBPct;
+		   return sCap23_info.Vbank_f;
+		 }
+	 }
+	 else
+	 {
+		 if(toe_is_error(WULIE_CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = wulie_Cap_info.EBPct;
+		   return wulie_Cap_info.cap_voltage;
+		 }
+	 }
+}
+
+fp32 get_current_cap_pct()
+{
+	//开始整数字相关的东西 即插即用的超级电容控制板 判断
+	 if(current_superCap == SuperCap_ID)
+	 {
+		 if(toe_is_error(SUPERCAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return superCap_info.EBPct_fromCap;
+			 //ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == sCap23_ID)
+	 {
+		 if(toe_is_error(SCAP_23_TOR))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return sCap23_info.EBPct;
+		   //ui_info.cap_volt = sCap23_info.Vbank_f;
+		 }
+	 }
+	 else
+	 {
+		 if(toe_is_error(WULIE_CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return wulie_Cap_info.EBPct;
+		   //ui_info.cap_volt = wulie_Cap_info.cap_voltage;
+		 }
+	 }
+}

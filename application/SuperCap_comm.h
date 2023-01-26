@@ -43,6 +43,9 @@ extern bool_t all_superCap_is_offline(void);
 extern void sCap23_offline_proc(void);
 extern bool_t sCap23_is_data_error_proc(void);
 
+extern fp32 get_current_cap_voltage(void);
+extern fp32 get_current_cap_pct(void);
+
 typedef enum
 {
 	/*TypeC -> SuperCap 时 CAN报文 即指令的ID
