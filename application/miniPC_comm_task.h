@@ -5,6 +5,9 @@
 #include "struct_typedef.h"
 #include "fifo.h"
 
+//Declare
+extern void pc_communication_task(void const *pvParameters);
+
 /* 
 Path for the comm and Flow of data: 
 miniPC UART -> UART wires -> Embedded UART Peripherals with DMA-> DMA buff (interupt)-> software fifo -> unpack array-ram buffer
@@ -28,6 +31,13 @@ note 1-17-2023: current data size did not exceed 50 bytes
 #define PC_HEADER_CRC_LEN                  (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE)
 #define PC_HEADER_CRC_CMDID_LEN            (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE + PC_PROTOCOL_CMD_SIZE) //(PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CRC16_SIZE + sizeof(uint16_t))
 #define PC_HEADER_CMDID_LEN                (PC_PROTOCOL_HEADER_SIZE + PC_PROTOCOL_CMD_SIZE) //(PC_PROTOCOL_HEADER_SIZE + sizeof(uint16_t))
+
+#define PC_HEADER_INDEX_FOR_SEQ						2   //this marks the index in protocol_packet[....]
+
+/*
+[...] in unit uint8_t
+(frame_header = 	Header/SOF[0] +	ver_frame_len[1]  +	seq[2] +	CRC8[3]) + cmd_id/package id[4][5] + Data[TBD] + frame_tail(CRC16)[ver_frame_len-1]
+*/
 
 #pragma pack(push, 1)
 
@@ -68,7 +78,7 @@ typedef enum
 typedef struct
 {
   pc_comm_frame_header_t *p_header;
-  uint8_t       data_len;
+  uint8_t       frame_len; //data_len; This is frame length of entire frame
 	uint16_t			cmd_id;
 	uint16_t			cmd_id_pc_comm_data_solve_debug; //For Debug
 	

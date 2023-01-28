@@ -132,14 +132,15 @@ void pc_unpack_fifo_data(void)
 			//data_len - uint8_t for pc comm
 			case PC_COMM_STEP_FRAME_LENGTH:
 			{
-				p_obj->data_len = byte;
+				p_obj->frame_len = byte;
 				p_obj->protocol_packet[p_obj->index++] = byte;
 				
 				//check data_len to avoid out of bound array ptr
-				if(p_obj->data_len < (PC_PROTOCOL_FRAME_MAX_SIZE - PC_HEADER_CRC_CMDID_LEN))
+				if(p_obj->frame_len < PC_PROTOCOL_FRAME_MAX_SIZE) //(PC_PROTOCOL_FRAME_MAX_SIZE - PC_HEADER_CRC_CMDID_LEN))
         {
-					//also check current index pos, current index position <-> SOF-sizeof cmdid
-					if(p_obj->index == PC_PROTOCOL_HEADER_SIZE)
+					//also check current index pos, current index position = array index for next seq field
+					//DJI referee did not check this current index position
+					if(p_obj->index == PC_HEADER_INDEX_FOR_SEQ)
 					{
 						p_obj->unpack_step = PC_COMM_STEP_SEQ; //PC_COMM_STEP_END_CRC16; //PC_COMM_STEP_CMDID;
 					}
@@ -199,17 +200,17 @@ void pc_unpack_fifo_data(void)
 			
 			case PC_COMM_STEP_END_CRC16:
 			{
-				if (p_obj->index < (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len)) //(REF_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+				if (p_obj->index < p_obj->frame_len) //(PC_HEADER_CRC_CMDID_LEN + p_obj->data_len))
         {
 					 //copy data from(pop) fifo and put into unpack array-ram buffer
            p_obj->protocol_packet[p_obj->index++] = byte;  
         }
-        if (p_obj->index >= (PC_HEADER_CRC_CMDID_LEN + p_obj->data_len))
+        if (p_obj->index >= p_obj->frame_len) //(PC_HEADER_CRC_CMDID_LEN + p_obj->data_len))
         {
           p_obj->unpack_step = PC_COMM_STEP_HEADER_SOF;
           p_obj->index = 0;
 
-          if ( verify_CRC16_check_sum(p_obj->protocol_packet, PC_HEADER_CRC_CMDID_LEN + p_obj->data_len) )
+          if ( verify_CRC16_check_sum(p_obj->protocol_packet, p_obj->frame_len) ) //verify_CRC16_check_sum(p_obj->protocol_packet, PC_HEADER_CRC_CMDID_LEN + p_obj->data_len)
           {
             pc_comm_data_solve(p_obj->protocol_packet); //solve the data with detail data sturct
 						//detect_hook(PC_TOE); in the other func
