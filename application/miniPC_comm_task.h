@@ -64,6 +64,16 @@ typedef  struct
 	
 } pc_comm_frame_header_t;
 
+typedef  struct
+{
+  uint8_t SOF;
+  uint8_t frame_length; //entire frame length
+	uint8_t seq;
+	uint8_t CRC8;
+  uint16_t cmd_id; //cmd_id included considered as header for embed send
+	
+} pc_comm_embed_send_header_t;
+
 typedef enum
 {
   PC_COMM_STEP_HEADER_SOF  = 0,
@@ -96,6 +106,8 @@ typedef struct
 //This is the DMA buff length
 #define MINIPC_COMM_UART_DMA_TX_BUF_LENGHT 128 //512
 
+#define MINIPC_COMM_FRAME_MAX_SIZE 40 //send temp ram buffer
+
 typedef struct
 {
 	//环形缓冲区模块
@@ -109,7 +121,16 @@ typedef struct
 	uint32_t debug_fifo_size;
 	uint32_t debug_UartTxCount;
 	
-} pc_comm_embed_send_data_t;
+} pc_comm_embed_uart_send_data_t;
+
+//协议层
+typedef struct
+{
+	pc_comm_embed_send_header_t *p_header;
+	uint8_t send_ram_buff[MINIPC_COMM_FRAME_MAX_SIZE];
+	uint8_t index;
+	
+}embed_send_protocol_t;
 
 /* -------------------------------- USART SEND END-------------------------------- */
 

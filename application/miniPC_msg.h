@@ -161,7 +161,7 @@ Embed to PC
 float EBPct_fromCap; //relative to 0J 0%-100%
 */
 //SZL 1-25-2023 EE->CV
-struct embed_msg_to_pc_t
+typedef struct
 {
 	/* ------------------ sensor & information sent to pc ------------------*/
 	//pointer to original source of information
@@ -186,7 +186,7 @@ struct embed_msg_to_pc_t
   uint8_t robot_id;
 	
 	/* ------------------ sensor & information sent to pc END ------------------*/
-};
+}embed_msg_to_pc_t;
 
 typedef struct
 {

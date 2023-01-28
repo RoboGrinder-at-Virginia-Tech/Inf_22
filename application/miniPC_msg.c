@@ -27,12 +27,14 @@
 #include "detect_task.h"
 #include "SuperCap_comm.h"
 #include "referee.h"
+#include "arm_math.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
 //包头实体, frame head
-pc_comm_frame_header_t pc_comm_receive_header;
-pc_comm_frame_header_t pc_send_header;
+pc_comm_frame_header_t pc_comm_receive_header; //this means embed receive msg from miniPC
+pc_comm_embed_send_header_t pc_send_header; //embed send msg from miniPC
+embed_send_protocol_t embed_send_protocol;
 
 //消息实体 原始数据, raw origial data
 //miniPC -> Embedded
@@ -44,7 +46,7 @@ pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_full;
 pc_info_t pc_info; //msg info from pc
 
 //origial information to pc
-struct embed_msg_to_pc_t embed_msg_to_pc;
+embed_msg_to_pc_t embed_msg_to_pc;
 
 //Embedded -> miniPC
 embed_chassis_info_t embed_chassis_info;
@@ -53,7 +55,7 @@ embed_gimbal_info_t embed_gimbal_info;
 void init_miniPC_comm_struct_data(void)
 {
 	memset(&pc_comm_receive_header, 0, sizeof(pc_comm_frame_header_t));
-	memset(&pc_send_header, 0, sizeof(pc_comm_frame_header_t));
+	memset(&pc_send_header, 0, sizeof(pc_comm_embed_send_header_t));
 	
 	memset(&pc_ui_msg, 0, sizeof(pc_ui_msg_t));
 	memset(&pc_cmd_chassis_control, 0, sizeof(pc_cmd_chassis_control_t));
@@ -63,11 +65,15 @@ void init_miniPC_comm_struct_data(void)
 	memset(&embed_chassis_info, 0, sizeof(embed_chassis_info_t));
 	memset(&embed_gimbal_info, 0, sizeof(embed_gimbal_info_t));
 	
+	memset(&embed_send_protocol, 0, sizeof(embed_send_protocol_t));
+	
 	//init information pckg
 	embed_msg_to_pc.chassis_move_ptr = get_chassis_pointer();
 	embed_msg_to_pc.gimbal_control_ptr = get_gimbal_pointer();
 	embed_msg_to_pc.quat_ptr = get_INS_gimbal_quat();
 	embed_msg_to_pc.shoot_control_ptr = get_robot_shoot_control();
+	
+	embed_send_protocol.p_header = &pc_send_header;
 }
 
 void cmd_process_pc_cmd_chassis_control(void)
@@ -195,15 +201,6 @@ bool_t pc_is_data_error_proc()
 }
 
 /* -------------------------------- USART SEND DATA FILL-------------------------------- */
-void pc_send_header_msg_data_fill(uint8_t frame_length)
-{
-	pc_send_header.SOF = PC_HEADER_SOF;
-	pc_send_header.frame_length = frame_length;
-	pc_send_header.seq = 1;
-	//pc_send_header.seq++;
-	pc_send_header.CRC8 = get_CRC8_check_sum(&(pc_send_header.SOF), 4, 0xFF);
-}
-
 void embed_all_info_update_from_sensor()
 {
 	/*
@@ -242,7 +239,7 @@ void embed_all_info_update_from_sensor()
 	
 }
 
-void embed_chassis_info_msg_data_update()
+void embed_chassis_info_msg_data_update(embed_chassis_info_t* embed_chassis_info_ptr, embed_msg_to_pc_t* embed_msg_to_pc_ptr)
 {
 //	embed_chassis_info.vx_mm = 
 //	embed_chassis_info
@@ -253,10 +250,97 @@ void embed_chassis_info_msg_data_update()
 //	embed_chassis_info
 //	embed_chassis_info
 //	embed_chassis_info
+	
+//	//m/s * 1000 <-->mm/s 
+//	embed_chassis_info_ptr->vx_mm = (int16_t)embed_msg_to_pc_ptr->s_vx_m * 1000;
+//	embed_chassis_info_ptr->vy_mm = (int16_t)embed_msg_to_pc_ptr->s_vy_m * 1000;
+//	embed_chassis_info_ptr->vw_mm = (int16_t)embed_msg_to_pc_ptr->s_vw_m * 1000;
+//	
+//	embed_chassis_info_ptr->energy_buff_pct = embed_msg_to_pc_ptr->energy_buff_pct;
+	
+	//For debug only
+	embed_chassis_info_ptr->vx_mm = 0x1234;
+	embed_chassis_info_ptr->vy_mm = 0x5678;
+	embed_chassis_info_ptr->vw_mm = 0x9ABC;
+	
+	embed_chassis_info_ptr->energy_buff_pct = 0xDE;
 }
 
-void embed_gimbal_info_msg_data_update()
+void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_ptr, embed_msg_to_pc_t* embed_msg_to_pc_ptr)
 {
+	embed_gimbal_info_ptr->pitch_relative_angle = embed_msg_to_pc_ptr->pitch_relative_angle; //= rad * 10000
+	
+	for(uint8_t i = 0; i < 4; i++)
+	{
+			if(fabs(embed_msg_to_pc_ptr->quat[i]) > 1.01f)
+			{
+				for(uint8_t j = 0; j < 4; j++)
+				{
+					embed_gimbal_info_ptr->quat[j] = 0;
+				}
+				break;
+			}
+			
+			embed_gimbal_info_ptr->quat[i] = (embed_msg_to_pc_ptr->quat[i]+1)*10000; //(quat[i]+1)*10000; linear trans.
+	}
+	
+	embed_gimbal_info_ptr->robot_id = embed_msg_to_pc_ptr->robot_id;
+	embed_gimbal_info_ptr->shoot_bullet_speed = embed_msg_to_pc_ptr->shoot_bullet_speed;
+	embed_gimbal_info_ptr->yaw_relative_angle = embed_msg_to_pc_ptr->yaw_relative_angle;
+  
+}
+
+//use global variable pc_send_header for debug purpose
+void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint8_t data_size)
+{
+	unsigned char *framepoint;  //read write pointer
+  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
+	uint16_t* frametail_ptr;
+	
+	framepoint = (unsigned char *)embed_send_protocol.p_header;
+	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
+	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size;
+	embed_send_protocol.p_header->seq = 1; //Add global for this
+	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum(framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
+	
+	embed_send_protocol.p_header->cmd_id = CHASSIS_INFO_CMD_ID;
+	
+	
+	//put header to ram buffer
+	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
+	{
+		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+		framepoint++;
+	}
+	
+	//put data section to ram buffer
+	framepoint = (unsigned char *)embed_chassis_info_ptr;
+	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
+	{
+		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+		framepoint++;
+	}
+	
+	//put frame tail check sum to ram buffer CRC16 换向
+	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
+	frametail_ptr[0] = frametailCRC;
+	
+	//集中发送
+	
+}
+
+void embed_gimbal_info_refresh()
+{
+	return;
+}
+
+void embed_send_data_to_pc_loop()
+{
+	embed_all_info_update_from_sensor();
+	//embed_chassis_info_msg_data_update();
+	
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */

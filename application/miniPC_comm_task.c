@@ -62,7 +62,7 @@ uint8_t pc_comm_usart1_buf[2][MINIPC_COMM_UART_DMA_RX_BUF_LENGHT];
 pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
 //send related var
-pc_comm_embed_send_data_t embed_send;
+pc_comm_embed_uart_send_data_t embed_send;
 uint8_t embed_send_fifo_buf[MINIPC_COMM_TX_FIFO_BUF_LENGTH];
 //uint8_t embed_send_usart1_buf[2][MINIPC_COMM_UART_DMA_TX_BUF_LENGHT];
 uint8_t embed_send_usart1_buf[MINIPC_COMM_UART_DMA_TX_BUF_LENGHT];
