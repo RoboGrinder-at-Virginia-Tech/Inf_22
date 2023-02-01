@@ -241,7 +241,7 @@ void USART1_IRQHandler(void)
 		
 		if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE))//huart1.Instance->SR & UART_FLAG_RXNE)//data msg received
     {
-        //__HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
+        __HAL_UART_CLEAR_PEFLAG(&huart1); //SZL 5-30-2022
 				__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
     }
     else if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
