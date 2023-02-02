@@ -290,6 +290,11 @@ void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_pt
   
 }
 
+/**
+ * @brief refresh data struct to ring buffer fifo or send directly
+ *
+ * @param variable lengthed data
+ */
 //use global variable pc_send_header for debug purpose
 void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint8_t data_size)
 {
@@ -331,6 +336,11 @@ void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, ui
 	
 }
 
+/**
+ * @brief refresh data struct to ring buffer fifo or send directly
+ *
+ * @param variable lengthed data
+ */
 void embed_gimbal_info_refresh()
 {
 	return;
