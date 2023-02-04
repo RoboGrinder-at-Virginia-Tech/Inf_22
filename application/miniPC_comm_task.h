@@ -10,7 +10,7 @@ extern void pc_communication_task(void const *pvParameters);
 extern void uart1_embed_send_byte(uint8_t ch);
 extern uint8_t get_uart1_embed_send_status(void);
 extern uint8_t uart1_poll_dma_tx(void);
-extern void uart1_tx_dma_done_isr(struct __DMA_HandleTypeDef * hdma);
+extern void uart1_tx_dma_done_isr(void); //(struct __DMA_HandleTypeDef * hdma);
 
 /* 
 Path for the comm and Flow of data: 

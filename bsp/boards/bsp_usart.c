@@ -42,29 +42,43 @@ void usart1_tx_dma_init(void)
     hdma_usart1_tx.Instance->M0AR = (uint32_t)(NULL);
     hdma_usart1_tx.Instance->NDTR = 0;
 
-		//configure call back funciton 配置中断回调函数
-		hdma_usart1_tx.XferCpltCallback = &uart1_tx_dma_done_isr;
+//		//configure call back funciton 配置中断回调函数
+//		hdma_usart1_tx.XferCpltCallback = &uart1_tx_dma_done_isr;
 
 }
 void usart1_tx_dma_enable(uint8_t *data, uint16_t len)
 {
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart1_tx);
+//    //disable DMA
+//    //失效DMA
+//    __HAL_DMA_DISABLE(&hdma_usart1_tx);
+
+//    while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
+//    {
+//        __HAL_DMA_DISABLE(&hdma_usart1_tx);
+//    }
+
+//    __HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_HISR_TCIF7);
+
+//    hdma_usart1_tx.Instance->M0AR = (uint32_t)(data);
+//    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, len);
+
+//    __HAL_DMA_ENABLE(&hdma_usart1_tx);
+//		
+//		//是否需要等待 DMA数据流有效
+		
+		//版本2 2-3-2023
+		//HAL_StatusTypeDef HAL_UART_Transmit_DMA(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size)
+		//disable DMA
+		__HAL_DMA_DISABLE(&hdma_usart1_tx);
 
     while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
     {
         __HAL_DMA_DISABLE(&hdma_usart1_tx);
     }
-
-    __HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_HISR_TCIF7);
-
-    hdma_usart1_tx.Instance->M0AR = (uint32_t)(data);
-    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, len);
-
-    __HAL_DMA_ENABLE(&hdma_usart1_tx);
 		
-		//是否需要等待 DMA数据流有效
+		__HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_HISR_TCIF7);
+		
+		HAL_UART_Transmit_DMA(&huart1, data, len);
 }
 
 

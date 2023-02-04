@@ -95,7 +95,8 @@ void pc_communication_task(void const *pvParameters)
 		//osDelay(10);
 		//osDelay(4);
 		//osDelay(100);
-		vTaskDelay(100);
+		//vTaskDelay(100);
+		vTaskDelay(4);
 		
 		//record high water mark
 #if INCLUDE_uxTaskGetStackHighWaterMark
@@ -321,9 +322,17 @@ void USART1_IRQHandler(void)
  * @param  
  * @retval 
  */
-void uart1_tx_dma_done_isr(struct __DMA_HandleTypeDef * hdma)
+void uart1_tx_dma_done_isr() //(struct __DMA_HandleTypeDef * hdma)
 {
  	embed_send.status = 0;	//DMA send in idle
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == &huart1)
+	{
+		uart1_tx_dma_done_isr();
+	}
 }
 
 /**

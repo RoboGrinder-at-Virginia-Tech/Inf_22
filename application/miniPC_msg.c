@@ -387,8 +387,13 @@ void embed_send_data_to_pc_loop()
 		embed_chassis_info_msg_data_update(&embed_chassis_info, &embed_msg_to_pc);
 	
 		//msg to fifo
-		embed_chassis_info_refresh(&embed_chassis_info, sizeof(embed_chassis_info));
-	}
+		embed_chassis_info_refresh(&embed_chassis_info, sizeof(embed_chassis_info_t));
+		
+		/*
+		进入这个if的频率决定了生产频率, 到时间后才进入这个if, 没到时间不进入这个if
+		没到时间需确认消费者在消费状态
+		*/
+	//}
 	
 	
 	//enable uart tx DMA which is the DMA poll
@@ -407,11 +412,13 @@ void embed_send_data_to_pc_loop()
 		while(!(get_uart1_embed_send_status()==0))
 		{
 			vTaskDelay(1);
+			uart1_poll_dma_tx();
 		}
 		
 		uart1_poll_dma_tx();
 		embed_send_protocol.relative_send_fail_cnts = 0;
 	}
+}//----------------
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */

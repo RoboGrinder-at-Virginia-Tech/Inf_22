@@ -195,6 +195,16 @@
           <WinNumber>1</WinNumber>
           <ItemText>pc_comm_fifo</ItemText>
         </Ww>
+        <Ww>
+          <count>8</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_send</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_send_protocol</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

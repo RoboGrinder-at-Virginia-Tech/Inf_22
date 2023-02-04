@@ -37,7 +37,7 @@ typedef enum
 /*
 UI related information - miniPC->Embeded
 */
-typedef struct
+typedef __packed struct
 {
     // = m * 100 = cm
     //int16_t detected_enemy_distance; //=0 when not detected
@@ -58,7 +58,7 @@ typedef enum
    PC_CHASSIS_FOLLOW_GIMBAL_YAW, //uint8_t 1
    PC_CHASSIS_SPIN, //uint8_t 2
 } pc_chassis_mode_e;
-typedef struct
+typedef __packed struct
 {
   int16_t vx_mm; // forward/back
 //: m/s * 1000 <-->mm/s 
@@ -75,7 +75,7 @@ typedef struct
 chassis related info. Send to PC
 Embedded -> miniPC
 */
-typedef struct
+typedef __packed struct
 {
   int16_t vx_mm; // forward/back
 //: m/s * 1000 <-->mm/s 
@@ -91,7 +91,7 @@ typedef struct
 /*
 Gimbal related control - miniPC->Embedded
 */
-typedef struct
+typedef __packed struct
 {
     int16_t yaw; //=rad*10000
     int16_t pitch;
@@ -104,7 +104,7 @@ typedef struct
 /*
 Gimbal information - Embedded -> miniPC
 */
-typedef struct
+typedef __packed struct
 {
     int16_t yaw_relative_angle; //= rad * 10000
     int16_t pitch_relative_angle;
