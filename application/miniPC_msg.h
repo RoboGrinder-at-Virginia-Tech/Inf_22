@@ -240,4 +240,5 @@ typedef struct
 
 extern void init_miniPC_comm_struct_data(void);
 extern void pc_comm_data_solve(uint8_t *frame);
+void embed_send_data_to_pc_loop(void);
 #endif

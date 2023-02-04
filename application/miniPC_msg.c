@@ -20,6 +20,9 @@
   */
 	
 #include "miniPC_msg.h"
+#include "main.h"
+#include "cmsis_os.h"
+#include "stm32f4xx_hal.h"
 #include "miniPC_comm_task.h"
 #include "string.h"
 #include "stdio.h"
@@ -52,6 +55,16 @@ embed_msg_to_pc_t embed_msg_to_pc;
 embed_chassis_info_t embed_chassis_info;
 embed_gimbal_info_t embed_gimbal_info;
 
+/*
+chassis_info 60 Hz
+1/60 = 0.01666 s = 16.667s
+
+gimbal_info 60 Hz
+
+*/
+const uint32_t chassis_info_embed_sendFreq = 16; //pre-determined send freq
+const uint32_t gimbal_info_embed_sendFreq = 16; 
+
 void init_miniPC_comm_struct_data(void)
 {
 	memset(&pc_comm_receive_header, 0, sizeof(pc_comm_frame_header_t));
@@ -74,6 +87,8 @@ void init_miniPC_comm_struct_data(void)
 	embed_msg_to_pc.shoot_control_ptr = get_robot_shoot_control();
 	
 	embed_send_protocol.p_header = &pc_send_header;
+	embed_send_protocol.chassis_info_embed_send_TimeStamp = xTaskGetTickCount();
+	embed_send_protocol.gimbal_info_embed_send_TimeStamp = xTaskGetTickCount();
 }
 
 void cmd_process_pc_cmd_chassis_control(void)
@@ -293,10 +308,10 @@ void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_pt
 /**
  * @brief refresh data struct to ring buffer fifo or send directly
  *
- * @param variable lengthed data
+ * @param data_size: variable lengthed data; data section data size
  */
 //use global variable pc_send_header for debug purpose
-void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint8_t data_size)
+void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint32_t data_size)
 {
 	unsigned char *framepoint;  //read write pointer
   uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
@@ -311,7 +326,7 @@ void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, ui
 	embed_send_protocol.p_header->cmd_id = CHASSIS_INFO_CMD_ID;
 	
 	
-	//put header to ram buffer
+	//put header + cmdid to ram buffer
 	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
 	{
 		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
@@ -333,9 +348,14 @@ void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, ui
 	frametail_ptr[0] = frametailCRC;
 	
 	//集中发送
+	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
+	{
+		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
+	}
 	
 }
 
+//TO DO
 /**
  * @brief refresh data struct to ring buffer fifo or send directly
  *
@@ -348,9 +368,50 @@ void embed_gimbal_info_refresh()
 
 void embed_send_data_to_pc_loop()
 {
+	//Update info from robot sensor; update every iteration
 	embed_all_info_update_from_sensor();
-	//embed_chassis_info_msg_data_update();
 	
+//	//定时创建一次动态的--------------
+//	if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
+//	{
+//			ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
+//			ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
+//	}
+	
+	//chassis_info gimbal_info 60Hz create and enqued to fifo
+	if(xTaskGetTickCount() - chassis_info_embed_sendFreq > embed_send_protocol.chassis_info_embed_send_TimeStamp)
+	{
+		embed_send_protocol.chassis_info_embed_send_TimeStamp = xTaskGetTickCount();
+		//time to do another send
+		//Copy value to send struct. simular to Float_Draw
+		embed_chassis_info_msg_data_update(&embed_chassis_info, &embed_msg_to_pc);
+	
+		//msg to fifo
+		embed_chassis_info_refresh(&embed_chassis_info, sizeof(embed_chassis_info));
+	}
+	
+	
+	//enable uart tx DMA which is the DMA poll
+	if(uart1_poll_dma_tx())
+	{
+		embed_send_protocol.relative_send_fail_cnts++;
+	}
+	else
+	{
+		embed_send_protocol.relative_send_fail_cnts = 0;
+	}
+	
+	//if reach a certain number, enforce sending
+	if(embed_send_protocol.relative_send_fail_cnts >= 5)
+	{
+		while(!(get_uart1_embed_send_status()==0))
+		{
+			vTaskDelay(1);
+		}
+		
+		uart1_poll_dma_tx();
+		embed_send_protocol.relative_send_fail_cnts = 0;
+	}
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */

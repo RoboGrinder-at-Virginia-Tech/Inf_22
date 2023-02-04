@@ -90,7 +90,7 @@ void pc_communication_task(void const *pvParameters)
 		pc_unpack_fifo_data();
 		
 		//Embeded-->PC; send data to PC
-		
+		embed_send_data_to_pc_loop();
 		
 		//osDelay(10);
 		//osDelay(4);
@@ -317,10 +317,11 @@ void USART1_IRQHandler(void)
 /* -------------------------------- USART SEND -------------------------------- */
 /**
  * @brief  串口dma发送完成中断处理 Serial port dma sending completes interrupt isr
+ * for
  * @param  
  * @retval 
  */
-void uart1_tx_dma_done_isr()
+void uart1_tx_dma_done_isr(struct __DMA_HandleTypeDef * hdma)
 {
  	embed_send.status = 0;	//DMA send in idle
 }
@@ -329,17 +330,18 @@ void uart1_tx_dma_done_isr()
  * @brief  循环从串口发送fifo读出数据，放置于dma发送缓存，并启动dma传输
  *					The loop sends the fifo read-out data from the serial port, 
  *					places it in the dma send cache, and initiates the dma transfer.
- *
+ * DMA2 Stream 7 hdma->XferM1CpltCallback(hdma);
+ *  void (* XferCpltCallback)(struct __DMA_HandleTypeDef * hdma);  DMA transfer complete callback 
  * @param  
  * @retval 
  */
-void uart1_poll_dma_tx()
+uint8_t uart1_poll_dma_tx()
 {
 	uint16_t size = 0;
 	
 	if (embed_send.status == 0x01)
   {
-        return;
+        return 1; //did not sent out the data
   }
 //	size = fifo_read(&s_uart_dev[uart_id].tx_fifo, s_uart_dev[uart_id].dmatx_buf,
 //					 s_uart_dev[uart_id].dmatx_buf_size);
@@ -356,6 +358,7 @@ void uart1_poll_dma_tx()
 		usart1_tx_dma_enable(embed_send.tx_dma_buf, size);
 		
 	}
+	return 0; //successfully enable send or no data to send
 }
 
 /**
@@ -369,15 +372,31 @@ void uart1_embed_send_byte(uint8_t ch) //(unsigned char ch)
 	fifo_s_puts(&embed_send.tx_fifo, (char*)&ch, 1);
 }
 
-/**
- * @brief refresh data struct to ring buffer
- *
- * @param variable lengthed data
- */
-void embed_send_refresh(int cnt,...)
+uint8_t get_uart1_embed_send_status()
 {
-	
+	if (embed_send.status == 0x00)
+	{
+		return 0; //not busy
+	}
+	else if(embed_send.status == 0x01)
+	{
+		return 1; //busy
+	}
+	else
+	{
+		return 1; //busy
+	}
 }
+
+///**
+// * @brief refresh data struct to ring buffer
+// *
+// * @param variable lengthed data
+// */
+//void embed_send_refresh(int cnt,...)
+//{
+//	
+//}
 
 /**
  * @brief 串口设备初始化 The serial port device is init

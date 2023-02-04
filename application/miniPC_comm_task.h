@@ -7,6 +7,10 @@
 
 //Declare
 extern void pc_communication_task(void const *pvParameters);
+extern void uart1_embed_send_byte(uint8_t ch);
+extern uint8_t get_uart1_embed_send_status(void);
+extern uint8_t uart1_poll_dma_tx(void);
+extern void uart1_tx_dma_done_isr(struct __DMA_HandleTypeDef * hdma);
 
 /* 
 Path for the comm and Flow of data: 
@@ -128,8 +132,16 @@ typedef struct
 {
 	pc_comm_embed_send_header_t *p_header;
 	uint8_t send_ram_buff[MINIPC_COMM_FRAME_MAX_SIZE];
-	uint8_t index;
+	uint32_t index;
 	
+	//the # of time that send failed
+	uint32_t relative_send_fail_cnts; //relative send counts, will use this to enforce dma tx poll
+	
+	
+	uint32_t chassis_info_embed_send_TimeStamp; //current time stamp
+	
+	uint32_t gimbal_info_embed_send_TimeStamp;
+
 }embed_send_protocol_t;
 
 /* -------------------------------- USART SEND END-------------------------------- */

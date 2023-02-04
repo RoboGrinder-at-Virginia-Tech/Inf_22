@@ -1,5 +1,6 @@
 #include "bsp_usart.h"
 #include "main.h"
+#include "miniPC_comm_task.h"
 
 extern UART_HandleTypeDef huart1;
 extern DMA_HandleTypeDef hdma_usart1_tx;
@@ -41,6 +42,8 @@ void usart1_tx_dma_init(void)
     hdma_usart1_tx.Instance->M0AR = (uint32_t)(NULL);
     hdma_usart1_tx.Instance->NDTR = 0;
 
+		//configure call back funciton 配置中断回调函数
+		hdma_usart1_tx.XferCpltCallback = &uart1_tx_dma_done_isr;
 
 }
 void usart1_tx_dma_enable(uint8_t *data, uint16_t len)
