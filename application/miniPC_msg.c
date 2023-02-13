@@ -393,7 +393,15 @@ void embed_send_data_to_pc_loop()
 		进入这个if的频率决定了生产频率, 到时间后才进入这个if, 没到时间不进入这个if
 		没到时间需确认消费者在消费状态
 		*/
-	//}
+	}//
+	else //testing
+	{
+		vTaskDelay(1); //频率 58.37 ~ 58.4
+		{
+			uint8_t i = 0;
+			i++;
+		}
+	}
 	
 	
 	//enable uart tx DMA which is the DMA poll
@@ -418,7 +426,7 @@ void embed_send_data_to_pc_loop()
 		uart1_poll_dma_tx();
 		embed_send_protocol.relative_send_fail_cnts = 0;
 	}
-}//----------------
+//}//----------------
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */
