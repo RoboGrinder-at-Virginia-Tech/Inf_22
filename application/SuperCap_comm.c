@@ -276,19 +276,23 @@ uint16_t get_superCap_charge_pwr()
 /*下面两个函数; 0->normal/online; 1->error/offline*/
 bool_t current_superCap_is_offline()
 {
-	if(current_superCap == SuperCap_ID)
+	if(current_superCap == sCap23_ID) //SuperCap_ID
 	{
-		return toe_is_error(SUPERCAP_TOE);
+		return toe_is_error(SCAP_23_TOR); //SUPERCAP_TOE
+	}
+	else if(current_superCap == wulie_Cap_CAN_ID) //wulie_Cap_CAN_ID
+	{
+		return toe_is_error(WULIE_CAP_TOE);
 	}
 	else
 	{
-		return toe_is_error(WULIE_CAP_TOE);
+		return toe_is_error(SUPERCAP_TOE); //sCap23_ID
 	}
 }
 
 bool_t all_superCap_is_offline()
 {
-	return toe_is_error(SUPERCAP_TOE) && toe_is_error(WULIE_CAP_TOE);
+	return toe_is_error(SUPERCAP_TOE) && toe_is_error(WULIE_CAP_TOE) && toe_is_error(SCAP_23_TOR);
 }
 
 /*
