@@ -215,6 +215,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>sCap23_info</ItemText>
         </Ww>
+        <Ww>
+          <count>12</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>robot_state</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
