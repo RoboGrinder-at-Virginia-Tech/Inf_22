@@ -97,6 +97,13 @@ void init_miniPC_comm_struct_data(void)
 	
 }
 
+/* ---------- setter method 赋值到 pc_info中 ---------- */
+void set_autoAimFlag(uint8_t autoAimFlag)
+{
+	pc_info.autoAimFlag = autoAimFlag;
+}
+/* ---------- setter method end ---------- */
+
 /* ---------- getter method 获取最终解包到 pc_info 中的数据 ---------- */
 // see the struct for the detailed information
 // fp32 yawMove_aid;
@@ -106,45 +113,56 @@ fp32 get_yawMove_aid()
 }
 
 //fp32 pitchMove_aid;
-fp32 pitchMove_aid()
+fp32 get_pitchMove_aid()
 {
 	return pc_info.pitchMove_aid;
 }
 
 //fp32 yawMove_absolute;
-fp32 yawMove_absolute()
+fp32 get_yawMove_absolute()
 {
 	return pc_info.yawMove_absolute;
 }
 
 //fp32 pitchMove_absolute;
-fp32 pitchMove_absolute()
+fp32 get_pitchMove_absolute()
 {
 	return pc_info.pitchMove_absolute;
 }
 
 //uint8_t enemy_detected;
-uint8_t enemy_detected()
+uint8_t get_enemy_detected()
 {
+	if(toe_is_error(PC_TOE))
+	{
+		return 0;
+	}
+	
 	return pc_info.enemy_detected;
 }
 
 //uint8_t shootCommand;
-uint8_t shootCommand()
+uint8_t get_shootCommand()
 {
 	return pc_info.shootCommand;
 }
 
 //uint8_t cv_gimbal_sts;
-uint8_t cv_gimbal_sts()
+uint8_t get_cv_gimbal_sts()
 {
 	return pc_info.cv_gimbal_sts;
 }
 
 //fp32 aim_pos_dis;
-fp32 aim_pos_dis()
+fp32 get_aim_pos_dis()
 {
 	return pc_info.aim_pos_dis;
+}
+
+//uint8_t autoAimFlag
+uint8_t get_autoAimFlag()
+{
+	return pc_info.autoAimFlag;
 }
 
 /* ---------- getter method end ---------- */
@@ -184,14 +202,15 @@ void cmd_process_pc_cmd_gimbal_ctrl_aid(void) //TODO添加数据合理性判断
 	pc_info.cv_gimbal_sts = 1; //aim mode FSM
 	
 	//Need to handle the erase of miniPC_info.yawMove_absolute and pitchMove?
+	//3-26-2023 no need to do that for now
 }
 
 void cmd_process_pc_cmd_gimbal_ctrl_full(void) //TODO添加数据合理性判断
 {
-	pc_info.yawMove_absolute = (fp32)pc_cmd_gimbal_ctrl_aid.yaw / 10000.0f;
-	pc_info.pitchMove_absolute = (fp32)pc_cmd_gimbal_ctrl_aid.pitch / 10000.0f;
-	pc_info.enemy_detected = pc_cmd_gimbal_ctrl_aid.is_detect;
-	pc_info.shootCommand = pc_cmd_gimbal_ctrl_aid.shoot;
+	pc_info.yawMove_absolute = (fp32)pc_cmd_gimbal_ctrl_full.yaw / 10000.0f;
+	pc_info.pitchMove_absolute = (fp32)pc_cmd_gimbal_ctrl_full.pitch / 10000.0f;
+	pc_info.enemy_detected = pc_cmd_gimbal_ctrl_full.is_detect;
+	pc_info.shootCommand = pc_cmd_gimbal_ctrl_full.shoot;
 
 	pc_info.cv_gimbal_sts = 2; //aim mode FSM
 	

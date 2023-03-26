@@ -90,7 +90,7 @@ void pc_communication_task(void const *pvParameters)
 		pc_unpack_fifo_data();
 		
 		//Embeded-->PC; send data to PC
-		embed_send_data_to_pc_loop();
+		//embed_send_data_to_pc_loop();
 		
 		//osDelay(10);
 		//osDelay(4);
