@@ -75,8 +75,9 @@ enum errorList
     REFEREE_TOE,
     RM_IMU_TOE,
     OLED_TOE,
-	  MINIPC_TOE,
+	  PC_TOE, //SZL 1-18-2023 change MINIPC_TOE to PC_TOE
 		SUPERCAP_TOE, //SZL 2-12-2022 添加
+	  SCAP_23_TOR, //SZL 12-27-2022 添加 新的超级电容
 	  WULIE_CAP_TOE, //雾列超级电容 TOE
 		SHOOT_FRIC_L_TOE,
 		SHOOT_FRIC_R_TOE,

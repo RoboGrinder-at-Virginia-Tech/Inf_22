@@ -54,7 +54,7 @@ void superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power
 	
 		/*---更新一下需要用到的 动态变动的数据---*/
 	  chassis_e_ctrl.chassis_power_limit = get_chassis_power_limit();
-		if(chassis_e_ctrl.chassis_power_limit > MAX_REASONABLE_CHARGE_PWR)
+		if(chassis_e_ctrl.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) //( (chassis_e_ctrl.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) || (chassis_e_ctrl.chassis_power_limit <0) )
 		{//识别 并处理 不合理数值
 			chassis_e_ctrl.chassis_power_limit = INITIAL_STATE_CHASSIS_POWER_LIM;
 		}
@@ -290,7 +290,7 @@ void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 	
 		/*---更新一下需要用到的 动态变动的数据---*/
 	  direct_connect_e_cont.chassis_power_limit = get_chassis_power_limit();
-	  if(direct_connect_e_cont.chassis_power_limit > MAX_REASONABLE_CHARGE_PWR)
+	  if(direct_connect_e_cont.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) //( (direct_connect_e_cont.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) || (direct_connect_e_cont.chassis_power_limit <0) )
 		{//识别 并处理 不合理数值
 			direct_connect_e_cont.chassis_power_limit = 50;
 		}
@@ -533,21 +533,25 @@ static void map_superCap_charge_pwr_to_debuff_total_current_limit(uint16_t charg
 		{
 			*total_i_lim = 13000.0f;//10000.0f; //8333.33f;//200w
 		}
+		else if(charge_pwr>30 && charge_pwr<=40)
+		{
+			*total_i_lim = 12000.0f; //13000.0f;//12000.0f;//240w
+		}
 		else if(charge_pwr>40 && charge_pwr<=50)
 		{
-			*total_i_lim = 14500.0f;//13000.0f;//240w
+			*total_i_lim = 13000.0f; //14500.0f;//13000.0f;//240w
 		}
 		else if(charge_pwr>50 && charge_pwr<=60)
 		{
-			*total_i_lim = 16000.0f;//14500.0f;//240w
+			*total_i_lim = 15000.0f; //16000.0f;//14500.0f;//240w
 		}
 		else if(charge_pwr>60 && charge_pwr<=80)
 		{
-			*total_i_lim = 20000.0f;//384w
+			*total_i_lim = 17500.0f; //20000.0f;//384w
 		}
 		else if(charge_pwr>80 && charge_pwr<=100)
 		{
-			*total_i_lim = 22000.0f;
+			*total_i_lim = 20000.0f; //22000.0f;
 		}
 		else
 	  {//一个典型值 = 10000

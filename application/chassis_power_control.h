@@ -37,7 +37,7 @@
 #define INITIAL_STATE_CHASSIS_POWER_LIM 40.0f
 #endif
 
-#define MAX_REASONABLE_CHARGE_PWR 160
+#define MAX_REASONABLE_CHARGE_PWR 130
 
 /*
 原始参数:
@@ -80,7 +80,7 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 ...
 #define ENERGY_BUFF_OUTPUT_CUTOFF_POINT 3.0f
 */
-#define WARNING_ENERGY_BUFF  35.0f //40.0f 
+#define WARNING_ENERGY_BUFF  30.0f//35.0f //40.0f 
 #define MINIMUM_ENERGY_BUFF  10.0f //10.0f //设定缓冲能量 危险值
 #define MAX_POWER_VALUE 400.0f //300.0f//220.0f
 
@@ -113,7 +113,7 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 
 /*When superCap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT is reached, output will be disabled; and the buff eng need to be recharged to MINIMUM_ENERGY_BUFF to re-enable the output*/
 #define superCap_ENERGY_BUFF_OUTPUT_CUTOFF_POINT 650.0f//700.0f //650.0f
-#define superCap_VOL_OUTPUT_CUTOFF_POINT 3.5f //13.50f //14.72f
+#define superCap_VOL_OUTPUT_CUTOFF_POINT 13.50f //3.5f //13.50f //14.72f
 
 //裁判系统功率 缓冲能量信息 间隔; 实时功率热量数据：0x0202。发送频率：50Hz; 即0.02s
 #define superCap_CHASSIS_SUPERCAP_COMM_TIME 0.02f; //由于使用此数值的算法不是特别合理, 目前暂时就用0.02f

@@ -39,6 +39,7 @@
 #include "voltage_task.h"
 #include "servo_task.h"
 #include "client_ui_task.h"
+#include "miniPC_comm_task.h"
 
 /* USER CODE END Includes */
 
@@ -53,6 +54,8 @@ osThreadId imuTaskHandle;
 osThreadId led_RGB_flow_handle;
 osThreadId oled_handle;
 osThreadId referee_usart_task_handle;
+osThreadId pc_communication_task_handle; //pc_communication_task
+
 osThreadId usb_task_handle;
 osThreadId battery_voltage_handle;
 osThreadId servo_task_handle;
@@ -178,6 +181,9 @@ void MX_FREERTOS_Init(void) {
     osThreadDef(REFEREE, referee_usart_task, osPriorityNormal, 0, 128);
     referee_usart_task_handle = osThreadCreate(osThread(REFEREE), NULL);
 		
+		//pc_communication_task
+		osThreadDef(PCCOMMU, pc_communication_task, osPriorityNormal, 0, 256);
+    pc_communication_task_handle = osThreadCreate(osThread(PCCOMMU), NULL);
 
     osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
     usb_task_handle = osThreadCreate(osThread(USBTask), NULL);

@@ -66,7 +66,6 @@ extern void userCallback_CAN2_FIFO1_IT(CAN_HandleTypeDef *hcan);
 
 extern void xPortSysTickHandler(void);
 
-extern void referee_USART1_IRQ_handler(void);
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -360,11 +359,11 @@ void DMA2_Stream6_IRQHandler(void)
 void DMA2_Stream7_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
-
+	
   /* USER CODE END DMA2_Stream7_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart1_tx);
   /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
-
+	
   /* USER CODE END DMA2_Stream7_IRQn 1 */
 }
 

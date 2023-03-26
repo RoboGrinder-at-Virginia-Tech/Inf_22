@@ -27,6 +27,14 @@
 #include "detect_task.h"
 #include "voltage_task.h"
 
+#include "miniPC_comm_task.h"
+#include "miniPC_msg.h"
+
+extern pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_aid;
+extern pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_full;
+
+extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
+
 
 static void usb_printf(const char *fmt,...);
 
@@ -46,35 +54,57 @@ void usb_task(void const * argument)
     while(1)
     {
         osDelay(1000);
-        usb_printf(
+//        usb_printf(
+//"******************************\r\n\
+//voltage percentage:%d%% \r\n\
+//DBUS:%s\r\n\
+//chassis motor1:%s\r\n\
+//chassis motor2:%s\r\n\
+//chassis motor3:%s\r\n\
+//chassis motor4:%s\r\n\
+//yaw motor:%s\r\n\
+//pitch motor:%s\r\n\
+//trigger motor:%s\r\n\
+//gyro sensor:%s\r\n\
+//accel sensor:%s\r\n\
+//mag sensor:%s\r\n\
+//referee usart:%s\r\n\
+//******************************\r\n",
+//            get_battery_percentage(), 
+//            status[error_list_usb_local[DBUS_TOE].error_exist],
+//            status[error_list_usb_local[CHASSIS_MOTOR1_TOE].error_exist],
+//            status[error_list_usb_local[CHASSIS_MOTOR2_TOE].error_exist],
+//            status[error_list_usb_local[CHASSIS_MOTOR3_TOE].error_exist],
+//            status[error_list_usb_local[CHASSIS_MOTOR4_TOE].error_exist],
+//            status[error_list_usb_local[YAW_GIMBAL_MOTOR_TOE].error_exist],
+//            status[error_list_usb_local[PITCH_GIMBAL_MOTOR_TOE].error_exist],
+//            status[error_list_usb_local[TRIGGER_MOTOR_TOE].error_exist],
+//            status[error_list_usb_local[BOARD_GYRO_TOE].error_exist],
+//            status[error_list_usb_local[BOARD_ACCEL_TOE].error_exist],
+//            status[error_list_usb_local[BOARD_MAG_TOE].error_exist],
+//            status[error_list_usb_local[REFEREE_TOE].error_exist]);
+
+				usb_printf(
 "******************************\r\n\
-voltage percentage:%d%% \r\n\
-DBUS:%s\r\n\
-chassis motor1:%s\r\n\
-chassis motor2:%s\r\n\
-chassis motor3:%s\r\n\
-chassis motor4:%s\r\n\
-yaw motor:%s\r\n\
-pitch motor:%s\r\n\
-trigger motor:%s\r\n\
-gyro sensor:%s\r\n\
-accel sensor:%s\r\n\
-mag sensor:%s\r\n\
-referee usart:%s\r\n\
+miniPC comm:%s\r\n\
+pc_cmd_gimbal_ctrl_aid.yaw: %x\r\n\
+pc_cmd_gimbal_ctrl_aid.pitch: %x\r\n\
+pc_cmd_gimbal_ctrl_aid.is_detect: %x\r\n\
+pc_cmd_gimbal_ctrl_aid.shoot: %x\r\n\
+----\r\n\
+pc_comm_unpack_data_obj.frame_len: %x\r\n\
+pc_comm_unpack_data_obj.cmd_id: %x\r\n\
+pc_comm_unpack_data_obj.unpack_step: %x\r\n\
 ******************************\r\n",
-            get_battery_percentage(), 
-            status[error_list_usb_local[DBUS_TOE].error_exist],
-            status[error_list_usb_local[CHASSIS_MOTOR1_TOE].error_exist],
-            status[error_list_usb_local[CHASSIS_MOTOR2_TOE].error_exist],
-            status[error_list_usb_local[CHASSIS_MOTOR3_TOE].error_exist],
-            status[error_list_usb_local[CHASSIS_MOTOR4_TOE].error_exist],
-            status[error_list_usb_local[YAW_GIMBAL_MOTOR_TOE].error_exist],
-            status[error_list_usb_local[PITCH_GIMBAL_MOTOR_TOE].error_exist],
-            status[error_list_usb_local[TRIGGER_MOTOR_TOE].error_exist],
-            status[error_list_usb_local[BOARD_GYRO_TOE].error_exist],
-            status[error_list_usb_local[BOARD_ACCEL_TOE].error_exist],
-            status[error_list_usb_local[BOARD_MAG_TOE].error_exist],
-            status[error_list_usb_local[REFEREE_TOE].error_exist]);
+						status[error_list_usb_local[PC_TOE].error_exist],
+						pc_cmd_gimbal_ctrl_aid.yaw,
+						pc_cmd_gimbal_ctrl_aid.pitch,
+						pc_cmd_gimbal_ctrl_aid.is_detect,
+						pc_cmd_gimbal_ctrl_aid.shoot,
+						
+						pc_comm_unpack_data_obj.frame_len,
+						pc_comm_unpack_data_obj.cmd_id,
+						pc_comm_unpack_data_obj.unpack_step);
 
     }
 

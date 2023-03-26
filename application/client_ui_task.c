@@ -19,6 +19,8 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "detect_task.h"
 #include "bsp_usart.h"
 
+#include "miniPC_msg.h"
+
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
 #endif
@@ -29,9 +31,10 @@ extern uint8_t turboMode;
 extern uint8_t swing_flag;
 
 extern shoot_control_t shoot_control; 
-extern miniPC_info_t miniPC_info;
+//extern miniPC_info_t miniPC_info;
 extern supercap_can_msg_id_e current_superCap;
 extern wulieCap_info_t wulie_Cap_info;
+extern sCap23_info_t sCap23_info; //新的超级电容控制板
 
 //DMA发送 全局变量 缓冲区
 uint8_t srv_DMA_comm_buf[SERVER_DMA_COMM_BUF_SIZE]; //SERVER_DMA_COMM_BUF_SIZE server_DMA_comm_buf
@@ -121,10 +124,6 @@ void client_ui_task(void const *pvParameters)
 		UI_DMA_refresh();
 	  //UI 初始创建 + 发送结束
 		
-		//记得注释
-//		miniPC_info.enemy_detected = 1;
-//		miniPC_info.cv_status = 1;
-//		miniPC_info.dis_raw = 0x00;
 	
 		/*	大装甲板宽 230mm 
 		*/
@@ -216,7 +215,7 @@ void client_ui_task(void const *pvParameters)
 				Float_Draw(&fDis, "991", UI_Graph_Change, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.proj_speed_limit);
 				
 				//CV是否识别到目标
-				if(miniPC_info.enemy_detected == 1)
+				if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
 				{
 					Circle_Draw(&gEnemyDetected_circle, "990", UI_Graph_Change, 4, UI_Color_Green, 15, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
 				}
@@ -325,7 +324,7 @@ void ui_coord_update()
 	 }
 	 
 	 //CV 状态机 状态 //自动瞄准开关状态 0关 1自动瞄准
-	 if(miniPC_info.autoAimFlag == 0)
+	 if(get_autoAimFlag() == 0) //(miniPC_info.autoAimFlag == 0)
 	 {
 		 ui_info.ui_cv_sts = cvOFF;
 		 ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_OFF_START_X;
@@ -333,7 +332,7 @@ void ui_coord_update()
 		 ui_info.box_cv_sts_coord[2] = TopLeft_REC_on_cv_OFF_END_X;
 		 ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_OFF_END_Y;
 	 }
-	 else if(miniPC_info.autoAimFlag == 1)
+	 else if(get_autoAimFlag() == 1) //(miniPC_info.autoAimFlag == 1)
 	 {
 		 ui_info.ui_cv_sts = cvAID;
 		 ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_AID_START_X;
@@ -341,7 +340,7 @@ void ui_coord_update()
 		 ui_info.box_cv_sts_coord[2] = TopLeft_REC_on_cv_AID_END_X;
 		 ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_AID_END_Y;
 	 }
-	 else if(miniPC_info.autoAimFlag == 2)
+	 else if(get_autoAimFlag() == 2) //(miniPC_info.autoAimFlag == 2)
 	 {
 		 ui_info.ui_cv_sts = cvLOCK;
 		 ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_LOCK_START_X;
@@ -351,7 +350,7 @@ void ui_coord_update()
 	 }
 	 
 	 //CV feedback 状态机
-	 if(miniPC_info.cv_status == 0)
+	 if(get_cv_gimbal_sts() == 0) //(miniPC_info.cv_status == 0)
 	 {
 		 ui_info.ui_cv_feedback_sts = cvOFF;
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X;
@@ -359,7 +358,7 @@ void ui_coord_update()
 		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_X;
 		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_Y;
 	 }
-	 else if(miniPC_info.cv_status == 1)
+	 else if(get_cv_gimbal_sts() == 1) //(miniPC_info.cv_status == 1)
 	 {
 		 ui_info.ui_cv_feedback_sts = cvAID;
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_X;
@@ -367,7 +366,7 @@ void ui_coord_update()
 		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_X;
 		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_Y;
 	 }
-	 else if(miniPC_info.cv_status == 2)
+	 else if(get_cv_gimbal_sts() == 2) //(miniPC_info.cv_status == 2)
 	 {
 		 ui_info.ui_cv_feedback_sts = cvLOCK;
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_START_X;
@@ -377,7 +376,7 @@ void ui_coord_update()
 	 }
 	 
 	 //CV状态机掉线提示
-	 if(toe_is_error(MINIPC_TOE))
+	 if(toe_is_error(PC_TOE))
 	 {
 		 ui_info.ui_cv_feedback_sts = cvOFF;
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X;
@@ -446,6 +445,19 @@ void ui_coord_update()
 			 ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
 		 }
 	 }
+	 else if(current_superCap == sCap23_ID)
+	 {
+		 if(toe_is_error(SCAP_23_TOR))
+		 {
+			 ui_info.cap_pct = 0.0f;
+			 ui_info.cap_volt = 0.0f;
+		 }
+		 else
+		 {
+			 ui_info.cap_pct = sCap23_info.EBPct;
+		   ui_info.cap_volt = sCap23_info.Vbank_f;
+		 }
+	 }
 	 else
 	 {
 		 if(toe_is_error(WULIE_CAP_TOE))
@@ -460,7 +472,8 @@ void ui_coord_update()
 		 }
 	 }
 	 
-	 ui_info.enemy_dis = miniPC_info.dis;//和张哥商量
+	 //ui_info.enemy_dis = miniPC_info.dis; //和张哥商量 3-26: ui包的发送于必要性
+	 ui_info.enemy_dis = get_aim_pos_dis(); 
 	 ui_info.proj_speed_limit = get_shooter_id1_17mm_speed_limit();
 }
 
@@ -489,7 +502,7 @@ void ui_dynamic_crt_send_fuc()
 		Float_Draw(&fDis, "991", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.enemy_dis);
 	
 		//CV是否识别到目标
-		if(miniPC_info.enemy_detected == 1)
+		if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
 		{
 			Circle_Draw(&gEnemyDetected_circle, "990", UI_Graph_ADD, 4, UI_Color_Green, 15, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
 		}
