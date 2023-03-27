@@ -54,7 +54,10 @@ osThreadId imuTaskHandle;
 osThreadId led_RGB_flow_handle;
 osThreadId oled_handle;
 osThreadId referee_usart_task_handle;
-osThreadId pc_communication_task_handle; //pc_communication_task
+
+//osThreadId pc_communication_task_handle; //pc_communication_task //separate to 2 tasks
+osThreadId embed_receive_Main_communication_task_handle;
+osThreadId embed_send_communication_task_handle;
 
 osThreadId usb_task_handle;
 osThreadId battery_voltage_handle;
@@ -181,9 +184,14 @@ void MX_FREERTOS_Init(void) {
     osThreadDef(REFEREE, referee_usart_task, osPriorityNormal, 0, 128);
     referee_usart_task_handle = osThreadCreate(osThread(REFEREE), NULL);
 		
-		//pc_communication_task
-		osThreadDef(PCCOMMU, pc_communication_task, osPriorityNormal, 0, 256);
-    pc_communication_task_handle = osThreadCreate(osThread(PCCOMMU), NULL);
+		//pc_communication_task saperate into 2
+//		osThreadDef(PCCOMMU, pc_communication_task, osPriorityNormal, 0, 256);
+//    pc_communication_task_handle = osThreadCreate(osThread(PCCOMMU), NULL);
+		osThreadDef(EMBEDRX, embed_receive_Main_communication_task, osPriorityNormal, 0, 256);
+    embed_receive_Main_communication_task_handle = osThreadCreate(osThread(EMBEDRX), NULL);
+		
+		osThreadDef(EMBEDTX, embed_send_communication_task, osPriorityNormal, 0, 256);
+    embed_send_communication_task_handle = osThreadCreate(osThread(EMBEDTX), NULL);
 
     osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
     usb_task_handle = osThreadCreate(osThread(USBTask), NULL);

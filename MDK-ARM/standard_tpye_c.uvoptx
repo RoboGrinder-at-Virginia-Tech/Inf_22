@@ -225,6 +225,26 @@
           <WinNumber>1</WinNumber>
           <ItemText>pc_info</ItemText>
         </Ww>
+        <Ww>
+          <count>14</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_gimbal_info</ItemText>
+        </Ww>
+        <Ww>
+          <count>15</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_msg_to_pc</ItemText>
+        </Ww>
+        <Ww>
+          <count>16</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_send_protocol</ItemText>
+        </Ww>
+        <Ww>
+          <count>17</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>embed_send</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
