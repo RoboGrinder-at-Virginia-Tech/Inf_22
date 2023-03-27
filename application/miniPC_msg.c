@@ -382,6 +382,7 @@ void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_pt
  * @brief refresh data struct to ring buffer fifo or send directly
  * 
  * To use: uniform refresh function substitute: embed_chassis_info_refresh + embed_gimbal_info_refresh
+ * The use of global variable pc_send_header for debug purpose
  * @param data section point; data_size: variable lengthed data; data section data size; cmdid
  */
 void embed_info_msg_refresh(uint8_t* embed_info_ptr, uint32_t data_size, uint16_t cmd_id_para)
@@ -431,156 +432,23 @@ void embed_info_msg_refresh(uint8_t* embed_info_ptr, uint32_t data_size, uint16_
 		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]); //现在发送
 	}
 	
-//	//集中发送
-//	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
-//	{
-//		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
-//	}
+	/*
+	3-26现象记录: sendFreq = 16, 实际上在ROS rqt上显示只有52Hz左右. 分析:
+	1/60 = 0.016s = 16ms; 1/52 = 0.0192; 1/50 = 0.020 = 20ms; 且 20ms - 16ms = 4ms
+	vTaskDelay(4); 在这个task的while中循环; 一般情况sendFreq = 16里, 都会远小于16ms
+	理想情况下, 假设这个task是实时的: 没有vTaskDelay(4), sendFreq = 16会使得 执行这个东西的频率为60Hz;
+	16  16  16  16  16  16  16  16 理想周期, 16ms 一次
+	 |---|晚开始赋值 只能 影响相位差 "比"的那个点更靠后了
+	|   |   |   |   |   |   |   |
+	(2) (2) (2) (2) (2) (2) (2) (2) 每一次执行sendFreq = 16中的耗时
 	
-}
-
-//// 这个是集中发送的版本 已经升级了
-//void embed_info_msg_refresh(uint8_t* embed_info_ptr, uint32_t data_size, uint16_t cmd_id_para)
-//{
-//	//uint8_t is unsigned char for STM32
-//	uint8_t* framepoint;  //read write pointer
-//  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
-//	uint16_t* frametail_ptr;
-//	
-//	framepoint = (uint8_t*)embed_send_protocol.p_header;
-//	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
-//	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size; //frame_length是整帧长度
-//	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
-//	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum((unsigned char *) framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
-//	
-//	embed_send_protocol.p_header->cmd_id = cmd_id_para;
-//	
-//	
-//	//put header + cmdid to ram buffer
-//	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
-//	{
-//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-//		framepoint++;
-//	}
-//	
-//	//put data section to ram buffer
-//	framepoint = (uint8_t*)embed_info_ptr;
-//	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
-//	{
-//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-//		framepoint++;
-//	}
-//	
-//	//put frame tail check sum to ram buffer CRC16 小端模式 换向
-//	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
-//	frametail_ptr[0] = frametailCRC;
-//	
-//	//集中发送
-//	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
-//	{
-//		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
-//	}
-//	
-//}
-
-/**
- * @brief refresh data struct to ring buffer fifo or send directly
- *
- * @param data_size: variable lengthed data; data section data size
- */
-//use global variable pc_send_header for debug purpose
-void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint32_t data_size)
-{
-	unsigned char *framepoint;  //read write pointer
-  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
-	uint16_t* frametail_ptr;
+	如果while中循环一次再vTaskDelay(4), 是会使得16的理想发送周期 + 4ms = 20ms
+	20  20  20  20  20  20  20  20
+	|   |   |   |   |   |   |   |
+	(2) (2) (2) (2) (2) (2) (2) (2) 每一次执行sendFreq = 16中的耗时
+	也就是观察到的 1/50 = 0.020 = 20ms
+	*/
 	
-	framepoint = (unsigned char *)embed_send_protocol.p_header;
-	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
-	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size;
-	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
-	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum(framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
-	
-	embed_send_protocol.p_header->cmd_id = CHASSIS_INFO_CMD_ID;
-	
-	
-	//put header + cmdid to ram buffer
-	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
-	{
-		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-		framepoint++;
-	}
-	
-	//put data section to ram buffer
-	framepoint = (unsigned char *)embed_chassis_info_ptr;
-	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
-	{
-		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-		framepoint++;
-	}
-	
-	//put frame tail check sum to ram buffer CRC16 小端模式 换向
-	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
-	frametail_ptr[0] = frametailCRC;
-	
-	//集中发送
-	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
-	{
-		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
-	}
-	
-}
-
-/**
- * @brief refresh data struct to ring buffer fifo or send directly
- *
- * @param variable lengthed data
- */
-void embed_gimbal_info_refresh(embed_gimbal_info_t* embed_gimbal_info_ptr, uint32_t data_size)
-{
-	unsigned char *framepoint;  //read write pointer
-  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
-	uint16_t* frametail_ptr;
-	
-	framepoint = (unsigned char *)embed_send_protocol.p_header;
-	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
-	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size;
-	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
-	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum(framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
-	
-	embed_send_protocol.p_header->cmd_id = GIMBAL_INFO_CMD_ID;
-	
-	
-	//put header + cmdid to ram buffer
-	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
-	{
-		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-		framepoint++;
-	}
-	
-	//put data section to ram buffer
-	framepoint = (unsigned char *)embed_gimbal_info_ptr;
-	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
-	{
-		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
-		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
-		framepoint++;
-	}
-	
-	//put frame tail check sum to ram buffer CRC16 小端模式 换向(就是避开之前的8bits写, 直接16bits写, STM32 小端模式)
-	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
-	frametail_ptr[0] = frametailCRC;
-	
-	//集中发送
-	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
-	{
-		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
-	}
 }
 
 void embed_send_data_to_pc_loop()
@@ -656,3 +524,149 @@ void embed_send_data_to_pc_loop()
 }
 
 /* -------------------------------- USART SEND DATA FILL END-------------------------------- */
+
+
+
+/* -------------------------------- Old code back up --------------------------------------- */
+/*这个是集中发送的版本 仅作保存 时间复杂度略微的比现在的高*/
+//void embed_info_msg_refresh(uint8_t* embed_info_ptr, uint32_t data_size, uint16_t cmd_id_para)
+//{
+//	//uint8_t is unsigned char for STM32
+//	uint8_t* framepoint;  //read write pointer
+//  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
+//	uint16_t* frametail_ptr;
+//	
+//	framepoint = (uint8_t*)embed_send_protocol.p_header;
+//	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
+//	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size; //frame_length是整帧长度
+//	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
+//	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum((unsigned char *) framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
+//	
+//	embed_send_protocol.p_header->cmd_id = cmd_id_para;
+//	
+//	
+//	//put header + cmdid to ram buffer
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put data section to ram buffer
+//	framepoint = (uint8_t*)embed_info_ptr;
+//	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put frame tail check sum to ram buffer CRC16 小端模式 换向
+//	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
+//	frametail_ptr[0] = frametailCRC;
+//	
+//	//集中发送
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
+//	{
+//		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
+//	}
+//	
+//}
+
+///**
+// * @brief refresh data struct to ring buffer fifo or send directly
+// * 仅作保存 时间复杂度略微的比现在的高
+// * @param variable lengthed data
+// */
+//void embed_gimbal_info_refresh(embed_gimbal_info_t* embed_gimbal_info_ptr, uint32_t data_size)
+//{
+//	unsigned char *framepoint;  //read write pointer
+//  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
+//	uint16_t* frametail_ptr;
+//	
+//	framepoint = (unsigned char *)embed_send_protocol.p_header;
+//	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
+//	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size;
+//	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
+//	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum(framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
+//	
+//	embed_send_protocol.p_header->cmd_id = GIMBAL_INFO_CMD_ID;
+//	
+//	
+//	//put header + cmdid to ram buffer
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put data section to ram buffer
+//	framepoint = (unsigned char *)embed_gimbal_info_ptr;
+//	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put frame tail check sum to ram buffer CRC16 小端模式 换向(就是避开之前的8bits写, 直接16bits写, STM32 小端模式)
+//	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
+//	frametail_ptr[0] = frametailCRC;
+//	
+//	//集中发送
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
+//	{
+//		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
+//	}
+//}
+
+///**
+// * @brief refresh data struct to ring buffer fifo or send directly
+// *
+// * @param data_size: variable lengthed data; data section data size
+// */
+//void embed_chassis_info_refresh(embed_chassis_info_t* embed_chassis_info_ptr, uint32_t data_size)
+//{
+//	unsigned char *framepoint;  //read write pointer
+//  uint16_t frametailCRC=0xFFFF;  //CRC16 check sum
+//	uint16_t* frametail_ptr;
+//	
+//	framepoint = (unsigned char *)embed_send_protocol.p_header;
+//	embed_send_protocol.p_header->SOF = PC_HEADER_SOF; //0xAF;
+//	embed_send_protocol.p_header->frame_length = PC_HEADER_CRC_CMDID_LEN + data_size;
+//	embed_send_protocol.p_header->seq = 1; //TODO: add global for this
+//	embed_send_protocol.p_header->CRC8 = get_CRC8_check_sum(framepoint, PC_PROTOCOL_HEADER_SIZE-1, 0xFF);
+//	
+//	embed_send_protocol.p_header->cmd_id = CHASSIS_INFO_CMD_ID;
+//	
+//	
+//	//put header + cmdid to ram buffer
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < PC_HEADER_CMDID_LEN; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put data section to ram buffer
+//	framepoint = (unsigned char *)embed_chassis_info_ptr;
+//	for(; embed_send_protocol.index < PC_HEADER_CMDID_LEN + data_size; embed_send_protocol.index++ )
+//	{
+//		embed_send_protocol.send_ram_buff[embed_send_protocol.index] = *framepoint;
+//		frametailCRC = get_CRC16_check_sum(framepoint, 1, frametailCRC);
+//		framepoint++;
+//	}
+//	
+//	//put frame tail check sum to ram buffer CRC16 小端模式 换向
+//	frametail_ptr = (uint16_t*) &embed_send_protocol.send_ram_buff[embed_send_protocol.index];
+//	frametail_ptr[0] = frametailCRC;
+//	
+//	//集中发送
+//	for(embed_send_protocol.index = 0; embed_send_protocol.index < embed_send_protocol.p_header->frame_length; embed_send_protocol.index++)
+//	{
+//		uart1_embed_send_byte(embed_send_protocol.send_ram_buff[embed_send_protocol.index]);
+//	}
+//	
+//}
