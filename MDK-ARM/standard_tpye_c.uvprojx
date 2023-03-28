@@ -728,6 +728,16 @@
               <FileType>5</FileType>
               <FilePath>..\application\miniPC_msg.h</FilePath>
             </File>
+            <File>
+              <FileName>prog_msg_utility.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\prog_msg_utility.c</FilePath>
+            </File>
+            <File>
+              <FileName>prog_msg_utility.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\prog_msg_utility.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
