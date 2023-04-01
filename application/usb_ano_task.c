@@ -81,7 +81,8 @@ void usb_ano_task(void const * argument)
 		}
 		
 		//copy data to send; convert to int16
-		//[0]ROLL [1]PIT [2]YAW by ano protocol 180/pi = 57.29577951f; - sign here is to temp fix the direction
+		//[0]ROLL [1]PIT [2]YAW by ano protocol 180/pi = 57.29577951f; - sign here is to temp fix the direction; 
+		// TODO: maybe use another rotation matrix rotate to their device's orientation coordinate
 		usb_ano_gimbal_info.angle[0] = (int16_t)( ( *(usb_ano_gimbal_info.gimbal_INS_angle_ptr + INS_gimbal_angle_ROLL_ADDRESS_OFFSET) * 57.29577951f ) * 100.0f );
 		usb_ano_gimbal_info.angle[1] = (int16_t)( ( *(usb_ano_gimbal_info.gimbal_INS_angle_ptr + INS_gimbal_angle_PITCH_ADDRESS_OFFSET) * -57.29577951f ) * 100.0f );
 		usb_ano_gimbal_info.angle[2] = (int16_t)( ( *(usb_ano_gimbal_info.gimbal_INS_angle_ptr + INS_gimbal_angle_YAW_ADDRESS_OFFSET) * -57.29577951f ) * 100.0f );
@@ -90,7 +91,7 @@ void usb_ano_task(void const * argument)
 		AnoPTv8TxFrameF3_mode1();
 		
 		//send
-		AnoPTv8TxRunThread1ms();
+		AnoPTv8HwTrigger1ms(); //AnoPTv8TxRunThread1ms();
 		
 		vTaskDelay(1);
 	}
