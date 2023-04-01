@@ -36,6 +36,7 @@
 #include "oled_task.h"
 #include "referee_usart_task.h"
 #include "usb_task.h"
+#include "usb_ano_task.h"
 #include "voltage_task.h"
 #include "servo_task.h"
 #include "client_ui_task.h"
@@ -59,7 +60,10 @@ osThreadId referee_usart_task_handle;
 osThreadId embed_receive_Main_communication_task_handle;
 osThreadId embed_send_communication_task_handle;
 
-osThreadId usb_task_handle;
+//Created task is either usb_task or usb_ano_task; Never both at the same time
+//osThreadId usb_task_handle;
+osThreadId usb_ano_task_handle;
+
 osThreadId battery_voltage_handle;
 osThreadId servo_task_handle;
 
@@ -210,8 +214,12 @@ void MX_FREERTOS_Init(void) {
 		osThreadDef(EMBEDTX, embed_send_communication_task, osPriorityNormal, 0, 256);
     embed_send_communication_task_handle = osThreadCreate(osThread(EMBEDTX), NULL);
 
-    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
-    usb_task_handle = osThreadCreate(osThread(USBTask), NULL);
+		//Created task is either usb_task or usb_ano_task; Never both at the same time
+//    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
+//    usb_task_handle = osThreadCreate(osThread(USBTask), NULL);
+		
+		osThreadDef(USBANOTask, usb_ano_task, osPriorityHigh, 0, 512); //osPriorityNormal osPriorityHigh 128
+    usb_ano_task_handle = osThreadCreate(osThread(USBANOTask), NULL);
 
     osThreadDef(BATTERY_VOLTAGE, battery_voltage_task, osPriorityNormal, 0, 128);
     battery_voltage_handle = osThreadCreate(osThread(BATTERY_VOLTAGE), NULL);
