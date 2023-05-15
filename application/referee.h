@@ -56,37 +56,64 @@ typedef enum
     PROGRESS_BATTLE         = 4,
     PROGRESS_CALCULATING    = 5,
 } game_progress_t;
-typedef __packed struct //0001
+typedef __packed struct //0001 SZL 5-15-2023
 {
     uint8_t game_type : 4;
-    uint8_t game_progress : 4;
-    uint16_t stage_remain_time;
+		uint8_t game_progress : 4;
+		uint16_t stage_remain_time;
+		uint64_t SyncTimeStamp;
 } ext_game_state_t;
 
 typedef __packed struct //0002
 {
     uint8_t winner;
 } ext_game_result_t;
-typedef __packed struct //0003 SZL 5-14-2022
+
+typedef __packed struct //0003 SZL 5-15-2023
 {
     uint16_t red_1_robot_HP;
-    uint16_t red_2_robot_HP;
-    uint16_t red_3_robot_HP;
-    uint16_t red_4_robot_HP;
-    uint16_t red_5_robot_HP;
-    uint16_t red_7_robot_HP;
-    uint16_t red_base_HP;
-    uint16_t blue_1_robot_HP;
-    uint16_t blue_2_robot_HP;
-    uint16_t blue_3_robot_HP;
-    uint16_t blue_4_robot_HP;
-    uint16_t blue_5_robot_HP;
-    uint16_t blue_7_robot_HP;
-    uint16_t blue_base_HP;
+		uint16_t red_2_robot_HP;
+		uint16_t red_3_robot_HP;
+		uint16_t red_4_robot_HP;
+		uint16_t red_5_robot_HP;
+		uint16_t red_7_robot_HP;
+		uint16_t red_outpost_HP;
+		uint16_t red_base_HP;
+		uint16_t blue_1_robot_HP;
+		uint16_t blue_2_robot_HP;
+		uint16_t blue_3_robot_HP;
+		uint16_t blue_4_robot_HP;
+		uint16_t blue_5_robot_HP;
+		uint16_t blue_7_robot_HP;
+		uint16_t blue_outpost_HP;
+		uint16_t blue_base_HP;
 } ext_game_robot_HP_t;
+
 /*
-0x0005暂时没有 ICRA不是人工智能挑战赛 不需要这部分信息
+0x0005: TODO: .c中具体收包程序
 */
+typedef __packed struct //0005 5-15 改到这里 PDFv1.4 P9
+{
+		uint8_t F1_zone_status:1;
+		uint8_t F1_zone_buff_debuff_status:3;
+		uint8_t F2_zone_status:1;
+		uint8_t F2_zone_buff_debuff_status:3;
+		uint8_t F3_zone_status:1;
+		uint8_t F3_zone_buff_debuff_status:3;
+		uint8_t F4_zone_status:1;
+		uint8_t F4_zone_buff_debuff_status:3;
+		uint8_t F5_zone_status:1;
+		uint8_t F5_zone_buff_debuff_status:3;
+		uint8_t F6_zone_status:1;
+		uint8_t F6_zone_buff_debuff_status:3;
+		uint16_t red1_bullet_left;
+		uint16_t red2_bullet_left;
+		uint16_t blue1_bullet_left;
+		uint16_t blue2_bullet_left;
+		uint8_t lurk_mode;
+		uint8_t res;
+} ext_ICRA_buff_debuff_zone_and_lurk_status_t;
+
 typedef __packed struct //0101
 {
     uint32_t event_type;
