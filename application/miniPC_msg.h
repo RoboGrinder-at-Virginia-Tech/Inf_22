@@ -238,7 +238,9 @@ typedef struct
 }pc_info_t;
 /*---------------------------------------------------- Processed Data - End Above ----------------------------------------------------*/
 
-void init_miniPC_comm_struct_data(void);
+void init_pc_to_embed_Main_comm_struct_data(void);
+void init_embed_to_pc_comm_struct_data(void);
+
 void pc_comm_data_solve(uint8_t *frame);
 void embed_send_data_to_pc_loop(void);
 
