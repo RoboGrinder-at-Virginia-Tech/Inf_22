@@ -109,7 +109,10 @@ void usb_task(void const * argument)
 //						pc_comm_unpack_data_obj.cmd_id,
 //						pc_comm_unpack_data_obj.unpack_step);
 ///* -------------- CV communication tests Ends -------------- */
+
+		/* ---------- RTOS tasks stats and info - prog_msg_utility ---------- */
 			  CPU_info_to_usb();
+		/* ---------- RTOS tasks stats and info - prog_msg_utility Ends ---------- */
     }
 
 }
