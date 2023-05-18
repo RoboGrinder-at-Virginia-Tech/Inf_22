@@ -547,6 +547,24 @@ fp32 get_current_cap_pct()
 	 }
 }
 
+///* 获得 当前在线的超级电容, 电压百分比, 13v时为0%
+//*/
+//fp32 get_current_cap_voltage_pct()
+//{
+//}
+
+/* 计算 获得 当前在线的超级电容, 能量(焦耳)百分比, 13v时为0%
+*/
+//call时 确保 参数的正确性
+fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
+{
+	return ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / (max_vol * max_vol);
+}
+
+fp32 get_current_capE_relative_pct()
+{
+}
+
 supercap_can_msg_id_e get_current_superCap()
 {
 		return current_superCap;

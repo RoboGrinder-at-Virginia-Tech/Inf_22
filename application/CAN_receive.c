@@ -465,7 +465,8 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 						  
 						  //SZL 7-21-2022 新增能量的计算
 						  superCap_info.EBank = 0.5f * superCap_info.VBKelvin_fromCap * superCap_info.VBKelvin_fromCap * CAPACITY_ZIDA_CAP;//CAPACITY=6
-							
+							//计算相对最低电压的百分比
+							superCap_info.relative_EBpct = cal_capE_relative_pct(superCap_info.VBKelvin_fromCap, MIN_VOLTAGE_ZIDA_CAP, CHARACTERISTIC_VOLTAGE_ZIDA_CAP);
 							
 							debug_r2.data[0] = rx_data_debug[3];
 							debug_r2.data[1] = rx_data_debug[2];
@@ -500,6 +501,10 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							//计算容量
 							sCap23_info.EBank = 0.5f * sCap23_info.Vbank_f * sCap23_info.Vbank_f * CAPACITY_23_CAP;//CAPACITY=6
 						  sCap23_info.EBPct = (sCap23_info.Vbank_f * sCap23_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
+							
+							//计算相对最低电压的百分比
+							superCap_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_ZIDA_CAP); // --- 5-18 中午--
+							
 							detect_hook(SCAP_23_TOR);
 							break;
 					}
