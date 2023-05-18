@@ -785,3 +785,19 @@ const shoot_control_t* get_robot_shoot_control()
 	return &shoot_control;
 }
 
+/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
+shoot_mode_e get_shoot_mode()
+{
+	return shoot_control.shoot_mode;
+}
+
+user_fire_ctrl_e get_user_fire_ctrl()
+{
+	return shoot_control.user_fire_ctrl;
+}
+
+uint8_t get_ammoBox_sts()
+{
+	return shoot_control.ammoBox_sts;
+}
+/* ---------- getter method end ---------- */

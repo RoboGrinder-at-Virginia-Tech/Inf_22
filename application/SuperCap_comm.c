@@ -203,7 +203,7 @@ void superCap_control_loop()
 根据目前使用的超级电容 返回电容组电压和剩余能量
 这里要做的就是返回合理的 传感器数据 不需要在这里考虑掉线
 */
-void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank)
+void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //仅功率控制使用
 {
 	fp32 temp_EBank=0, temp_cap_voltage=0;
 	if(current_superCap == SuperCap_ID)
@@ -247,7 +247,7 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank)
 /*
 返回超级电容充电功率
 */
-uint16_t get_superCap_charge_pwr()
+uint16_t get_superCap_charge_pwr() //仅功率控制使用
 {
 	fp32 temp_charge_pwr=0;
 	if(current_superCap == SuperCap_ID)
@@ -545,4 +545,9 @@ fp32 get_current_cap_pct()
 		   //ui_info.cap_volt = wulie_Cap_info.cap_voltage;
 		 }
 	 }
+}
+
+supercap_can_msg_id_e get_current_superCap()
+{
+		return current_superCap;
 }

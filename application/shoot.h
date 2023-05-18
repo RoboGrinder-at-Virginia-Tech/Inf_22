@@ -291,4 +291,7 @@ extern int16_t shoot_control_loop(void);
 
 extern const shoot_control_t* get_robot_shoot_control(void);
 
+extern shoot_mode_e get_shoot_mode(void);
+extern user_fire_ctrl_e get_user_fire_ctrl(void);
+extern uint8_t get_ammoBox_sts(void);
 #endif

@@ -6,7 +6,6 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 
 **************************************************************/
 
-
 #include "client_ui_task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -17,17 +16,18 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "referee.h"
 #include "referee_usart_task.h"
 #include "detect_task.h"
-
+#include "chassis_task.h"
+#include "chassis_behaviour.h"
 #include "miniPC_msg.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
 #endif
 
-extern uint8_t turboMode;
-extern uint8_t swing_flag;
+//extern uint8_t turboMode;
+//extern uint8_t swing_flag;
 
-extern shoot_control_t shoot_control; 
+//extern shoot_control_t shoot_control; 
 //extern miniPC_info_t miniPC_info;
 extern supercap_can_msg_id_e current_superCap;
 extern wulieCap_info_t wulie_Cap_info;
@@ -273,7 +273,7 @@ void client_ui_task(void const *pvParameters)
 void ui_coord_update()
 {
 	 //底盘 turbo 模式的判断
-	 if(turboMode == 0)
+	 if(get_turboMode() == 0)
 	 {
 		 ui_info.ui_chassis_sts = NORM;
 		 ui_info.box_chassis_sts_coord[0] = TopRight_REC_on_NORM_START_X;
@@ -295,7 +295,7 @@ void ui_coord_update()
 		swing_flag = 0 无小陀螺
 		swing_flag = 1 有小陀螺
 		*/
-	 if(swing_flag == 0)
+	 if(get_swing_flag() == 0)
 	 {
 		 ui_info.ui_spin_sts = spinFOLL;
 		 ui_info.box_spin_sts_coord[0] = TopRight_REC_on_FOLL_START_X;
@@ -375,7 +375,7 @@ void ui_coord_update()
 	 }
 	 
 	 //GUN 状态机 状态
-	 if(shoot_control.shoot_mode == SHOOT_STOP)
+	 if(get_shoot_mode() == SHOOT_STOP)
 	 {
 		 ui_info.ui_gun_sts = gunOFF;
 		 ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_OFF_START_X;
@@ -383,7 +383,7 @@ void ui_coord_update()
 		 ui_info.box_gun_sts_coord[2] = TopLeft_REC_on_gun_OFF_END_X;
 		 ui_info.box_gun_sts_coord[3] = TopLeft_REC_on_gun_OFF_END_Y;
 	 }
-	 else if(shoot_control.user_fire_ctrl == user_SHOOT_AUTO)
+	 else if(get_user_fire_ctrl() == user_SHOOT_AUTO)
 	 {
 		 ui_info.ui_gun_sts = gunAUTO;
 		 ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_AUTO_START_X;
@@ -391,7 +391,7 @@ void ui_coord_update()
 		 ui_info.box_gun_sts_coord[2] = TopLeft_REC_on_gun_AUTO_END_X;
 		 ui_info.box_gun_sts_coord[3] = TopLeft_REC_on_gun_AUTO_END_Y;
 	 }
-	 else if(shoot_control.user_fire_ctrl == user_SHOOT_SEMI)
+	 else if(get_user_fire_ctrl() == user_SHOOT_SEMI)
 	 {
 		 ui_info.ui_gun_sts = gunSEMI;
 		 ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_SEMI_START_X;
@@ -401,7 +401,7 @@ void ui_coord_update()
 	 }
 	 
 	 //Ammo Box 状态机 状态
-	 if(shoot_control.ammoBox_sts == ammoOFF)
+	 if(get_ammoBox_sts() == ammoOFF)
 	 {
 		 ui_info.ui_ammoBox_sts = ammoOFF;
 		 //ui_info.box_ammoBox_sts_coord
@@ -410,7 +410,7 @@ void ui_coord_update()
 		 ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OFF_END_X;
 		 ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OFF_END_Y;
 	 }
-	 else if(shoot_control.ammoBox_sts == ammoOPEN)
+	 else if(get_ammoBox_sts() == ammoOPEN)
 	 {
 		 ui_info.ui_ammoBox_sts = ammoOPEN;
 		 //ui_info.box_ammoBox_sts_coord
@@ -421,45 +421,48 @@ void ui_coord_update()
 	 }
 
 	 //开始整数字相关的东西 即插即用的超级电容控制板 判断
-	 if(current_superCap == SuperCap_ID)
-	 {
-		 if(toe_is_error(SUPERCAP_TOE))
-		 {
-			 ui_info.cap_pct = 0.0f;
-			 ui_info.cap_volt = 0.0f;
-		 }
-		 else
-		 {
-			 ui_info.cap_pct = superCap_info.EBPct_fromCap;
-			 ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
-		 }
-	 }
-	 else if(current_superCap == sCap23_ID)
-	 {
-		 if(toe_is_error(SCAP_23_TOR))
-		 {
-			 ui_info.cap_pct = 0.0f;
-			 ui_info.cap_volt = 0.0f;
-		 }
-		 else
-		 {
-			 ui_info.cap_pct = sCap23_info.EBPct;
-		   ui_info.cap_volt = sCap23_info.Vbank_f;
-		 }
-	 }
-	 else
-	 {
-		 if(toe_is_error(WULIE_CAP_TOE))
-		 {
-			 ui_info.cap_pct = 0.0f;
-			 ui_info.cap_volt = 0.0f;
-		 }
-		 else
-		 {
-			 ui_info.cap_pct = wulie_Cap_info.EBPct;
-		   ui_info.cap_volt = wulie_Cap_info.cap_voltage;
-		 }
-	 }
+	 ui_info.cap_pct = get_current_cap_voltage();
+	 ui_info.cap_volt = get_current_cap_pct();
+	 
+//	 if(current_superCap == SuperCap_ID)
+//	 {
+//		 if(toe_is_error(SUPERCAP_TOE))
+//		 {
+//			 ui_info.cap_pct = 0.0f;
+//			 ui_info.cap_volt = 0.0f;
+//		 }
+//		 else
+//		 {
+//			 ui_info.cap_pct = superCap_info.EBPct_fromCap;
+//			 ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
+//		 }
+//	 }
+//	 else if(current_superCap == sCap23_ID)
+//	 {
+//		 if(toe_is_error(SCAP_23_TOR))
+//		 {
+//			 ui_info.cap_pct = 0.0f;
+//			 ui_info.cap_volt = 0.0f;
+//		 }
+//		 else
+//		 {
+//			 ui_info.cap_pct = sCap23_info.EBPct;
+//		   ui_info.cap_volt = sCap23_info.Vbank_f;
+//		 }
+//	 }
+//	 else
+//	 {
+//		 if(toe_is_error(WULIE_CAP_TOE))
+//		 {
+//			 ui_info.cap_pct = 0.0f;
+//			 ui_info.cap_volt = 0.0f;
+//		 }
+//		 else
+//		 {
+//			 ui_info.cap_pct = wulie_Cap_info.EBPct;
+//		   ui_info.cap_volt = wulie_Cap_info.cap_voltage;
+//		 }
+//	 }
 	 
 	 //ui_info.enemy_dis = miniPC_info.dis; //和张哥商量 3-26: ui包的发送于必要性
 	 ui_info.enemy_dis = get_aim_pos_dis(); 

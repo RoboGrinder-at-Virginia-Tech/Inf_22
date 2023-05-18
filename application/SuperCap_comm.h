@@ -164,4 +164,6 @@ extern uint8_t debug_a;
 extern uint8_t debug_b;
 extern uint8_t debug_c;
 
+extern supercap_can_msg_id_e get_current_superCap(void);
+
 #endif /*__SUPERCAP_COMM_H___*/
