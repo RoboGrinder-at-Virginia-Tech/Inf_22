@@ -13,7 +13,7 @@
 
 /*超级电容电容组数据*/
 //2023新超级电容
-#define CHARACTERISTIC_VOLTAGE_23_CAP 27.0f//26.5f //特征电压是充电电路输出电压，对于C620必须低一些，否则会触发保护
+#define CHARACTERISTIC_VOLTAGE_23_CAP 26.0f//26.5f //特征电压是充电电路输出电压，对于C620必须低一些，否则会触发保护
 #define MIN_VOLTAGE_23_CAP 13.0f
 #define CAPACITY_23_CAP 5.0f //6.0f //电容容量，单位法拉
 

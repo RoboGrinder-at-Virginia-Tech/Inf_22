@@ -8,6 +8,7 @@
 #include "user_lib.h"
 #include "detect_task.h"
 #include "chassis_power_control.h"
+#include "arm_math.h"
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -457,7 +458,7 @@ bool_t wulie_Cap_is_data_error_proc()
 //API for UI and other
 fp32 get_current_cap_voltage()
 {
-	//开始整数字相关的东西 即插即用的超级电容控制板 判断
+	//即插即用的超级电容控制板 判断
 	 if(current_superCap == SuperCap_ID)
 	 {
 		 if(toe_is_error(SUPERCAP_TOE))
@@ -502,7 +503,7 @@ fp32 get_current_cap_voltage()
 
 fp32 get_current_cap_pct()
 {
-	//开始整数字相关的东西 即插即用的超级电容控制板 判断
+	//即插即用的超级电容控制板 判断
 	 if(current_superCap == SuperCap_ID)
 	 {
 		 if(toe_is_error(SUPERCAP_TOE))
@@ -552,17 +553,52 @@ fp32 get_current_cap_pct()
 //fp32 get_current_cap_voltage_pct()
 //{
 //}
-
+extern RC_ctrl_t rc_ctrl;
 /* 计算 获得 当前在线的超级电容, 能量(焦耳)百分比, 13v时为0%
 */
 //call时 确保 参数的正确性
 fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
 {
-	return ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / (max_vol * max_vol);
+	return fp32_constrain( ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / ( (max_vol - min_vol) * (max_vol - min_vol) ), 0.0f, 1.0f);
 }
 
 fp32 get_current_capE_relative_pct()
 {
+		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
+//		//即插即用的超级电容控制板 判断
+//		if(current_superCap == SuperCap_ID)
+//		{
+//			 if(toe_is_error(SUPERCAP_TOE))
+//			 {
+//				 return 0.0f;
+//			 }
+//			 else
+//			 {
+//				 return superCap_info.relative_EBpct;
+//			 }
+//		 }
+//		 else if(current_superCap == sCap23_ID)
+//		 {
+//			 if(toe_is_error(SCAP_23_TOR))
+//			 {
+//				 return 0.0f;
+//			 }
+//			 else
+//			 {
+//				 return sCap23_info.relative_EBpct;
+//			 }
+//		 }
+//		 else
+//		 {
+//			 if(toe_is_error(WULIE_CAP_TOE))
+//			 {
+//				 return 0.0f;
+//			 }
+//			 else
+//			 {
+//				 return wulie_Cap_info.relative_EBpct;
+//			 }
+//		 }
 }
 
 supercap_can_msg_id_e get_current_superCap()

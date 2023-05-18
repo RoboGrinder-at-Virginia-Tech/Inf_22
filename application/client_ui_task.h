@@ -204,6 +204,7 @@ typedef struct
 {
   float cap_volt;
 	float cap_pct;
+	float cap_relative_pct;
 	
 	float enemy_dis;
 	float proj_speed_limit;
@@ -227,6 +228,8 @@ typedef struct
 	//张哥那边反馈的status
 	ui_cv_sts_e ui_cv_feedback_sts;
 	uint16_t box_cv_feedback_sts[4];
+	
+	uint16_t superCap_line_var_length;
 	
 } ui_info_t; //动态的UI信息 结构体 对象
 

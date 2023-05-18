@@ -19,6 +19,7 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "chassis_task.h"
 #include "chassis_behaviour.h"
 #include "miniPC_msg.h"
+#include "user_lib.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
@@ -54,6 +55,10 @@ Graph_Data gChassisSts_box, gSPINSts_box;//右上角
 Graph_Data gCVSts_box, gGunSts_box, gABoxSts_box;//左上角
 Graph_Data gEnemyDetected_circle, gCVfb_sts_box;
 
+//超级电容能量框
+Graph_Data superCapFrame; //外框 长方形
+Graph_Data superCapLine; //里面填充
+
 //删除图层结构体
 UI_Data_Delete delLayer;
 
@@ -64,7 +69,7 @@ uint32_t client_ui_count_ref = 0;
 uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
-const uint16_t ui_dynamic_crt_sendFreq = 1000;
+const uint16_t ui_dynamic_crt_sendFreq = 1; //1000;
 
 void client_ui_task(void const *pvParameters)
 {
@@ -108,6 +113,10 @@ void client_ui_task(void const *pvParameters)
     Float_Draw(&fProjSLim, "992", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 720, 15.00);
 		Float_Draw(&fDis, "991", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 680, 1.00);
 		
+		//5-18-23 超级电容 移动能量条 初始化为满能量状态
+		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y);
+		
+		UI_ReFresh(1,superCapLine);
   	UI_ReFresh(2, fCapVolt, fCapPct);
 		UI_ReFresh(2, fProjSLim, fDis);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
@@ -178,6 +187,8 @@ void client_ui_task(void const *pvParameters)
 				Char_Draw(&strProjSLimSts, "015", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 8, 3, Enemy_dis_STS_X, Enemy_dis_STS_Y, 									 "DS:    m");
 				Char_Draw(&strDisSts, "016", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, Projectile_speed_lim_STS_X, Projectile_speed_lim_STS_Y,  "PL:    m/s");
 				
+				//超级电容 容量静态外框
+				Rectangle_Draw(&superCapFrame, "025", UI_Graph_ADD, 3, UI_Color_Main, 3, Center_Bottom_SuperCap_Frame_Start_X, Center_Bottom_SuperCap_Frame_Start_Y, Center_Bottom_SuperCap_Frame_End_X, Center_Bottom_SuperCap_Frame_End_Y);
 
 				//更新 同态图标的坐标数据------------
 				ui_coord_update();
@@ -205,6 +216,9 @@ void client_ui_task(void const *pvParameters)
 				Float_Draw(&fProjSLim, "992", UI_Graph_Change, 4, UI_Color_Main, 20, 2, 3, 240, 720, ui_info.enemy_dis);
 				Float_Draw(&fDis, "991", UI_Graph_Change, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.proj_speed_limit);
 				
+				//5-18-23 超级电容 移动能量条
+				Line_Draw(&superCapLine, "988", UI_Graph_Change, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
+				
 				//CV是否识别到目标
 				if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
 				{
@@ -221,7 +235,7 @@ void client_ui_task(void const *pvParameters)
 				
 				//完成绘制 开始发送 先发静态
 				//refresh UI and String(Char)
-				UI_ReFresh(1,gAimVertL);
+				UI_ReFresh(2, gAimVertL, superCapFrame);
 				UI_ReFresh(5, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m, gAimHorizL8m);
 				UI_ReFresh(5, left8to7, left7to5,left5to4,left4to2, right8to7);
 				UI_ReFresh(5,right5to4,right4to2 );
@@ -239,6 +253,7 @@ void client_ui_task(void const *pvParameters)
 				Char_ReFresh(strDisSts);
 				
 				//动态的修改 发送
+				UI_ReFresh(1,superCapLine);
 				UI_ReFresh(2, fCapVolt, fCapPct);
 				UI_ReFresh(2, fProjSLim, fDis);
 				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
@@ -421,8 +436,10 @@ void ui_coord_update()
 	 }
 
 	 //开始整数字相关的东西 即插即用的超级电容控制板 判断
-	 ui_info.cap_pct = get_current_cap_voltage();
+//	 ui_info.cap_pct = get_current_cap_voltage();
 	 ui_info.cap_volt = get_current_cap_pct();
+	 ui_info.cap_relative_pct = get_current_capE_relative_pct();
+	 ui_info.cap_pct = ui_info.cap_relative_pct;
 	 
 //	 if(current_superCap == SuperCap_ID)
 //	 {
@@ -467,6 +484,9 @@ void ui_coord_update()
 	 //ui_info.enemy_dis = miniPC_info.dis; //和张哥商量 3-26: ui包的发送于必要性
 	 ui_info.enemy_dis = get_aim_pos_dis(); 
 	 ui_info.proj_speed_limit = get_shooter_id1_17mm_speed_limit();
+	 
+	 //超级电容相关
+	 ui_info.superCap_line_var_length = (uint16_t) Center_Bottom_SuperCap_Line_Length_Max * fp32_constrain( get_current_capE_relative_pct(), 0.0f, 1.0f);
 }
 
 void ui_dynamic_crt_send_fuc()
@@ -492,6 +512,9 @@ void ui_dynamic_crt_send_fuc()
 		
 		Float_Draw(&fProjSLim, "992", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 720, ui_info.proj_speed_limit);
 		Float_Draw(&fDis, "991", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.enemy_dis);
+		
+		//5-18-23 超级电容 移动能量条
+		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
 	
 		//CV是否识别到目标
 		if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
@@ -508,6 +531,7 @@ void ui_dynamic_crt_send_fuc()
 		//新增绘制结束		
 				
 		//动态的修改 发送
+		UI_ReFresh(1,superCapLine);
 		UI_ReFresh(2, fCapVolt, fCapPct);
 		UI_ReFresh(2, fProjSLim, fDis);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);

@@ -250,6 +250,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>now_oled_errror</ItemText>
         </Ww>
+        <Ww>
+          <count>19</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rc_ctrl</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

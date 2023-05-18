@@ -503,7 +503,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 						  sCap23_info.EBPct = (sCap23_info.Vbank_f * sCap23_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
 							
 							//计算相对最低电压的百分比
-							superCap_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_ZIDA_CAP); // --- 5-18 中午--
+							superCap_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_23_CAP);
 							
 							detect_hook(SCAP_23_TOR);
 							break;
@@ -525,6 +525,10 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							//计算容量
 							wulie_Cap_info.EBank = 0.5f * wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage * CAPACITY_WULIE_CAP;//CAPACITY=6
 						  wulie_Cap_info.EBPct = (wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage)/(CHARACTERISTIC_VOLTAGE_WULIE_CAP * CHARACTERISTIC_VOLTAGE_WULIE_CAP)*100.0f;
+						
+							//计算相对最低电压的百分比
+							wulie_Cap_info.relative_EBpct = cal_capE_relative_pct(wulie_Cap_info.cap_voltage, MIN_VOLTAGE_WULIE_CAP, CHARACTERISTIC_VOLTAGE_WULIE_CAP);
+						
 							detect_hook(WULIE_CAP_TOE);
 							break;
 					}
