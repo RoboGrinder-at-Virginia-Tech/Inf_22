@@ -15,6 +15,9 @@ UI坐标标定
 #define Center_X 960
 #define	Center_Y 540
 
+/*右下角 小陀螺和底盘 云台Yaw夹角指示器*/
+#define 
+
 /* 中间 靠下方 超级电容状态相关位置 */
 //静态的框
 #define Center_Bottom_SuperCap_Frame_Start_X (Center_X - 200) //960-20
