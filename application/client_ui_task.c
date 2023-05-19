@@ -59,6 +59,9 @@ Graph_Data gEnemyDetected_circle, gCVfb_sts_box;
 Graph_Data superCapFrame; //外框 长方形
 Graph_Data superCapLine; //里面填充
 
+//底盘角度指示器
+Graph_Data chassisLine;
+
 //删除图层结构体
 UI_Data_Delete delLayer;
 
@@ -70,6 +73,64 @@ uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
 const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
+
+//初始化 准备使用arm矩阵库去计算底盘指示器角度
+static void chassis_frame_UI_sensor_and_graph_init()
+{
+	//初始化数据
+	ui_info.gimbal_control_ptr = get_gimbal_pointer();
+	ui_info.frame_chassis_coord_start_raw[0] = Chassis_Frame_Start_X;
+	ui_info.frame_chassis_coord_start_raw[1] = Chassis_Frame_Start_Y;
+	ui_info.frame_chassis_coord_end_raw[0] = Chassis_Frame_End_X;
+	ui_info.frame_chassis_coord_end_raw[1] = Chassis_Frame_End_Y;
+	
+	//坐标轴变换
+	ui_info.frame_chassis_coord_final[0] = ui_info.frame_chassis_coord_start_raw[0] + Chassis_Frame_Coord_Center_X;
+	ui_info.frame_chassis_coord_final[1] = ui_info.frame_chassis_coord_start_raw[1] + Chassis_Frame_Coord_Center_Y;
+	ui_info.frame_chassis_coord_final[2] = ui_info.frame_chassis_coord_end_raw[0] + Chassis_Frame_Coord_Center_X;
+	ui_info.frame_chassis_coord_final[3] = ui_info.frame_chassis_coord_end_raw[1] + Chassis_Frame_Coord_Center_Y;
+}
+
+static void chassis_frame_UI_sensor_update()
+{
+	ui_info.yaw_relative_angle = rad_format(ui_info.gimbal_control_ptr->gimbal_yaw_motor.relative_angle);
+}
+
+static void chassis_frame_UI_arm_init(fp32 angle)
+{
+	mat_init(&ui_info.frame_chassis_coord_start_vec, 2, 1, (fp32 *) ui_info.frame_chassis_coord_start_raw);
+	mat_init(&ui_info.frame_chassis_coord_end_vec, 2, 1, (fp32 *) ui_info.frame_chassis_coord_end_raw);
+	
+	mat_init(&ui_info.new_frame_chassis_coord_start_vec, 2, 1, (fp32 *) ui_info.new_frame_chassis_coord_start_raw);
+	mat_init(&ui_info.new_frame_chassis_coord_end_vec, 2, 1, (fp32 *) ui_info.new_frame_chassis_coord_end_raw);
+	
+	/* matrix element (i, j) is stored at: pData[i*numCols + j] */
+	ui_info.frame_chassis_rotation_matrix_raw[0] = arm_cos_f32(angle);
+	ui_info.frame_chassis_rotation_matrix_raw[1] = -arm_sin_f32(angle);
+	ui_info.frame_chassis_rotation_matrix_raw[2] = arm_sin_f32(angle);
+	ui_info.frame_chassis_rotation_matrix_raw[3] = arm_cos_f32(angle);
+	
+	mat_init(&ui_info.chassis_rotation_matrix, 2, 2, (fp32 *) ui_info.frame_chassis_rotation_matrix_raw);
+}
+
+//计算底盘指示器角度
+static void chassis_frame_UI_arm_cal(fp32 angle)
+{
+	ui_info.chassis_rotation_matrix.pData[0] = arm_cos_f32(angle);
+	ui_info.chassis_rotation_matrix.pData[1] = -arm_sin_f32(angle);
+	ui_info.chassis_rotation_matrix.pData[2] = arm_sin_f32(angle);
+	ui_info.chassis_rotation_matrix.pData[3] = arm_cos_f32(angle);
+	
+	//计算旋转后坐标
+	mat_mult(&ui_info.chassis_rotation_matrix, &ui_info.frame_chassis_coord_start_vec, &ui_info.new_frame_chassis_coord_start_vec);
+	mat_mult(&ui_info.chassis_rotation_matrix, &ui_info.frame_chassis_coord_end_vec, &ui_info.new_frame_chassis_coord_end_vec);
+	
+	//坐标轴变换
+	ui_info.frame_chassis_coord_final[0] = ui_info.new_frame_chassis_coord_start_vec.pData[0] + Chassis_Frame_Coord_Center_X;
+	ui_info.frame_chassis_coord_final[1] = ui_info.new_frame_chassis_coord_start_vec.pData[1] + Chassis_Frame_Coord_Center_Y;
+	ui_info.frame_chassis_coord_final[2] = ui_info.new_frame_chassis_coord_end_vec.pData[0] + Chassis_Frame_Coord_Center_X;
+	ui_info.frame_chassis_coord_final[3] = ui_info.new_frame_chassis_coord_end_vec.pData[1] + Chassis_Frame_Coord_Center_Y;
+}
 
 void client_ui_task(void const *pvParameters)
 {
@@ -116,13 +177,21 @@ void client_ui_task(void const *pvParameters)
 		//5-18-23 超级电容 移动能量条 初始化为满能量状态
 		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y);
 		
-		UI_ReFresh(1,superCapLine);
+		chassis_frame_UI_sensor_and_graph_init();
+		chassis_frame_UI_sensor_update();
+		chassis_frame_UI_arm_init(ui_info.yaw_relative_angle);
+		
+		//初始创建 底盘角度指示框
+		Line_Draw(&chassisLine, "987", UI_Graph_ADD, 7, UI_Color_Main, Chassis_Frame_Height, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
+		
+		UI_ReFresh(2, superCapLine, chassisLine);
   	UI_ReFresh(2, fCapVolt, fCapPct);
 		UI_ReFresh(2, fProjSLim, fDis);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
 		//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
 		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
 	  //UI 初始创建 + 发送结束
+		
 		
 	
 		/*	大装甲板宽 230mm 
@@ -219,6 +288,10 @@ void client_ui_task(void const *pvParameters)
 				//5-18-23 超级电容 移动能量条
 				Line_Draw(&superCapLine, "988", UI_Graph_Change, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
 				
+				chassis_frame_UI_arm_cal(ui_info.yaw_relative_angle);
+				//底盘角度指示框
+				Line_Draw(&chassisLine, "987", UI_Graph_Change, 7, UI_Color_Main, Chassis_Frame_Height, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
+				
 				//CV是否识别到目标
 				if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
 				{
@@ -253,7 +326,7 @@ void client_ui_task(void const *pvParameters)
 				Char_ReFresh(strDisSts);
 				
 				//动态的修改 发送
-				UI_ReFresh(1,superCapLine);
+				UI_ReFresh(2, superCapLine, chassisLine);
 				UI_ReFresh(2, fCapVolt, fCapPct);
 				UI_ReFresh(2, fProjSLim, fDis);
 				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
@@ -487,6 +560,8 @@ void ui_coord_update()
 	 
 	 //超级电容相关
 	 ui_info.superCap_line_var_length = (uint16_t) Center_Bottom_SuperCap_Line_Length_Max * fp32_constrain( get_current_capE_relative_pct(), 0.0f, 1.0f);
+	 
+	 chassis_frame_UI_sensor_update(); //update gimbal yaw angle
 }
 
 void ui_dynamic_crt_send_fuc()
@@ -515,7 +590,11 @@ void ui_dynamic_crt_send_fuc()
 		
 		//5-18-23 超级电容 移动能量条
 		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
-	
+		
+		chassis_frame_UI_arm_cal(ui_info.yaw_relative_angle);
+		//底盘角度指示框
+		Line_Draw(&chassisLine, "987", UI_Graph_Change, 7, UI_Color_Main, Chassis_Frame_Height, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
+				
 		//CV是否识别到目标
 		if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
 		{
@@ -531,7 +610,7 @@ void ui_dynamic_crt_send_fuc()
 		//新增绘制结束		
 				
 		//动态的修改 发送
-		UI_ReFresh(1,superCapLine);
+		UI_ReFresh(2, superCapLine, chassisLine);
 		UI_ReFresh(2, fCapVolt, fCapPct);
 		UI_ReFresh(2, fProjSLim, fDis);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);

@@ -12,8 +12,9 @@ frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,Õû°üĞ£Ñ
 #include "stdarg.h"
 #include "usart.h"
 #include "client_ui_coordinate_info.h"
-
+#include "user_lib.h"
 #include "struct_typedef.h"
+#include "gimbal_task.h"
 
 #pragma pack(1)                           //°´1×Ö½Ú¶ÔÆë
 
@@ -230,6 +231,32 @@ typedef struct
 	uint16_t box_cv_feedback_sts[4];
 	
 	uint16_t superCap_line_var_length;
+	
+	const gimbal_control_t* gimbal_control_ptr;
+	fp32 yaw_relative_angle; //= rad
+	
+	/* matrix element (i, j) is stored at: pData[i*numCols + j] */
+	
+	//µ×ÅÌ Ğı×ª Ö¸Ê¾¿ò [0] start x; [1] start y; [2] end x; [3] end y
+	//³õÊ¼½Ç¶È
+	fp32 frame_chassis_coord_start_raw[2]; //·ÇÏòÁ¿ĞÎÊ½, °´Êı×é´æ
+	mat frame_chassis_coord_start_vec; //2*1ÏòÁ¿ µ×ÅÌ
+	
+	fp32 frame_chassis_coord_end_raw[2]; //·ÇÏòÁ¿ĞÎÊ½, °´Êı×é´æ
+	mat frame_chassis_coord_end_vec; //2*1ÏòÁ¿ µ×ÅÌ
+	
+	// new µ±Ç° ×îĞÂ½Ç¶È
+	fp32 new_frame_chassis_coord_start_raw[2]; //·ÇÏòÁ¿ĞÎÊ½, °´Êı×é´æ
+	mat new_frame_chassis_coord_start_vec; //2*1ÏòÁ¿ µ×ÅÌ
+	
+	fp32 new_frame_chassis_coord_end_raw[2]; //·ÇÏòÁ¿ĞÎÊ½, °´Êı×é´æ
+	mat new_frame_chassis_coord_end_vec; //2*1ÏòÁ¿ µ×ÅÌ
+	//
+	
+	fp32 frame_chassis_rotation_matrix_raw[4]; //Ô­Ê¼Êı¾İ Ğı×ª¾ØÕó
+	mat chassis_rotation_matrix; //2*2µ×ÅÌĞı×ª¾ØÕó
+	
+	uint16_t frame_chassis_coord_final[4];
 	
 } ui_info_t; //¶¯Ì¬µÄUIĞÅÏ¢ ½á¹¹Ìå ¶ÔÏó
 
