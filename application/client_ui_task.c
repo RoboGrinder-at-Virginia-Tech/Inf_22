@@ -69,7 +69,7 @@ uint32_t client_ui_count_ref = 0;
 uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
-const uint16_t ui_dynamic_crt_sendFreq = 1; //1000;
+const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
 
 void client_ui_task(void const *pvParameters)
 {
@@ -114,7 +114,7 @@ void client_ui_task(void const *pvParameters)
 		Float_Draw(&fDis, "991", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 680, 1.00);
 		
 		//5-18-23 超级电容 移动能量条 初始化为满能量状态
-		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y);
+		Line_Draw(&superCapLine, "988", UI_Graph_ADD, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y);
 		
 		UI_ReFresh(1,superCapLine);
   	UI_ReFresh(2, fCapVolt, fCapPct);
@@ -217,7 +217,7 @@ void client_ui_task(void const *pvParameters)
 				Float_Draw(&fDis, "991", UI_Graph_Change, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.proj_speed_limit);
 				
 				//5-18-23 超级电容 移动能量条
-				Line_Draw(&superCapLine, "988", UI_Graph_Change, 4, UI_Color_Main, 10, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
+				Line_Draw(&superCapLine, "988", UI_Graph_Change, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
 				
 				//CV是否识别到目标
 				if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
@@ -270,7 +270,7 @@ void client_ui_task(void const *pvParameters)
 //			 temp_time_check_HAL = HAL_GetTick();
 //			 _temp_a++;
 			 
-				vTaskDelay(100);
+				vTaskDelay(10); //100
 				//
 				client_ui_count_ref++;
 				
@@ -558,7 +558,7 @@ void UI_SendByte(unsigned char ch)
 {
 //   USART_SendData(USART3,ch);
 //   while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);	
-	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,999);
+	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
 //	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
 //	{
 //		vTaskDelay(1);

@@ -16,19 +16,21 @@ UI坐标标定
 #define	Center_Y 540
 
 /* 中间 靠下方 超级电容状态相关位置 */
+//静态的框
 #define Center_Bottom_SuperCap_Frame_Start_X (Center_X - 200) //960-20
 #define Center_Bottom_SuperCap_Frame_Start_Y 300 //200
 #define Center_Bottom_SuperCap_Frame_Height 20
 #define Center_Bottom_SuperCap_Frame_End_X (Center_X + 200)
 #define Center_Bottom_SuperCap_Frame_End_Y (Center_Bottom_SuperCap_Frame_Start_Y - Center_Bottom_SuperCap_Frame_Height)
 
-// 
-#define Center_Bottom_SuperCap_Line_Start_X (Center_Bottom_SuperCap_Frame_Start_X - 2) //(Center_X - 38) //960-20
-#define Center_Bottom_SuperCap_Line_Start_Y (Center_Bottom_SuperCap_Frame_Start_Y - 2)  //(150-2) //200
-#define Center_Bottom_SuperCap_Line_Height (Center_Bottom_SuperCap_Frame_Height - 2)
-#define Center_Bottom_SuperCap_Line_End_X (Center_Bottom_SuperCap_Frame_End_X + 2)
+//移动长度的线 指示容量
+#define Center_Bottom_SuperCap_Line_Downward_Shift 10
+#define Center_Bottom_SuperCap_Line_Start_X (Center_Bottom_SuperCap_Frame_Start_X) //(Center_X - 38) //960-20
+#define Center_Bottom_SuperCap_Line_Start_Y (Center_Bottom_SuperCap_Frame_Start_Y - Center_Bottom_SuperCap_Line_Downward_Shift)  //(150-2) //200
+#define Center_Bottom_SuperCap_Line_Width Center_Bottom_SuperCap_Frame_Height
+#define Center_Bottom_SuperCap_Line_End_X (Center_Bottom_SuperCap_Frame_End_X)
 #define Center_Bottom_SuperCap_Line_Length_Max (Center_Bottom_SuperCap_Line_End_X - Center_Bottom_SuperCap_Line_Start_X)
-#define Center_Bottom_SuperCap_Line_End_Y (Center_Bottom_SuperCap_Line_Start_Y - Center_Bottom_SuperCap_Frame_Height)
+#define Center_Bottom_SuperCap_Line_End_Y Center_Bottom_SuperCap_Line_Start_Y
 
 //右上角 字符串 起始坐标:
 #define	TopRight_String_Start_X 1440
