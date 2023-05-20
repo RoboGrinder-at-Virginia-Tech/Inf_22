@@ -258,6 +258,24 @@ typedef struct
 	
 	uint16_t frame_chassis_coord_final[4];
 	
+	//灯条
+	fp32 bar_chassis_coord_start_raw[2]; //非向量形式, 按数组存
+	mat bar_chassis_coord_start_vec; //2*1向量 底盘
+	
+	fp32 bar_chassis_coord_end_raw[2]; //非向量形式, 按数组存
+	mat bar_chassis_coord_end_vec; //2*1向量 底盘
+	
+	// new 当前 最新角度
+	fp32 new_bar_chassis_coord_start_raw[2]; //非向量形式, 按数组存
+	mat new_bar_chassis_coord_start_vec; //2*1向量 底盘
+	
+	fp32 new_bar_chassis_coord_end_raw[2]; //非向量形式, 按数组存
+	mat new_bar_chassis_coord_end_vec; //2*1向量 底盘
+	//
+	
+	uint16_t bar_chassis_coord_final[4];
+	
+	
 } ui_info_t; //动态的UI信息 结构体 对象
 
 void UI_Delete(u8 Del_Operate,u8 Del_Layer);

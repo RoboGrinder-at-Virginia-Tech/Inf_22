@@ -15,20 +15,47 @@ UI坐标标定
 #define Center_X 960
 #define	Center_Y 540
 
-/*右下角 小陀螺和底盘 云台Yaw夹角指示器*/
-#define Chassis_Frame_Coord_Center_X Center_X //1200
-#define Chassis_Frame_Coord_Center_Y Center_Y //300
+/*右下角 小陀螺和底盘 云台Yaw夹角指示器; 框和灯条 其局部坐标系 的具体地址*/
+#define Chassis_Frame_Coord_Center_X 1300 //Center_X
+#define Chassis_Frame_Coord_Center_Y 200 //Center_Y
+
+//炮塔 球
+#define Turret_Cir_Start_X Chassis_Frame_Coord_Center_X
+#define Turret_Cir_Start_Y Chassis_Frame_Coord_Center_Y
+#define Turret_Cir_Radius 22
+#define Turret_Cir_Pen 3
+
+//枪口 线
+#define Gun_Line_Length 140
+#define Gun_Line_Start_X Turret_Cir_Start_X
+#define Gun_Line_Start_Y Turret_Cir_Start_Y
+#define Gun_Line_End_X Gun_Line_Start_X
+#define Gun_Line_End_Y (Turret_Cir_Start_Y + Gun_Line_Length)
+#define Gun_Line_Pen 3
 
 //以下信息为 底盘 框 局部的坐标 -----------------------------
-#define Chassis_Frame_Width  150
-#define Chassis_Frame_Height 200
+#define Chassis_Frame_Width  100 //75 //150
+#define Chassis_Frame_Height 134 //100 //200
+#define Chassis_Frame_Height_Pen Chassis_Frame_Height
+
+#define Chassis_Frame_Uniform_Shift 67 //50 //90
 
 #define Chassis_Frame_Start_X (-Chassis_Frame_Width/2)
-#define Chassis_Frame_Start_Y (Chassis_Frame_Height/2)
+#define Chassis_Frame_Start_Y (-Chassis_Frame_Height/2 + Chassis_Frame_Uniform_Shift)
 
-#define Chassis_Frame_End_X (-Chassis_Frame_Start_X) //(-Chassis_Frame_Width/2)
-#define Chassis_Frame_End_Y Chassis_Frame_Start_Y //(Chassis_Frame_Height/2)
+#define Chassis_Frame_End_X (Chassis_Frame_Width/2) //(-Chassis_Frame_Start_X) //(-Chassis_Frame_Width/2)
+#define Chassis_Frame_End_Y (-Chassis_Frame_Height/2 + Chassis_Frame_Uniform_Shift) //Chassis_Frame_Start_Y //(Chassis_Frame_Height/2)
 // End 底盘 框 局部坐标
+
+// 灯条 局部坐标
+#define Chassis_Frame_Light_Bar_Height_Pen 20
+#define Chassis_Frame_Light_Bar_Downward_Shift (Chassis_Frame_Light_Bar_Height_Pen/2)
+#define Chassis_Frame_Light_Bar_Start_X (Chassis_Frame_Start_X+5)
+#define Chassis_Frame_Light_Bar_Start_Y (Chassis_Frame_Start_Y - (Chassis_Frame_Height/2) - Chassis_Frame_Light_Bar_Downward_Shift)
+
+#define Chassis_Frame_Light_Bar_End_X (Chassis_Frame_End_X-5)
+#define Chassis_Frame_Light_Bar_End_Y (Chassis_Frame_Start_Y - (Chassis_Frame_Height/2) - Chassis_Frame_Light_Bar_Downward_Shift)
+// End 灯条
 
 /* 中间 靠下方 超级电容状态相关位置 */
 //静态的框
@@ -148,7 +175,7 @@ UI坐标标定
 #define TopLeft_REC_on_cv_LOCK_START_Y TopLeft_REC_on_cv_OFF_START_Y //850
 #define TopLeft_REC_on_cv_LOCK_END_X TopLeft_REC_on_cv_LOCK_START_X+UI_REC_LENGTH //535
 #define TopLeft_REC_on_cv_LOCK_END_Y TopLeft_REC_on_cv_LOCK_START_Y-UI_REC_WIDTH //815
-//
+//CV指示球
 #define TopLeft_Cir_on_cv_DET_START_X 580
 #define TopLeft_Cir_on_cv_DET_START_Y 832
 #define TopLeft_Cir_on_cv_DET_radius 10
