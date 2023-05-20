@@ -15,9 +15,22 @@ UI坐标标定
 #define Center_X 960
 #define	Center_Y 540
 
+//机器人 对位线 中间考下
+#define Chassis_Drive_Pos_Line_Left_X_Offset 600
+#define Chassis_Drive_Pos_Line_Left_Y_Offset 200
+#define Chassis_Drive_Pos_Line_Left_Start_X (Center_X - Chassis_Drive_Pos_Line_Left_X_Offset)
+#define Chassis_Drive_Pos_Line_Left_Start_Y (Center_Y - Chassis_Drive_Pos_Line_Left_Y_Offset)
+#define Chassis_Drive_Pos_Line_Left_End_X (Chassis_Drive_Pos_Line_Left_Start_X + 100)
+#define Chassis_Drive_Pos_Line_Left_End_Y (Chassis_Drive_Pos_Line_Left_Start_Y + 30)
+//以左边为准 右边自动标定
+#define Chassis_Drive_Pos_Line_Right_Start_X 0
+#define Chassis_Drive_Pos_Line_Right_Start_Y 0
+#define Chassis_Drive_Pos_Line_Right_End_X 0
+#define Chassis_Drive_Pos_Line_Right_End_Y 0
+
 /*右下角 小陀螺和底盘 云台Yaw夹角指示器; 框和灯条 其局部坐标系 的具体地址*/
-#define Chassis_Frame_Coord_Center_X 1300 //Center_X
-#define Chassis_Frame_Coord_Center_Y 200 //Center_Y
+#define Chassis_Frame_Coord_Center_X 1200 //1300 //Center_X
+#define Chassis_Frame_Coord_Center_Y 120 //200 //Center_Y
 
 //炮塔 球
 #define Turret_Cir_Start_X Chassis_Frame_Coord_Center_X
@@ -26,13 +39,16 @@ UI坐标标定
 #define Turret_Cir_Pen 3
 
 //枪口 线
-#define Gun_Line_Length 140
+#define Gun_Line_Length 120
 #define Gun_Line_Start_X Turret_Cir_Start_X
 #define Gun_Line_Start_Y Turret_Cir_Start_Y
 #define Gun_Line_End_X Gun_Line_Start_X
 #define Gun_Line_End_Y (Turret_Cir_Start_Y + Gun_Line_Length)
 #define Gun_Line_Pen 3
-
+/* 5-20-2023注释:
+动态图层会覆盖静态的, 图层并不是所有情况都有用, 一旦change了, 动态的就会跑到上面, 
+得在刷新动态的时候 捆绑的静态一起刷新
+*/
 //以下信息为 底盘 框 局部的坐标 -----------------------------
 #define Chassis_Frame_Width  100 //75 //150
 #define Chassis_Frame_Height 134 //100 //200
@@ -48,7 +64,7 @@ UI坐标标定
 // End 底盘 框 局部坐标
 
 // 灯条 局部坐标
-#define Chassis_Frame_Light_Bar_Height_Pen 20
+#define Chassis_Frame_Light_Bar_Height_Pen 10
 #define Chassis_Frame_Light_Bar_Downward_Shift (Chassis_Frame_Light_Bar_Height_Pen/2)
 #define Chassis_Frame_Light_Bar_Start_X (Chassis_Frame_Start_X+5)
 #define Chassis_Frame_Light_Bar_Start_Y (Chassis_Frame_Start_Y - (Chassis_Frame_Height/2) - Chassis_Frame_Light_Bar_Downward_Shift)
@@ -57,10 +73,10 @@ UI坐标标定
 #define Chassis_Frame_Light_Bar_End_Y (Chassis_Frame_Start_Y - (Chassis_Frame_Height/2) - Chassis_Frame_Light_Bar_Downward_Shift)
 // End 灯条
 
-/* 中间 靠下方 超级电容状态相关位置 */
+/* 中间 靠下方  ------ 超级电容状态 ------   相关位置 */
 //静态的框
 #define Center_Bottom_SuperCap_Frame_Start_X (Center_X - 200) //960-20
-#define Center_Bottom_SuperCap_Frame_Start_Y 300 //200
+#define Center_Bottom_SuperCap_Frame_Start_Y 230 //200
 #define Center_Bottom_SuperCap_Frame_Height 20
 #define Center_Bottom_SuperCap_Frame_End_X (Center_X + 200)
 #define Center_Bottom_SuperCap_Frame_End_Y (Center_Bottom_SuperCap_Frame_Start_Y - Center_Bottom_SuperCap_Frame_Height)
@@ -74,24 +90,34 @@ UI坐标标定
 #define Center_Bottom_SuperCap_Line_Length_Max (Center_Bottom_SuperCap_Line_End_X - Center_Bottom_SuperCap_Line_Start_X)
 #define Center_Bottom_SuperCap_Line_End_Y Center_Bottom_SuperCap_Line_Start_Y
 
+//中间 靠下方 电容 volt电压  和 能量 半分比数字 坐标
+#define Center_Bottom_SuperCap_VOLT_Font_Size 40
+#define Center_Bottom_SuperCap_VOLT_NUM_X_COORD (960-220)
+#define Center_Bottom_SuperCap_VOLT_NUM_Y_COORD (Center_Bottom_SuperCap_Frame_Start_Y - 30) //(200-30)
+// pct 数字 坐标
+#define Center_Bottom_SuperCap_PCT_Font_Size 20
+#define Center_Bottom_SuperCap_PCT_NUM_X_COORD (960-220)
+#define Center_Bottom_SuperCap_PCT_NUM_Y_COORD (Center_Bottom_SuperCap_Frame_Start_Y - 80)//(250-30)
+
 //右上角 字符串 起始坐标:
 #define	TopRight_String_Start_X 1440
 #define TopRight_String_Start_Y 840
 #define TopRight_static_Y_offset 30
-
+//String未使用了
 #define CAP_PCT_X TopRight_String_Start_X //1440
 #define CAP_PCT_Y TopRight_String_Start_Y //840
-
+//String未使用了
 #define CAP_VOLT_X TopRight_String_Start_X //1440
 #define CAP_VOLT_Y (TopRight_String_Start_Y-TopRight_static_Y_offset) //810
 
 
-//右上角 传递动态信息的 字符串
-#define TopRight_dynamic_Y_offset 40
-#define CHASSIS_STS_X TopRight_String_Start_X //1440
-#define CHASSIS_STS_Y (CAP_VOLT_Y-TopRight_dynamic_Y_offset) //770
-#define SPIN_STS_X TopRight_String_Start_X //1440
-#define SPIN_STS_Y (CHASSIS_STS_Y-TopRight_dynamic_Y_offset) //730
+//中间 NOT右上角 传递动态信息的 字符串
+#define CHASSIS_INFO_X_offset 90 //40
+#define CHASSIS_INFO_Dynamic_Y_offset 40 //40
+#define CHASSIS_STS_X (Center_X - CHASSIS_INFO_X_offset) //TopRight_String_Start_X //1440
+#define CHASSIS_STS_Y (Center_Bottom_SuperCap_Frame_Start_Y - 50) //(CAP_VOLT_Y-TopRight_dynamic_Y_offset) //770
+#define SPIN_STS_X (Center_X - CHASSIS_INFO_X_offset) //TopRight_String_Start_X //1440
+#define SPIN_STS_Y (CHASSIS_STS_Y - CHASSIS_INFO_Dynamic_Y_offset) //730
 
 //左上角起始坐标
 #define TopLeft_String_Start_X 150
@@ -140,7 +166,7 @@ UI坐标标定
 #define TopRight_REC_on_BOOST_END_X TopRight_REC_on_BOOST_START_X+UI_REC_LENGTH //1625
 #define TopRight_REC_on_BOOST_END_Y TopRight_REC_on_BOOST_START_Y-UI_REC_WIDTH //745
 
-//右上角 动态方框 SPIN_STS
+//中间靠下 NOT右上角(尽管是这样命名的) 动态方框 SPIN_STS
 #define TopRight_REC_on_FOLL_START_X SPIN_STS_X-TopRight_REC_START_offset_X //1430
 #define TopRight_REC_on_FOLL_START_Y SPIN_STS_Y+TopRight_REC_START_offset_Y //740
 #define TopRight_REC_on_FOLL_END_X TopRight_REC_on_FOLL_START_X+UI_REC_LENGTH //1525
