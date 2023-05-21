@@ -289,9 +289,11 @@ typedef struct
 	uint16_t chassis_drive_pos_line_right_var_endY;
 	
 	//Error Code 各种设备的错误 代码
-	char chassis_error_code[6];
-	char gimbal_error_code[6];
-	char shoot_error_code[6]; //feeding error code
+	char chassis_error_code[8];
+	char gimbal_error_code[8];
+	char shoot_error_code[8]; //feeding error code
+	char superCap_error_code[8];
+	char referee_error_code[8];
 	
 } ui_info_t; //动态的UI信息 结构体 对象
 

@@ -454,6 +454,13 @@ void client_ui_task(void const *pvParameters)
 #endif	
 		}
 }
+////uint8_t
+//static const char ui_robot_general_status[2][8] = {"OK\0", "ERROR!\0"};
+////机器人各个设备的error code
+//void ui_error_code_update()
+//{
+//	
+//}
 
 /*通过判断相关 状态机 -> ui坐标 */
 void ui_coord_update()
