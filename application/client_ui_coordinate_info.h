@@ -16,17 +16,18 @@ UI坐标标定
 #define	Center_Y 540
 
 //机器人 对位线 中间考下
-#define Chassis_Drive_Pos_Line_Left_X_Offset 600
-#define Chassis_Drive_Pos_Line_Left_Y_Offset 200
-#define Chassis_Drive_Pos_Line_Left_Start_X (Center_X - Chassis_Drive_Pos_Line_Left_X_Offset)
-#define Chassis_Drive_Pos_Line_Left_Start_Y (Center_Y - Chassis_Drive_Pos_Line_Left_Y_Offset)
-#define Chassis_Drive_Pos_Line_Left_End_X (Chassis_Drive_Pos_Line_Left_Start_X + 100)
-#define Chassis_Drive_Pos_Line_Left_End_Y (Chassis_Drive_Pos_Line_Left_Start_Y + 30)
+//左侧对位线
+#define Chassis_Drive_Pos_Line_Left_Start_X 548
+#define Chassis_Drive_Pos_Line_Left_Start_Y 140
+#define Chassis_Drive_Pos_Line_Left_Slope 1.00f
+#define Chassis_Drive_Pos_Line_Left_End_X 720 //停止X 坐标
+#define Chassis_Drive_Pos_Line_Left_End_Y 312 //草稿 不直接使用, 使用slope + start 计算
 //以左边为准 右边自动标定
-#define Chassis_Drive_Pos_Line_Right_Start_X 0
-#define Chassis_Drive_Pos_Line_Right_Start_Y 0
-#define Chassis_Drive_Pos_Line_Right_End_X 0
-#define Chassis_Drive_Pos_Line_Right_End_Y 0
+#define Chassis_Drive_Pos_Line_Right_Start_X (Center_X - Chassis_Drive_Pos_Line_Left_Start_X + Center_X)
+#define Chassis_Drive_Pos_Line_Right_Start_Y Chassis_Drive_Pos_Line_Left_Start_Y
+#define Chassis_Drive_Pos_Line_Right_Slope (-1.00f)
+#define Chassis_Drive_Pos_Line_Right_End_X (Center_X - Chassis_Drive_Pos_Line_Left_End_X + Center_X) //停止X 坐标
+#define Chassis_Drive_Pos_Line_Right_End_Y 312 //草稿 不直接使用, 使用slope + start 计算
 
 /*右下角 小陀螺和底盘 云台Yaw夹角指示器; 框和灯条 其局部坐标系 的具体地址*/
 #define Chassis_Frame_Coord_Center_X 1200 //1300 //Center_X

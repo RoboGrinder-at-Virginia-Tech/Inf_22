@@ -275,6 +275,23 @@ typedef struct
 	
 	uint16_t bar_chassis_coord_final[4];
 	
+	//底盘 对位线计算 左
+	uint16_t chassis_drive_pos_line_left_var_startX;
+	uint16_t chassis_drive_pos_line_left_var_startY;
+	fp32 chassis_drive_pos_line_left_slope_var;
+	uint16_t chassis_drive_pos_line_left_var_endX;
+	uint16_t chassis_drive_pos_line_left_var_endY;
+	//底盘 对位线计算 右
+	uint16_t chassis_drive_pos_line_right_var_startX;
+	uint16_t chassis_drive_pos_line_right_var_startY;
+	fp32 chassis_drive_pos_line_right_slope_var;
+	uint16_t chassis_drive_pos_line_right_var_endX;
+	uint16_t chassis_drive_pos_line_right_var_endY;
+	
+	//Error Code 各种设备的错误 代码
+	char chassis_error_code[6];
+	char gimbal_error_code[6];
+	char shoot_error_code[6]; //feeding error code
 	
 } ui_info_t; //动态的UI信息 结构体 对象
 
