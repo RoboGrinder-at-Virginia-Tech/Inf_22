@@ -207,23 +207,62 @@ void usart6_init(uint8_t *rx1_buf, uint8_t *rx2_buf, uint16_t dma_buf_num)
 
 }
 
-void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
+void usart6_tx_dma_init(void)
 {
+
+    //enable the DMA transfer for the receiver and tramsmit request
+    //使能DMA串口接收和发送
+    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAR);
+    SET_BIT(huart6.Instance->CR3, USART_CR3_DMAT);
+
     //disable DMA
     //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart6_tx);
+    __HAL_DMA_DISABLE(&hdma_usart6_rx);
+
+    while(hdma_usart6_rx.Instance->CR & DMA_SxCR_EN)
+    {
+        __HAL_DMA_DISABLE(&hdma_usart6_rx);
+    }
+
+    hdma_usart6_rx.Instance->PAR = (uint32_t) & (USART6->DR);
+    hdma_usart6_rx.Instance->M0AR = (uint32_t)(NULL);
+    hdma_usart6_rx.Instance->NDTR = 0;
+
+//		//configure call back funciton 配置中断回调函数
+//		hdma_usart6_rx.XferCpltCallback = &uart6_tx_dma_done_isr;
+
+}
+
+void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
+{
+//    //disable DMA
+//    //失效DMA
+//    __HAL_DMA_DISABLE(&hdma_usart6_tx);
+
+//    while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
+//    {
+//        __HAL_DMA_DISABLE(&hdma_usart6_tx);
+//    }
+
+//    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
+
+//    hdma_usart6_tx.Instance->M0AR = (uint32_t)(data);
+//    __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, len);
+
+//    __HAL_DMA_ENABLE(&hdma_usart6_tx);
+		
+		//5-22-2023版本
+		//disable DMA
+		__HAL_DMA_DISABLE(&hdma_usart6_tx);
 
     while(hdma_usart6_tx.Instance->CR & DMA_SxCR_EN)
     {
         __HAL_DMA_DISABLE(&hdma_usart6_tx);
     }
-
-    __HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
-
-    hdma_usart6_tx.Instance->M0AR = (uint32_t)(data);
-    __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, len);
-
-    __HAL_DMA_ENABLE(&hdma_usart6_tx);
+		
+		__HAL_DMA_CLEAR_FLAG(&hdma_usart6_tx, DMA_HISR_TCIF6);
+		
+		HAL_UART_Transmit_DMA(&huart6, data, len);
 }
 
 /* -------------------------------------------------- New DMA -------------------------------------------------- */

@@ -21,6 +21,8 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "miniPC_msg.h"
 #include "user_lib.h"
 #include <string.h>
+#include "fifo.h"
+#include "bsp_usart.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
@@ -87,6 +89,12 @@ const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
 //const uint16_t ui_dynamic_crt_sendFreq = 100;
 
 uint16_t ui_cv_circle_size_debug = TopLeft_Cir_on_cv_DET_Pen_Size;
+
+//Ring buffer
+client_ui_uart_send_data_t ui_fifo_send;
+//串口 ring buffer - 数组 全局变量缓冲区
+uint8_t client_ui_send_fifo_buf[CLIENT_UI_TX_FIFO_BUF_LENGTH];
+uint8_t client_ui_send_usart6_buf[CLIENT_UI_UART_DMA_TX_BUF_LENGHT];
 
 //初始化 准备使用arm矩阵库去计算底盘指示器角度
 static void chassis_frame_UI_sensor_and_graph_init()
@@ -295,12 +303,24 @@ static void ui_error_code_update()
 	
 }
 
+void client_ui_tx_fifo_init()
+{
+	fifo_s_init(&ui_fifo_send.tx_fifo, client_ui_send_fifo_buf, CLIENT_UI_TX_FIFO_BUF_LENGTH);
+	ui_fifo_send.tx_dma_buf = &client_ui_send_usart6_buf[0];
+	ui_fifo_send.tx_dma_buf_size = sizeof(client_ui_send_usart6_buf);
+	ui_fifo_send.status = 0;
+	
+	vTaskDelay(50); //等一手
+	//usart6_tx_dma_init called in main
+}
+
 void client_ui_task(void const *pvParameters)
 {
 		//等待referee_usart_task中完成对MCU UART6的初始化
 		vTaskDelay(200);
 		ui_info.error_list_UI_local = get_error_list_point(); //list pointer init
-
+		client_ui_tx_fifo_init();
+	
 //		memset(&G1,0,sizeof(G1));
 //		memset(&G2,0,sizeof(G2));
 //		memset(&G3,0,sizeof(G3));
@@ -953,12 +973,75 @@ void ui_dynamic_crt_send_fuc()
 //				Delete_ReFresh(delLayer);
 
 
-/****************************************串口驱动映射************************************/
+/****************************************串口驱动映射 和 相关发送************************************/
+/* -------------------------------- USART SEND -------------------------------- */
+/**
+ * @brief  串口dma发送完成中断处理 Serial port dma sending completes interrupt isr
+ * for
+ * @param  
+ * @retval 
+ */
+void uart6_tx_dma_done_isr() //(struct __DMA_HandleTypeDef * hdma)
+{
+ 	ui_fifo_send.status = 0;	//DMA send in idle
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == &huart6)
+	{
+		uart6_tx_dma_done_isr();
+	}
+}
+
+/**
+ * @brief  循环从串口发送fifo读出数据，放置于dma发送缓存，并启动dma传输
+ *					The loop sends the fifo read-out data from the serial port, 
+ *					places it in the dma send cache, and initiates the dma transfer.
+ * DMA2 Stream 7 hdma->XferM1CpltCallback(hdma);
+ *  void (* XferCpltCallback)(struct __DMA_HandleTypeDef * hdma);  DMA transfer complete callback 
+ * @param  
+ * @retval 
+ */
+uint8_t uart1_poll_dma_tx()
+{
+	int size = 0;
+	
+	if (ui_fifo_send.status == 0x01)
+  {
+        return 1; //did not sent out the data
+  }
+//	size = fifo_read(&s_uart_dev[uart_id].tx_fifo, s_uart_dev[uart_id].dmatx_buf,
+//					 s_uart_dev[uart_id].dmatx_buf_size);
+	
+	size = fifo_s_gets(&ui_fifo_send.tx_fifo, (char *)ui_fifo_send.tx_dma_buf, ui_fifo_send.tx_dma_buf_size);
+	ui_fifo_send.debug_fifo_size = size; //update debug buff size cnt
+	
+	if (size != 0 && size > 0)
+	{	
+    ui_fifo_send.debug_UartTxCount += size; //update tx count
+		
+		/* DMA发送状态,必须在使能DMA传输前置位，否则有可能DMA已经传输并进入中断 */
+		ui_fifo_send.status = 0x01;
+		usart6_tx_dma_enable(ui_fifo_send.tx_dma_buf, size);
+		
+	}
+	return 0; //successfully enable send or no data to send
+}
+
+/**
+ * @brief  串口驱动映射 Serial drive overwrite
+ * overwrite to put msg in fifo, producer will call this function in their function
+ * @param  
+ * @retval 
+ */
 void UI_SendByte(unsigned char ch)
 {
+	fifo_s_puts(&ui_fifo_send.tx_fifo, (char*)&ch, 1);
+	
 //   USART_SendData(USART3,ch);
 //   while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);	
-	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
+//	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999); // 5-22-2023前 使用的 稳定 阻塞发送
 //	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
 //	{
 //		vTaskDelay(1);
@@ -971,6 +1054,22 @@ void UI_SendByte(unsigned char ch)
 //	}
 }
 
+//fifo 相关
+uint8_t get_uart6_ui_send_status()
+{
+	if (ui_fifo_send.status == 0x00)
+	{
+		return 0; //not busy
+	}
+	else if(ui_fifo_send.status == 0x01)
+	{
+		return 1; //busy
+	}
+	else
+	{
+		return 1; //busy
+	}
+}
 /********************************************删除操作*************************************
 **参数：Del_Operate  对应头文件删除操作
         Del_Layer    要删除的层 取值0-9

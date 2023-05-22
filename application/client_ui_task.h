@@ -16,6 +16,7 @@ frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,Õû°üÐ£Ñ
 #include "struct_typedef.h"
 #include "gimbal_task.h"
 #include "detect_task.h"
+#include "fifo.h"
 
 #pragma pack(1)                           //°´1×Ö½Ú¶ÔÆë
 
@@ -169,6 +170,13 @@ typedef struct
 } String_Data;                  //´òÓ¡×Ö·û´®Êý¾Ý
 
 #pragma pack()
+
+//Tx fifo Êý×é ´óÐ¡-this value is used for fifo - software fifo buffer
+#define CLIENT_UI_TX_FIFO_BUF_LENGTH 128
+
+//DMA buffer ´óÐ¡-this is the DMA buff length
+#define CLIENT_UI_UART_DMA_TX_BUF_LENGHT 128
+
 //UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
 typedef enum
 {
@@ -201,6 +209,22 @@ typedef enum
 		ammoOFF,
 		ammoOPEN
 }ui_ammoBox_sts_e;
+
+//UI fifo·¢ËÍ½á¹¹Ìå
+typedef struct
+{
+	//ring buffer »·ÐÎ»º³åÇøÄ£¿é
+	fifo_s_t tx_fifo; //embed send ring buffer
+	
+	uint8_t status;	//msg send sts
+	
+	uint8_t* tx_dma_buf; //ptr to send dma
+	uint16_t tx_dma_buf_size; //the size of the send dma array
+	
+	uint32_t debug_fifo_size;
+	uint32_t debug_UartTxCount;
+	
+} client_ui_uart_send_data_t;
 
 typedef struct
 {
@@ -306,7 +330,7 @@ typedef struct
 	uint8_t referee_error_flag; //0 no err; 1 at least one err
 	
 	const error_t *error_list_UI_local;
-	
+		
 } ui_info_t; //¶¯Ì¬µÄUIÐÅÏ¢ ½á¹¹Ìå ¶ÔÏó
 
 void UI_Delete(u8 Del_Operate,u8 Del_Layer);
@@ -323,7 +347,7 @@ int Char_ReFresh(String_Data string_Data);
 void Arc_Draw(Graph_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_StartAngle,u32 Graph_EndAngle,u32 Graph_Width,u32 Start_x,u32 Start_y,u32 x_Length,u32 y_Length);
 void ui_coord_update(void);
 void ui_dynamic_crt_send_fuc(void);
-
+uint8_t get_uart6_ui_send_status(void);
 //Ïß³Ì
 void client_ui_task(void const *pvParameters);
 
