@@ -15,6 +15,22 @@ UI坐标标定
 #define Center_X 960
 #define	Center_Y 540
 
+//中间 关键警告信息
+#define Robot_Warning_Msg_Font_Size 30
+#define Robot_Warning_Msg_X (Center_X-150)
+#define Robot_Warning_Msg_Y 840
+#define Robot_Warning_Msg_X_Offset 220
+#define Robot_Warning_Msg_Y_Offset 30
+
+#define Robot_Warning_Spin_X Robot_Warning_Msg_X
+#define Robot_Warning_Spin_Y Robot_Warning_Msg_Y
+
+#define Robot_Warning_Fric_X Robot_Warning_Spin_X+Robot_Warning_Msg_X_Offset
+#define Robot_Warning_Fric_Y Robot_Warning_Spin_Y
+//REF掉线了
+#define Robot_Warning_REF_X Robot_Warning_Fric_X
+#define Robot_Warning_REF_Y Robot_Warning_Fric_Y-Robot_Warning_Msg_Y_Offset
+
 //机器人 对位线 中间考下
 //左侧对位线
 #define Chassis_Drive_Pos_Line_Left_Start_X 548
@@ -111,6 +127,24 @@ UI坐标标定
 #define CAP_VOLT_X TopRight_String_Start_X //1440
 #define CAP_VOLT_Y (TopRight_String_Start_Y-TopRight_static_Y_offset) //810
 
+//2023 error dcode position
+#define ERROR_CODE_STR_X_OFFSET_FROM_FIX_STR 60
+//底盘
+#define CHASSIS_ERROR_CODE_X TopRight_String_Start_X
+#define CHASSIS_ERROR_CODE_Y TopRight_String_Start_Y
+//云台
+#define GIMBAL_ERROR_CODE_X TopRight_String_Start_X
+#define GIMBAL_ERROR_CODE_Y (CHASSIS_ERROR_CODE_Y-TopRight_static_Y_offset)
+//发射机构
+#define SHOOT_ERROR_CODE_X TopRight_String_Start_X
+#define SHOOT_ERROR_CODE_Y (GIMBAL_ERROR_CODE_Y-TopRight_static_Y_offset)
+//超级电容
+#define SUPERCAP_ERROR_CODE_X TopRight_String_Start_X
+#define SUPERCAP_ERROR_CODE_Y (SHOOT_ERROR_CODE_Y-TopRight_static_Y_offset)
+//裁判系统
+#define REFEREE_ERROR_CODE_X TopRight_String_Start_X
+#define REFEREE_ERROR_CODE_Y (SUPERCAP_ERROR_CODE_Y-TopRight_static_Y_offset)
+
 
 //中间 NOT右上角 传递动态信息的 字符串
 #define CHASSIS_INFO_X_offset 90 //40
@@ -203,9 +237,10 @@ UI坐标标定
 #define TopLeft_REC_on_cv_LOCK_END_X TopLeft_REC_on_cv_LOCK_START_X+UI_REC_LENGTH //535
 #define TopLeft_REC_on_cv_LOCK_END_Y TopLeft_REC_on_cv_LOCK_START_Y-UI_REC_WIDTH //815
 //CV指示球
-#define TopLeft_Cir_on_cv_DET_START_X 580
-#define TopLeft_Cir_on_cv_DET_START_Y 832
-#define TopLeft_Cir_on_cv_DET_radius 10
+#define TopLeft_Cir_on_cv_DET_START_X (Center_X - 100) //580
+#define TopLeft_Cir_on_cv_DET_START_Y (Center_Y + 50)
+#define TopLeft_Cir_on_cv_DET_radius 10 //10
+#define TopLeft_Cir_on_cv_DET_Pen_Size 16 //28 //10
 
 #define TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X TopLeft_REC_on_cv_OFF_START_X-8
 #define TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_Y TopLeft_REC_on_cv_OFF_START_Y+8

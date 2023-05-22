@@ -15,6 +15,7 @@ frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,Õû°üĞ£Ñ
 #include "user_lib.h"
 #include "struct_typedef.h"
 #include "gimbal_task.h"
+#include "detect_task.h"
 
 #pragma pack(1)                           //°´1×Ö½Ú¶ÔÆë
 
@@ -290,10 +291,21 @@ typedef struct
 	
 	//Error Code ¸÷ÖÖÉè±¸µÄ´íÎó ´úÂë
 	char chassis_error_code[8];
+	uint8_t chassis_error_flag; //0 no err; 1 at least one err
+	
 	char gimbal_error_code[8];
+	uint8_t gimbal_error_flag; //0 no err; 1 at least one err
+	
 	char shoot_error_code[8]; //feeding error code
+	uint8_t shoot_error_flag; //0 no err; 1 at least one err
+	
 	char superCap_error_code[8];
+	uint8_t superCap_error_flag; //0 no err; 1 at least one err
+	
 	char referee_error_code[8];
+	uint8_t referee_error_flag; //0 no err; 1 at least one err
+	
+	const error_t *error_list_UI_local;
 	
 } ui_info_t; //¶¯Ì¬µÄUIĞÅÏ¢ ½á¹¹Ìå ¶ÔÏó
 
