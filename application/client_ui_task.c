@@ -26,6 +26,7 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
+uint32_t client_ui_poll_dma_task_high_water;
 #endif
 
 //extern uint8_t turboMode;
@@ -411,7 +412,7 @@ void client_ui_task(void const *pvParameters)
 	  //UI 初始创建 + 发送结束
 		
 		//fifo发送使能
-		uart6_poll_dma_tx();
+//		uart6_poll_dma_tx();
 		
 		//底盘 对位线计算 初始化 左
 		ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
@@ -598,7 +599,7 @@ void client_ui_task(void const *pvParameters)
 				Char_ReFresh(strProjSLimSts);
 				Char_ReFresh(strDisSts);
 				//fifo发送使能
-				uart6_poll_dma_tx();
+//				uart6_poll_dma_tx();
 				
 				//动态的修改 发送
 				UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
@@ -628,7 +629,7 @@ void client_ui_task(void const *pvParameters)
 //				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
 				//fifo发送使能
-				uart6_poll_dma_tx();
+//				uart6_poll_dma_tx();
 				
 				//定时创建一次动态的--------------
 				if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
@@ -636,7 +637,7 @@ void client_ui_task(void const *pvParameters)
 						ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 						ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
 						//fifo发送使能
-						uart6_poll_dma_tx();
+//						uart6_poll_dma_tx();
 				}
 //				temp_time_check_RTOS = xTaskGetTickCount();
 //			 temp_time_check_HAL = HAL_GetTick();
@@ -657,28 +658,6 @@ void client_ui_task(void const *pvParameters)
 //				Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
 				
-				//强制性保证发送成功; enable uart tx DMA which is the DMA poll
-				if(uart6_poll_dma_tx())
-				{
-					ui_fifo_send.relative_send_fail_cnts++;
-				}
-				else
-				{
-					ui_fifo_send.relative_send_fail_cnts = 0;
-				}
-				
-				//if reach a certain number, enforce sending, ensure fifo will not be used out
-				if(ui_fifo_send.relative_send_fail_cnts >= 10)
-				{
-					while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-					{
-//						vTaskDelay(1);
-						uart6_poll_dma_tx();
-					}
-					
-//					uart6_poll_dma_tx();
-					ui_fifo_send.relative_send_fail_cnts = 0;
-				}
 				vTaskDelay(100); //100
 //				vTaskDelay(10); //100
 				
@@ -1871,5 +1850,46 @@ uint16_t Get_CRC16_Check_Sum_UI(uint8_t *pchMessage,uint32_t dwLength,uint16_t w
 	return wCRC; 
 }
 
-
+/*
+尝试专门使用一个线程完成 DMA发送, 一直盯着DMA
+*/
+void client_ui_poll_dma_task(void const *pvParameters)
+{
+	vTaskDelay(200);
+	
+	while(1)
+	{
+			//fifo发送使能
+			uart6_poll_dma_tx();
+			
+//			//强制性保证发送成功; enable uart tx DMA which is the DMA poll
+//			if(uart6_poll_dma_tx())
+//			{
+//				ui_fifo_send.relative_send_fail_cnts++;
+//			}
+//			else
+//			{
+//				ui_fifo_send.relative_send_fail_cnts = 0;
+//			}
+//			
+//			//if reach a certain number, enforce sending, ensure fifo will not be used out
+//			if(ui_fifo_send.relative_send_fail_cnts >= 10)
+//			{
+//				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+//				{
+//					vTaskDelay(1);
+//					uart6_poll_dma_tx();
+//				}
+//				
+//		//					uart6_poll_dma_tx();
+//				ui_fifo_send.relative_send_fail_cnts = 0;
+//			}
+			
+			vTaskDelay(5);
+	
+#if INCLUDE_uxTaskGetStackHighWaterMark
+      client_ui_poll_dma_task_high_water = uxTaskGetStackHighWaterMark(NULL);
+#endif
+	}
+}
 
