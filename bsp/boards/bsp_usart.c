@@ -1,6 +1,7 @@
 #include "bsp_usart.h"
 #include "main.h"
 #include "miniPC_comm_task.h"
+#include "client_ui_task.h"
 
 extern UART_HandleTypeDef huart1;
 extern DMA_HandleTypeDef hdma_usart1_tx;
@@ -9,8 +10,24 @@ extern UART_HandleTypeDef huart6;
 extern DMA_HandleTypeDef hdma_usart6_rx;
 extern DMA_HandleTypeDef hdma_usart6_tx;
 
+/**
+ * @brief 串口Uart Tx完成 call back函数, 有HAL库调用
+ * @param  
+ * @retval 
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == &huart1)
+	{
+		uart1_tx_dma_done_isr();
+	}
+	
+	if(huart == &huart6)
+	{
+		uart6_tx_dma_done_isr();
+	}
+}
 
-//PR test 2021/3/13
 /*
 USART 1 - miniPC comm
 USART 6 - referee */
@@ -265,132 +282,132 @@ void usart6_tx_dma_enable(uint8_t *data, uint16_t len)
 		HAL_UART_Transmit_DMA(&huart6, data, len);
 }
 
-/* -------------------------------------------------- New DMA -------------------------------------------------- */
-/*
-SZL 1-20-2023 Board support package for DMA uart send
+///* -------------------------------------------------- New DMA -------------------------------------------------- */
+///*
+//SZL 1-20-2023 Board support package for DMA uart send
 
-Draft: HAL_DMA_STATE_READY
+//Draft: HAL_DMA_STATE_READY
 
-Note: the order to call and use these functions:
-usart1_init(...)
-usart1_tx_dual_buff_dma_init_no_enable(...)
-usart1_tx_dma_dual_buff_enable(....)
+//Note: the order to call and use these functions:
+//usart1_init(...)
+//usart1_tx_dual_buff_dma_init_no_enable(...)
+//usart1_tx_dma_dual_buff_enable(....)
 
-更具研究 双DMA发送方式并不可取 以下函数均未使用
+//更具研究 双DMA发送方式并不可取 以下函数均未使用
 
-*/
+//*/
 
-/*
-SZL 1-21-2023
-Add dual buffer UART Tx DMA
-Note that user need to call this function after regular usart1_init(...)
-*/
-void usart1_tx_dual_buff_dma_init_no_enable(uint8_t *tx1_buf, uint8_t *tx2_buf, uint16_t dma_tx_buf_num)
-{
-	  //enable the DMA transfer for the receiver and tramsmit request
-    //使能DMA串口接收和发送
-    SET_BIT(huart1.Instance->CR3, USART_CR3_DMAR);
-    SET_BIT(huart1.Instance->CR3, USART_CR3_DMAT);
+///*
+//SZL 1-21-2023
+//Add dual buffer UART Tx DMA
+//Note that user need to call this function after regular usart1_init(...)
+//*/
+//void usart1_tx_dual_buff_dma_init_no_enable(uint8_t *tx1_buf, uint8_t *tx2_buf, uint16_t dma_tx_buf_num)
+//{
+//	  //enable the DMA transfer for the receiver and tramsmit request
+//    //使能DMA串口接收和发送
+//    SET_BIT(huart1.Instance->CR3, USART_CR3_DMAR);
+//    SET_BIT(huart1.Instance->CR3, USART_CR3_DMAT);
 
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart1_tx);
+//    //disable DMA
+//    //失效DMA
+//    __HAL_DMA_DISABLE(&hdma_usart1_tx);
 
-    while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
-    {
-        __HAL_DMA_DISABLE(&hdma_usart1_tx);
-    }
-		//1-21-23 add
-		__HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_LISR_TCIF2);
-		
-    hdma_usart1_tx.Instance->PAR = (uint32_t) & (USART1->DR);
-		//memory buffer 1
-    hdma_usart1_tx.Instance->M0AR = (uint32_t)(tx1_buf); //(NULL);
-		//memory buffer 2
-		hdma_usart1_tx.Instance->M1AR = (uint32_t)(tx2_buf);
-		
-//    hdma_usart1_tx.Instance->NDTR = 0;
-		//data length
-    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, dma_tx_buf_num);
-		
-		//enable double memory buffer
-    SET_BIT(hdma_usart1_rx.Instance->CR, DMA_SxCR_DBM);
-}
+//    while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
+//    {
+//        __HAL_DMA_DISABLE(&hdma_usart1_tx);
+//    }
+//		//1-21-23 add
+//		__HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_LISR_TCIF2);
+//		
+//    hdma_usart1_tx.Instance->PAR = (uint32_t) & (USART1->DR);
+//		//memory buffer 1
+//    hdma_usart1_tx.Instance->M0AR = (uint32_t)(tx1_buf); //(NULL);
+//		//memory buffer 2
+//		hdma_usart1_tx.Instance->M1AR = (uint32_t)(tx2_buf);
+//		
+////    hdma_usart1_tx.Instance->NDTR = 0;
+//		//data length
+//    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, dma_tx_buf_num);
+//		
+//		//enable double memory buffer
+//    SET_BIT(hdma_usart1_rx.Instance->CR, DMA_SxCR_DBM);
+//}
 
-/*
-Enable send with para. memory address and size
-*/
-void usart1_tx_dual_buff_dma_enable(uint8_t *tx1_buf, uint8_t *tx2_buf, uint16_t dma_tx_buf_num) //(uint8_t *data, uint16_t len)
-{
-    //disable DMA
-    //失效DMA
-    __HAL_DMA_DISABLE(&hdma_usart1_tx);
+///*
+//Enable send with para. memory address and size
+//*/
+//void usart1_tx_dual_buff_dma_enable(uint8_t *tx1_buf, uint8_t *tx2_buf, uint16_t dma_tx_buf_num) //(uint8_t *data, uint16_t len)
+//{
+//    //disable DMA
+//    //失效DMA
+//    __HAL_DMA_DISABLE(&hdma_usart1_tx);
 
-    while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
-    {
-        __HAL_DMA_DISABLE(&hdma_usart1_tx);
-    }
+//    while(hdma_usart1_tx.Instance->CR & DMA_SxCR_EN)
+//    {
+//        __HAL_DMA_DISABLE(&hdma_usart1_tx);
+//    }
 
-    __HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_HISR_TCIF7);
+//    __HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_HISR_TCIF7);
 
-    //hdma_usart1_tx.Instance->M0AR = (uint32_t)(data);
-		//memory buffer 1
-    hdma_usart1_tx.Instance->M0AR = (uint32_t)(tx1_buf); //(NULL);
-		//memory buffer 2
-		hdma_usart1_tx.Instance->M1AR = (uint32_t)(tx2_buf);
-		
-    //__HAL_DMA_SET_COUNTER(&hdma_usart1_tx, len);
-		//data length
-    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, dma_tx_buf_num);
-		
-		//Enable double memory buffer
-    SET_BIT(hdma_usart1_rx.Instance->CR, DMA_SxCR_DBM);
+//    //hdma_usart1_tx.Instance->M0AR = (uint32_t)(data);
+//		//memory buffer 1
+//    hdma_usart1_tx.Instance->M0AR = (uint32_t)(tx1_buf); //(NULL);
+//		//memory buffer 2
+//		hdma_usart1_tx.Instance->M1AR = (uint32_t)(tx2_buf);
+//		
+//    //__HAL_DMA_SET_COUNTER(&hdma_usart1_tx, len);
+//		//data length
+//    __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, dma_tx_buf_num);
+//		
+//		//Enable double memory buffer
+//    SET_BIT(hdma_usart1_rx.Instance->CR, DMA_SxCR_DBM);
 
-    __HAL_DMA_ENABLE(&hdma_usart1_tx);
-		//是否需要等待 DMA数据流有效
-}
+//    __HAL_DMA_ENABLE(&hdma_usart1_tx);
+//		//是否需要等待 DMA数据流有效
+//}
 
-/*
-Send function, to send a fixed length of data
-This function will find the avaliable DMA, and write data to that dma buff
-*/
-void usart1_tx_dual_buff_dma_cmd_send(uint8_t *tx_buf, uint16_t len)
-{
-	
-}
+///*
+//Send function, to send a fixed length of data
+//This function will find the avaliable DMA, and write data to that dma buff
+//*/
+//void usart1_tx_dual_buff_dma_cmd_send(uint8_t *tx_buf, uint16_t len)
+//{
+//	
+//}
 
 /* -------- Other Support Functions -------- */
-/* This function to get the usart1 dma states
+///* This function to get the usart1 dma states
 
-in file: stm32f4xx.h
-typedef enum 
-{
-  RESET = 0U, 
-  SET = !RESET
-} FlagStatus, ITStatus;
+//in file: stm32f4xx.h
+//typedef enum 
+//{
+//  RESET = 0U, 
+//  SET = !RESET
+//} FlagStatus, ITStatus;
 
-usart1_get_tx_dma_tc_state() = 0RESET trans not completed; = 1SET completed */
-FlagStatus usart1_get_tx_dma_tc_state(void)
-{
-		//HAL_DMA_GetState(&hdma_usart1_rx) == HAL_DMA_STATE_READY;
-	  if(__HAL_DMA_GET_FLAG(&hdma_usart1_tx, DMA_FLAG_TCIF3_7) == SET)
-		{
-			__HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_FLAG_TCIF3_7);
-			return SET; //1;
-		}
-		else
-		{
-			return RESET; //0;
-		}
-	
-//    if(DMA_GetFlagStatus(DMA1_FLAG_TC4) == SET)
-//    {
-//        DMA_ClearFlag(DMA1_FLAG_TC4);
-//        
-//        return true;
-//    }
-//    else
-//    {
-//        return false;
-//    }
-} 
+//usart1_get_tx_dma_tc_state() = 0RESET trans not completed; = 1SET completed */
+//FlagStatus usart1_get_tx_dma_tc_state(void)
+//{
+//		//HAL_DMA_GetState(&hdma_usart1_rx) == HAL_DMA_STATE_READY;
+//	  if(__HAL_DMA_GET_FLAG(&hdma_usart1_tx, DMA_FLAG_TCIF3_7) == SET)
+//		{
+//			__HAL_DMA_CLEAR_FLAG(&hdma_usart1_tx, DMA_FLAG_TCIF3_7);
+//			return SET; //1;
+//		}
+//		else
+//		{
+//			return RESET; //0;
+//		}
+//	
+////    if(DMA_GetFlagStatus(DMA1_FLAG_TC4) == SET)
+////    {
+////        DMA_ClearFlag(DMA1_FLAG_TC4);
+////        
+////        return true;
+////    }
+////    else
+////    {
+////        return false;
+////    }
+//} 

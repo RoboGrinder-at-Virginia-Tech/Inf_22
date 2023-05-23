@@ -362,13 +362,13 @@ void uart1_tx_dma_done_isr() //(struct __DMA_HandleTypeDef * hdma)
  	embed_send.status = 0;	//DMA send in idle
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart == &huart1)
-	{
-		uart1_tx_dma_done_isr();
-	}
-}
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	if(huart == &huart1)
+//	{
+//		uart1_tx_dma_done_isr();
+//	}
+//}
 
 /**
  * @brief  循环从串口发送fifo读出数据，放置于dma发送缓存，并启动dma传输

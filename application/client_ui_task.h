@@ -224,6 +224,9 @@ typedef struct
 	uint32_t debug_fifo_size;
 	uint32_t debug_UartTxCount;
 	
+	//the # of time that send failed
+	uint32_t relative_send_fail_cnts; //relative send counts, will use this to enforce dma tx poll
+	
 } client_ui_uart_send_data_t;
 
 typedef struct
@@ -347,6 +350,9 @@ int Char_ReFresh(String_Data string_Data);
 void Arc_Draw(Graph_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_StartAngle,u32 Graph_EndAngle,u32 Graph_Width,u32 Start_x,u32 Start_y,u32 x_Length,u32 y_Length);
 void ui_coord_update(void);
 void ui_dynamic_crt_send_fuc(void);
+
+void uart6_tx_dma_done_isr(void);
+uint8_t uart6_poll_dma_tx(void);
 uint8_t get_uart6_ui_send_status(void);
 //Ïß³Ì
 void client_ui_task(void const *pvParameters);
