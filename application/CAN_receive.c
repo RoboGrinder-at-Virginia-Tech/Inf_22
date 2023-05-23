@@ -503,7 +503,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 						  sCap23_info.EBPct = (sCap23_info.Vbank_f * sCap23_info.Vbank_f)/(CHARACTERISTIC_VOLTAGE_23_CAP * CHARACTERISTIC_VOLTAGE_23_CAP)*100.0f;
 							
 							//计算相对最低电压的百分比
-							superCap_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_23_CAP);
+							sCap23_info.relative_EBpct = cal_capE_relative_pct(sCap23_info.Vbank_f, MIN_VOLTAGE_23_CAP, CHARACTERISTIC_VOLTAGE_23_CAP);
 							
 							detect_hook(SCAP_23_TOR);
 							break;

@@ -826,7 +826,7 @@ void ui_coord_update()
 
 	 //开始整数字相关的东西 即插即用的超级电容控制板 判断
 //	 ui_info.cap_pct = get_current_cap_voltage();
-	 ui_info.cap_volt = get_current_cap_pct();
+	 ui_info.cap_volt = get_current_cap_voltage();
 	 ui_info.cap_relative_pct = get_current_capE_relative_pct();
 	 ui_info.cap_pct = ui_info.cap_relative_pct;
 	 
