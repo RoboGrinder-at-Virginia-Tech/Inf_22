@@ -564,41 +564,41 @@ fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
 
 fp32 get_current_capE_relative_pct()
 {
-		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
-//		//¼´²å¼´ÓÃµÄ³¬¼¶µçÈÝ¿ØÖÆ°å ÅÐ¶Ï
-//		if(current_superCap == SuperCap_ID)
-//		{
-//			 if(toe_is_error(SUPERCAP_TOE))
-//			 {
-//				 return 0.0f;
-//			 }
-//			 else
-//			 {
-//				 return superCap_info.relative_EBpct;
-//			 }
-//		 }
-//		 else if(current_superCap == sCap23_ID)
-//		 {
-//			 if(toe_is_error(SCAP_23_TOR))
-//			 {
-//				 return 0.0f;
-//			 }
-//			 else
-//			 {
-//				 return sCap23_info.relative_EBpct;
-//			 }
-//		 }
-//		 else
-//		 {
-//			 if(toe_is_error(WULIE_CAP_TOE))
-//			 {
-//				 return 0.0f;
-//			 }
-//			 else
-//			 {
-//				 return wulie_Cap_info.relative_EBpct;
-//			 }
-//		 }
+//		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
+		//¼´²å¼´ÓÃµÄ³¬¼¶µçÈÝ¿ØÖÆ°å ÅÐ¶Ï
+		if(current_superCap == SuperCap_ID)
+		{
+			 if(toe_is_error(SUPERCAP_TOE))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return superCap_info.relative_EBpct;
+			 }
+		 }
+		 else if(current_superCap == sCap23_ID)
+		 {
+			 if(toe_is_error(SCAP_23_TOR))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return sCap23_info.relative_EBpct;
+			 }
+		 }
+		 else
+		 {
+			 if(toe_is_error(WULIE_CAP_TOE))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return wulie_Cap_info.relative_EBpct;
+			 }
+		 }
 }
 
 supercap_can_msg_id_e get_current_superCap()
