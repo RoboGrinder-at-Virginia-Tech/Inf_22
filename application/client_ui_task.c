@@ -410,7 +410,8 @@ void client_ui_task(void const *pvParameters)
 		Char_ReFresh(strRef);
 	  //UI 初始创建 + 发送结束
 		
-		uart6_poll_dma_tx(); //fifo发送使能
+		//fifo发送使能
+		uart6_poll_dma_tx();
 		
 		//底盘 对位线计算 初始化 左
 		ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
@@ -585,9 +586,6 @@ void client_ui_task(void const *pvParameters)
 				UI_ReFresh(5, left8to7, left7to5,left5to4,left4to2, right8to7);
 				UI_ReFresh(5,right5to4,right4to2 );
 				UI_ReFresh(5, right7to5);
-				
-				uart6_poll_dma_tx(); //fifo发送使能
-				
 				//Right
 				//Char_ReFresh(strCapVolt);
 				//Char_ReFresh(strCapPct);	
@@ -599,8 +597,8 @@ void client_ui_task(void const *pvParameters)
 				Char_ReFresh(strABoxSts);
 				Char_ReFresh(strProjSLimSts);
 				Char_ReFresh(strDisSts);
-				
-				uart6_poll_dma_tx(); //fifo发送使能
+				//fifo发送使能
+				uart6_poll_dma_tx();
 				
 				//动态的修改 发送
 				UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
@@ -613,9 +611,6 @@ void client_ui_task(void const *pvParameters)
 				UI_ReFresh(2, fProjSLim, fDis);
 				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
 				//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
-				
-				uart6_poll_dma_tx(); //fifo发送使能
-				
 				UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
 				Char_ReFresh(strVarChassis);
 				Char_ReFresh(strVarGimbal); 
@@ -632,16 +627,16 @@ void client_ui_task(void const *pvParameters)
 //				Circle_Draw(&turretCir, "026", UI_Graph_Change, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
 //				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
-				
-				uart6_poll_dma_tx(); //fifo发送使能
+				//fifo发送使能
+				uart6_poll_dma_tx();
 				
 				//定时创建一次动态的--------------
 				if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
 				{
 						ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 						ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
-						
-						uart6_poll_dma_tx(); //fifo发送使能
+						//fifo发送使能
+						uart6_poll_dma_tx();
 				}
 //				temp_time_check_RTOS = xTaskGetTickCount();
 //			 temp_time_check_HAL = HAL_GetTick();
@@ -1558,7 +1553,6 @@ int UI_ReFresh(int cnt,...)
    va_end(ap);
    
    UI_Seq++;                                                         //包序号+1
-	 uart6_poll_dma_tx(); //fifo发送使能
    return 0;
 }
 
@@ -1675,7 +1669,6 @@ int Char_ReFresh(String_Data string_Data)
    
    
    UI_Seq++;                                                         //包序号+1
-	 uart6_poll_dma_tx(); //fifo发送使能
    return 0;
 }
 
@@ -1786,7 +1779,6 @@ int Delete_ReFresh(UI_Data_Delete delete_Data)
    
    
    UI_Seq++;                                                         //包序号+1
-	 uart6_poll_dma_tx(); //fifo发送使能
    return 0;
 }
 
