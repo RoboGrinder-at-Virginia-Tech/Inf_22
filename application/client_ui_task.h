@@ -172,10 +172,10 @@ typedef struct
 #pragma pack()
 
 //Tx fifo 数组 大小-this value is used for fifo - software fifo buffer
-#define CLIENT_UI_TX_FIFO_BUF_LENGTH 2048 //4069
+#define CLIENT_UI_TX_FIFO_BUF_LENGTH 4069 //2048 //4069
 
 //DMA buffer 大小-this is the DMA buff length
-#define CLIENT_UI_UART_DMA_TX_BUF_LENGHT 512 //4069
+#define CLIENT_UI_UART_DMA_TX_BUF_LENGHT 2048 //4069
 
 //UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
 typedef enum

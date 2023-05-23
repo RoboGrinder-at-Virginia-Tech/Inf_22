@@ -85,8 +85,8 @@ uint32_t client_ui_count_ref = 0;
 uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
-const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
-//const uint16_t ui_dynamic_crt_sendFreq = 100;
+//const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
+const uint16_t ui_dynamic_crt_sendFreq = 1000;
 
 uint16_t ui_cv_circle_size_debug = TopLeft_Cir_on_cv_DET_Pen_Size;
 
@@ -673,19 +673,19 @@ void client_ui_task(void const *pvParameters)
 				}
 				
 				//if reach a certain number, enforce sending, ensure fifo will not be used out
-				if(ui_fifo_send.relative_send_fail_cnts >= 1)
+				if(ui_fifo_send.relative_send_fail_cnts >= 10)
 				{
 					while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
 					{
-						vTaskDelay(1);
+//						vTaskDelay(1);
 						uart6_poll_dma_tx();
 					}
 					
-					uart6_poll_dma_tx();
+//					uart6_poll_dma_tx();
 					ui_fifo_send.relative_send_fail_cnts = 0;
 				}
-//				vTaskDelay(100); //100
-				vTaskDelay(10); //100
+				vTaskDelay(100); //100
+//				vTaskDelay(10); //100
 				
 				//其它debug使用的不重要变量
 				client_ui_count_ref++;
