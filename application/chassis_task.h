@@ -126,7 +126,7 @@ SZL 5-21-2022 重新算
 #define SLOW_SPEED 1.7f	//5-24-2022之前 1.4f //低速 模式速度
 #define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
 #define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
-#define SPIN_SPEED 4.8f//3.8f//3.3f//5-24-2022之前3.6f//6.0f //小陀螺速度
+#define SPIN_SPEED 3.0f //4.8f//3.8f//3.3f//5-24-2022之前3.6f//6.0f //小陀螺速度
 /*
 原始的是: #define SPIN_SPEED 6.0f //小陀螺速度
 //PR 底盘线性油门
