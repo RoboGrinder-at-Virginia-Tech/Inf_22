@@ -297,7 +297,7 @@ static void calc_gimbal_cali(const gimbal_step_cali_t *gimbal_cali, uint16_t *ya
 static void J_scope_gimbal_test(void);
 #endif
 
-extern miniPC_info_t miniPC_info;
+//extern miniPC_info_t miniPC_info; //3-26-2023 update never use this again
 
 
 //gimbal control data
@@ -638,7 +638,7 @@ const gimbal_motor_t *get_pitch_motor_point(void)
 /** PR test 2021/4/3, ‘∆Ã®÷∏’Î
 *
 */
-gimbal_control_t *get_gimbal_pointer(void)
+const gimbal_control_t *get_gimbal_pointer(void)
  {    
 	   gimbal_control_t * sp= &gimbal_control;
      return sp;

@@ -32,6 +32,8 @@
 #include "pid.h"
 #include "referee_usart_task.h"
 
+#include "miniPC_msg.h"
+
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
 #define shoot_fric2_on(pwm) fric2_on((pwm)) //摩擦轮2pwm宏定义
 #define shoot_fric_off()    fric_off()      //关闭两个摩擦轮
@@ -42,7 +44,7 @@
 #define BUTTEN_TRIG_PIN HAL_GPIO_ReadPin(BUTTON_TRIG_GPIO_Port, BUTTON_TRIG_Pin)
 
 
-extern miniPC_info_t miniPC_info;
+//extern miniPC_info_t miniPC_info; //3-26-2023 update never use this again
 
 /**
   * @brief          射击状态机设置，遥控器上拨一次开启，再上拨关闭，下拨1次发射1颗，一直处在下，则持续发射，用于3min准备时间清理子弹
@@ -214,6 +216,7 @@ int16_t shoot_control_loop(void)
 		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
+	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
         //设置拨弹轮的速度
@@ -277,11 +280,16 @@ int16_t shoot_control_loop(void)
         shoot_laser_on(); //激光开启
 			
 				
-				//6-17增加串级PID----
+				//6-17未来可能增加串级PID----
 				
         //计算拨弹轮电机PID
         PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
-        shoot_control.given_current = (int16_t)(shoot_control.trigger_motor_pid.out);
+        
+#if TRIG_MOTOR_TURN
+				shoot_control.given_current = -(int16_t)(shoot_control.trigger_motor_pid.out);
+#else
+				shoot_control.given_current = (int16_t)(shoot_control.trigger_motor_pid.out);
+#endif
         if(shoot_control.shoot_mode < SHOOT_READY_BULLET)
         {
             shoot_control.given_current = 0;
@@ -464,21 +472,21 @@ static void shoot_set_mode(void)
 		//或 即按键只能开启aim
 		if(shoot_control.key_X_cnt == 0)
 		{
-			miniPC_info.autoAimFlag = 0;
+			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
 		}
 		else if(shoot_control.key_X_cnt == 1) 
 		{
-			miniPC_info.autoAimFlag = 1;
+			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
 		}
 		else if(shoot_control.key_X_cnt == 2)
 		{
-//			miniPC_info.autoAimFlag = 2;
-			miniPC_info.autoAimFlag = 1;
+			//miniPC_info.autoAimFlag = 2;
+			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
 		}
 		
 		if(shoot_control.press_r_time == PRESS_LONG_TIME_R || shoot_control.press_key_V_time == PRESS_LONG_TIME_V)
 		{
-			miniPC_info.autoAimFlag = 2;
+			set_autoAimFlag(2); //miniPC_info.autoAimFlag = 2;
 			//shoot_control.key_X_cnt = 2;
 		}
 //		else
@@ -489,21 +497,24 @@ static void shoot_set_mode(void)
 		
 		if(shoot_control.shoot_rc->key.v & KEY_PRESSED_OFFSET_C) // press C to turn off auto aim
 		{
-			miniPC_info.autoAimFlag = 0;
+			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;
 		}
-
 		//X按键计数以及相关检测结束
 		
+		//10-某一天-2022修改
 		//连续发弹判断; 发射机构断电时, shoot_mode状态机不会被置为发射相关状态
     if(shoot_control.shoot_mode > SHOOT_READY_FRIC && shoot_control.trigger_motor_17mm_is_online)
     {
         //鼠标长按一直进入射击状态 保持连发
 				//(shoot_control.user_fire_ctrl==user_SHOOT_AUTO && shoot_control.press_l)
+			  
+			  //重要 TODO: 添加 敌我识别
 			
 				if(shoot_control.user_fire_ctrl==user_SHOOT_SEMI)
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) )|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -514,7 +525,8 @@ static void shoot_set_mode(void)
 				}
 				else if(shoot_control.user_fire_ctrl==user_SHOOT_AUTO)
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.press_l ))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -525,7 +537,8 @@ static void shoot_set_mode(void)
 				}
 				else
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -571,10 +584,17 @@ static void shoot_feedback_update(void)
     static const fp32 fliter_num[3] = {1.725709860247969f, -0.75594777109163436f, 0.030237910843665373f};
 
     //二阶低通滤波
+#if TRIG_MOTOR_TURN
     speed_fliter_1 = speed_fliter_2;
+    speed_fliter_2 = speed_fliter_3;
+    speed_fliter_3 = speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] - (shoot_control.shoot_motor_measure->speed_rpm * MOTOR_RPM_TO_SPEED) * fliter_num[2];
+    shoot_control.speed = speed_fliter_3;
+#else
+		speed_fliter_1 = speed_fliter_2;
     speed_fliter_2 = speed_fliter_3;
     speed_fliter_3 = speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] + (shoot_control.shoot_motor_measure->speed_rpm * MOTOR_RPM_TO_SPEED) * fliter_num[2];
     shoot_control.speed = speed_fliter_3;
+#endif
 		
 		//电机是否离线检测
 		/*只扫描一次按键这个思路*/
@@ -616,9 +636,13 @@ static void shoot_feedback_update(void)
 		
 		//添加了码盘值积分后 对拨弹盘angle的计算 SZL 5-19
 		//之前的转了几圈 + 当前的编码器值 将其转换为弧度制 马盘值里程计
+#if TRIG_MOTOR_TURN
+		shoot_control.angle = -(shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->delta_ecd) * MOTOR_ECD_TO_ANGLE;
+#else
 		shoot_control.angle = (shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->delta_ecd) * MOTOR_ECD_TO_ANGLE;
 		//shoot_control.angle = (shoot_control.shoot_motor_measure->total_ecd + shoot_control.shoot_motor_measure->ecd) * MOTOR_ECD_TO_ANGLE;
-		
+#endif
+
 		//其实可以把所有按键相关状态机放到这里 从set mode中移到这里面 虽然会有耦合
 		
 		//按键V记时, V只是记录了上一次状态, 但是没有计数
@@ -756,3 +780,24 @@ static void shoot_bullet_control_17mm(void)
    
 }
 
+const shoot_control_t* get_robot_shoot_control()
+{
+	return &shoot_control;
+}
+
+/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
+shoot_mode_e get_shoot_mode()
+{
+	return shoot_control.shoot_mode;
+}
+
+user_fire_ctrl_e get_user_fire_ctrl()
+{
+	return shoot_control.user_fire_ctrl;
+}
+
+uint8_t get_ammoBox_sts()
+{
+	return shoot_control.ammoBox_sts;
+}
+/* ---------- getter method end ---------- */

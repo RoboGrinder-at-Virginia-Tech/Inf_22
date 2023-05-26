@@ -1,4 +1,3 @@
-
 /**
   ****************************(C) COPYRIGHT 2019 DJI****************************
   * @file       chassis.c/h
@@ -127,7 +126,7 @@ SZL 5-21-2022 重新算
 #define SLOW_SPEED 1.7f	//5-24-2022之前 1.4f //低速 模式速度
 #define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
 #define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
-#define SPIN_SPEED 4.8f//3.8f//3.3f//5-24-2022之前3.6f//6.0f //小陀螺速度
+#define SPIN_SPEED 5.0f //3.0f //4.8f//3.8f//3.3f//5-24-2022之前3.6f//6.0f //小陀螺速度
 /*
 原始的是: #define SPIN_SPEED 6.0f //小陀螺速度
 //PR 底盘线性油门
@@ -159,8 +158,8 @@ SZL 5-21-2022 重新算
 //chassis motor speed PID
 //底盘电机速度环PID
 #define M3505_MOTOR_SPEED_PID_KP 9000.0f
-#define M3505_MOTOR_SPEED_PID_KI 10.0f
-#define M3505_MOTOR_SPEED_PID_KD 0.1f
+#define M3505_MOTOR_SPEED_PID_KI 0.0f //10.0f //3.0f //10.0f
+#define M3505_MOTOR_SPEED_PID_KD 0.0f //0.1f
 #define M3505_MOTOR_SPEED_PID_MAX_OUT MAX_MOTOR_CAN_CURRENT
 #define M3505_MOTOR_SPEED_PID_MAX_IOUT 2000.0f
 
@@ -184,6 +183,9 @@ typedef enum
 {
   CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW,   //chassis will follow yaw gimbal motor relative angle.底盘会跟随云台相对角度
   CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW,  //chassis will have yaw angle(chassis_yaw) close-looped control.底盘有底盘角度控制闭环
+	
+	CHASSIS_VECTOR_SPIN, // chassis spining function. 底盘小陀螺 不跟随云台朝向
+	
   CHASSIS_VECTOR_NO_FOLLOW_YAW,       //chassis will have rotation speed control. 底盘有旋转速度控制
   CHASSIS_VECTOR_RAW,                 //control-current will be sent to CAN bus derectly.
 
@@ -263,4 +265,8 @@ extern void chassis_task(void const *pvParameters);
   */
 extern void chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set, chassis_move_t *chassis_move_rc_to_vector);
 
+/*SZL 1-25 add get chassis_move pointer*/
+extern const chassis_move_t *get_chassis_pointer(void);
+
+extern uint8_t get_turboMode(void);
 #endif

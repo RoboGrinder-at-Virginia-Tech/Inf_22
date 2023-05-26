@@ -9,7 +9,8 @@
   *
   @verbatim
   ==============================================================================
-
+	Original file: C:\Users\Shen\Documents\GitHub\Development-Board-C-Examples\20.standard_robot\application
+	or: https://github.com/RoboMaster/Development-Board-C-Examples/blob/master/20.standard_robot/application/oled_task.c
   ==============================================================================
   @endverbatim
   ****************************(C) COPYRIGHT 2019 DJI****************************
@@ -21,6 +22,8 @@
 #include "cmsis_os.h"
 #include "detect_task.h"
 #include "voltage_task.h"
+
+#include "prog_msg_utility.h"
 
 #define OLED_CONTROL_TIME 10
 #define REFRESH_RATE    10
@@ -123,6 +126,10 @@ void oled_task(void const * argument)
 								//Fric R
 								OLED_show_string(64, 0, (uint8_t*)"FR");
 								OLED_show_graphic(64+12, 0, &check_box[error_list_local[SHOOT_FRIC_R_TOE].error_exist]);
+								
+								//szl 3-28 add 1s tick time display
+								OLED_show_string(96, 0, (uint8_t*)"T");
+								OLED_show_string(96+6, 0, (uint8_t*)util_1s_time_cnt_toString());
 								
                 for(i = CHASSIS_MOTOR1_TOE; i < TRIGGER_MOTOR_TOE + 1; i++)
                 {

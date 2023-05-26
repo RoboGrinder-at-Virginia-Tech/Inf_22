@@ -66,13 +66,14 @@ extern void userCallback_CAN2_FIFO1_IT(CAN_HandleTypeDef *hcan);
 
 extern void xPortSysTickHandler(void);
 
-extern void referee_USART1_IRQ_handler(void);
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
+extern TIM_HandleTypeDef htim8;
+extern TIM_HandleTypeDef htim14;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart6_rx;
@@ -83,7 +84,7 @@ extern UART_HandleTypeDef huart1;
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles Non maskable interrupt.
@@ -276,13 +277,28 @@ void EXTI9_5_IRQHandler(void)
 //void USART1_IRQHandler(void)
 //{
 //  /* USER CODE BEGIN USART1_IRQn 0 */
-//	
-//	/* USER CODE END USART1_IRQn 0 */
-//	HAL_UART_IRQHandler(&huart1);
-//	/* USER CODE BEGIN USART1_IRQn 1 */
+////	
+//  /* USER CODE END USART1_IRQn 0 */
+//  HAL_UART_IRQHandler(&huart1);
+//  /* USER CODE BEGIN USART1_IRQn 1 */
 
 //  /* USER CODE END USART1_IRQn 1 */
 //}
+
+/**
+  * @brief This function handles TIM8 trigger and commutation interrupts and TIM14 global interrupt.
+  */
+void TIM8_TRG_COM_TIM14_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 0 */
+
+  /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim8);
+  HAL_TIM_IRQHandler(&htim14);
+  /* USER CODE BEGIN TIM8_TRG_COM_TIM14_IRQn 1 */
+
+  /* USER CODE END TIM8_TRG_COM_TIM14_IRQn 1 */
+}
 
 /**
   * @brief This function handles DMA2 stream1 global interrupt.
@@ -360,11 +376,11 @@ void DMA2_Stream6_IRQHandler(void)
 void DMA2_Stream7_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
-
+	
   /* USER CODE END DMA2_Stream7_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart1_tx);
   /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
-
+	
   /* USER CODE END DMA2_Stream7_IRQn 1 */
 }
 

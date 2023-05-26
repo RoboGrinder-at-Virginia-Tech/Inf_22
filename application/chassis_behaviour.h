@@ -88,7 +88,10 @@ typedef enum
   CHASSIS_ZERO_FORCE,                   //chassis will be like no power,底盘无力, 跟没上电那样
   CHASSIS_NO_MOVE,                      //chassis will be stop,底盘保持不动
   CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW,   //chassis will follow gimbal, usually in infantry,正常步兵底盘跟随云台
-  CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW,  //chassis will follow chassis yaw angle, usually in engineer,
+  
+	CHASSIS_SPIN, //chassis spiing function, 小陀螺 底盘此时不跟随云台
+	
+	CHASSIS_ENGINEER_FOLLOW_CHASSIS_YAW,  //chassis will follow chassis yaw angle, usually in engineer,
                                         //because chassis does have gyro sensor, its yaw angle is calculed by gyro in gimbal and gimbal motor angle,
                                         //if you have a gyro sensor in chassis, please updata yaw, pitch, roll angle in "chassis_feedback_update"  function
                                         //工程底盘角度控制底盘，由于底盘未有陀螺仪，故而角度是减去云台角度而得到，
@@ -134,5 +137,5 @@ extern void chassis_behaviour_mode_set(chassis_move_t *chassis_move_mode);
   */
 
 extern void chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *angle_set, chassis_move_t *chassis_move_rc_to_vector);
-extern uint8_t swing_flag;
+extern uint8_t get_swing_flag(void);
 #endif

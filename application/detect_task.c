@@ -263,8 +263,8 @@ extern void OLED_com_reset(void);
 extern void superCap_offline_proc(void);
 extern bool_t superCap_is_data_error_proc(void);
 extern void superCap_solve_data_error_proc(void);
-extern void miniPC_offline_proc(void);
-extern bool_t miniPC_is_data_error_proc(void);
+extern void pc_offline_proc(void);
+extern bool_t pc_is_data_error_proc(void);
 
 static void detect_init(uint32_t time)
 {
@@ -287,6 +287,7 @@ static void detect_init(uint32_t time)
             {100, 100, 6},  //oled {100, 100, 1}
 						{200, 200, 15},   //MiniPC 串口通信
 						{200, 200, 14},   //SuperCap SZL-3-12-2022 {30, 50, 14},  
+						{300, 100, 14},   //sCap_23 2023新的超级电容 
 						{2000, 2000, 14},		//雾列 超级电容 {90, 90, 14},
 						{10, 10, 12},		//shooter L
 						{10, 10, 12},		//shooter R
@@ -322,15 +323,20 @@ static void detect_init(uint32_t time)
 		error_list[SUPERCAP_TOE].solve_lost_fun = superCap_offline_proc;
 		error_list[SUPERCAP_TOE].solve_data_error_fun = NULL;
 		
+		//SZL 12-27-2022 易林新超级电容
+		error_list[SCAP_23_TOR].data_is_error_fun = sCap23_is_data_error_proc;
+		error_list[SCAP_23_TOR].solve_lost_fun = sCap23_offline_proc;
+		error_list[SCAP_23_TOR].solve_data_error_fun = NULL;
+		
 		//雾列超级电容 相关函数
 		error_list[WULIE_CAP_TOE].data_is_error_fun = wulie_Cap_is_data_error_proc;
 		error_list[WULIE_CAP_TOE].solve_lost_fun = wulie_Cap_offline_proc;
 		error_list[WULIE_CAP_TOE].solve_data_error_fun = NULL;
 		
 		//miniPC 相关掉线函数
-		error_list[MINIPC_TOE].data_is_error_fun = miniPC_is_data_error_proc;
-		error_list[MINIPC_TOE].solve_lost_fun = miniPC_offline_proc;
-		error_list[MINIPC_TOE].solve_data_error_fun = NULL;
+		error_list[PC_TOE].data_is_error_fun = pc_is_data_error_proc; //miniPC_is_data_error_proc;
+		error_list[PC_TOE].solve_lost_fun = pc_offline_proc;
+		error_list[PC_TOE].solve_data_error_fun = NULL;
 
 //    error_list[DBUSTOE].dataIsErrorFun = RC_data_is_error;
 //    error_list[DBUSTOE].solveLostFun = slove_RC_lost;

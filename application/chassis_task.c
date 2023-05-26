@@ -559,18 +559,37 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
         //calculate ratation speed
         //计算旋转PID角速度
-			if(swing_flag == 0){
-        chassis_move_control->wz_set = -PID_calc(&chassis_move_control->chassis_angle_pid, chassis_move_control->chassis_yaw_motor->relative_angle, chassis_move_control->chassis_relative_angle_set);
-			}else if(swing_flag ==1){
-				chassis_move_control->wz_set = SPIN_SPEED;
-			}
-
 			
+        chassis_move_control->wz_set = -PID_calc(&chassis_move_control->chassis_angle_pid, chassis_move_control->chassis_yaw_motor->relative_angle, chassis_move_control->chassis_relative_angle_set);
+	
 			  //speed limit
         //速度限幅
         chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
         chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
     }
+		else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_SPIN)
+		{
+				fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
+        //rotate chassis direction, make sure vertial direction follow gimbal 
+        //旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
+        sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+        cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+        chassis_move_control->vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
+        chassis_move_control->vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+        //set control relative angle  set-point
+        //设置控制相对云台角度
+        chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
+        
+			  //set ratation speed
+        //小陀螺 模式下 设置旋转角速度
+				chassis_move_control->wz_set = SPIN_SPEED;
+		
+
+			  //speed limit
+        //速度限幅
+        chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
+        chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
+		}
     else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW)
     {
         fp32 delat_angle = 0.0f;
@@ -698,8 +717,8 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
 
 #if USE_SpeedAdaptiveChassisPowerControl
 		//calculate pid and power control
-//		speed_adaptive_chassis_power_control(chassis_move_control_loop);
-		superCap_speed_adaptive_chassis_power_control(chassis_move_control_loop);
+		speed_adaptive_chassis_power_control(chassis_move_control_loop);
+//		superCap_speed_adaptive_chassis_power_control(chassis_move_control_loop);
 		
 #else
     //calculate pid
@@ -711,12 +730,26 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
 
 
     //功率控制power control
-    chassis_power_control(chassis_move_control_loop);
+    //chassis_power_control(chassis_move_control_loop);
 #endif
-		
+
     //赋值电流值
     for (i = 0; i < 4; i++)
     {
         chassis_move_control_loop->motor_chassis[i].give_current = (int16_t)(chassis_move_control_loop->motor_speed_pid[i].out);
     }
 }
+
+const chassis_move_t *get_chassis_pointer(void)
+{
+	return &chassis_move;
+}
+
+/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
+uint8_t get_turboMode()
+{
+	return turboMode;
+}
+
+
+/* ---------- getter method end ---------- */
