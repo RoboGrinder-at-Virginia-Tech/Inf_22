@@ -202,6 +202,15 @@ typedef enum
 		ammoOPEN
 }ui_ammoBox_sts_e;
 
+/*
+5-26-2023 设备连接OK是删除该UI; 设备连接ERR时显示
+*/
+typedef enum
+{
+		devError = UI_Graph_ADD,
+		devOK = UI_Graph_Del,
+}ui_dev_connection_sts_e;
+
 typedef struct
 {
   float cap_volt;
