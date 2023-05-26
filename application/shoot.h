@@ -135,7 +135,7 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     40//60//5-24之前:40//30
+#define SHOOT_HEAT_REMAIN_VALUE     50//60//5-24之前:40//30
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
