@@ -32,6 +32,8 @@
 #include "pid.h"
 #include "referee_usart_task.h"
 
+#include "miniPC_msg.h"
+
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
 #define shoot_fric2_on(pwm) fric2_on((pwm)) //摩擦轮2pwm宏定义
 #define shoot_fric_off()    fric_off()      //关闭两个摩擦轮
@@ -42,7 +44,7 @@
 #define BUTTEN_TRIG_PIN HAL_GPIO_ReadPin(BUTTON_TRIG_GPIO_Port, BUTTON_TRIG_Pin)
 
 
-extern miniPC_info_t miniPC_info;
+//extern miniPC_info_t miniPC_info; //3-26-2023 update never use this again
 
 /**
   * @brief          射击状态机设置，遥控器上拨一次开启，再上拨关闭，下拨1次发射1颗，一直处在下，则持续发射，用于3min准备时间清理子弹
@@ -470,21 +472,21 @@ static void shoot_set_mode(void)
 		//或 即按键只能开启aim
 		if(shoot_control.key_X_cnt == 0)
 		{
-			miniPC_info.autoAimFlag = 0;
+			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
 		}
 		else if(shoot_control.key_X_cnt == 1) 
 		{
-			miniPC_info.autoAimFlag = 1;
+			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
 		}
 		else if(shoot_control.key_X_cnt == 2)
 		{
-//			miniPC_info.autoAimFlag = 2;
-			miniPC_info.autoAimFlag = 1;
+			//miniPC_info.autoAimFlag = 2;
+			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
 		}
 		
 		if(shoot_control.press_r_time == PRESS_LONG_TIME_R || shoot_control.press_key_V_time == PRESS_LONG_TIME_V)
 		{
-			miniPC_info.autoAimFlag = 2;
+			set_autoAimFlag(2); //miniPC_info.autoAimFlag = 2;
 			//shoot_control.key_X_cnt = 2;
 		}
 //		else
@@ -495,7 +497,7 @@ static void shoot_set_mode(void)
 		
 		if(shoot_control.shoot_rc->key.v & KEY_PRESSED_OFFSET_C) // press C to turn off auto aim
 		{
-			miniPC_info.autoAimFlag = 0;
+			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;
 		}
 		//X按键计数以及相关检测结束
@@ -506,10 +508,13 @@ static void shoot_set_mode(void)
     {
         //鼠标长按一直进入射击状态 保持连发
 				//(shoot_control.user_fire_ctrl==user_SHOOT_AUTO && shoot_control.press_l)
+			  
+			  //重要 TODO: 添加 敌我识别
 			
 				if(shoot_control.user_fire_ctrl==user_SHOOT_SEMI)
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) )|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -520,7 +525,8 @@ static void shoot_set_mode(void)
 				}
 				else if(shoot_control.user_fire_ctrl==user_SHOOT_AUTO)
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.press_l ))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -531,7 +537,8 @@ static void shoot_set_mode(void)
 				}
 				else
 				{
-					if (((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
@@ -773,3 +780,24 @@ static void shoot_bullet_control_17mm(void)
    
 }
 
+const shoot_control_t* get_robot_shoot_control()
+{
+	return &shoot_control;
+}
+
+/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
+shoot_mode_e get_shoot_mode()
+{
+	return shoot_control.shoot_mode;
+}
+
+user_fire_ctrl_e get_user_fire_ctrl()
+{
+	return shoot_control.user_fire_ctrl;
+}
+
+uint8_t get_ammoBox_sts()
+{
+	return shoot_control.ammoBox_sts;
+}
+/* ---------- getter method end ---------- */

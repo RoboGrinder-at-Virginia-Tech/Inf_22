@@ -8,6 +8,7 @@
 #include "user_lib.h"
 #include "detect_task.h"
 #include "chassis_power_control.h"
+#include "arm_math.h"
 
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
@@ -158,19 +159,19 @@ void superCap_control_loop()
 		else if(current_superCap == sCap23_ID)
 		{//sCap23易林超级电容控制板
 			//计算max_charge_pwr_from_ref
-			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
+			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
 			
 			if(sCap23_info.max_charge_pwr_from_ref > MAX_REASONABLE_CHARGE_PWR)//101.0f)
 			{
 				sCap23_info.max_charge_pwr_from_ref = 40;
 			}
 			
-			//Only for Debug
-			sCap23_info.max_charge_pwr_from_ref = 41; //66;
+//			//Only for Debug
+//			sCap23_info.max_charge_pwr_from_ref = 41; //66;
 			//--------------------------------------------
 			
 			//计算fail_safe_charge_pwr_ref 修改成用ifelse标定等级标定fail safe, 这个的目的是 比赛中可能有临时的底盘充电增益, fail safe表示当前的一个安全数值
-			sCap23_info.fail_safe_charge_pwr_ref = 40; // 60; // = sCap23_info.max_charge_pwr_from_ref;
+			sCap23_info.fail_safe_charge_pwr_ref = sCap23_info.max_charge_pwr_from_ref; //40; // 60; // = sCap23_info.max_charge_pwr_from_ref;
 		
 			sCap23_info.charge_pwr_command = sCap23_info.max_charge_pwr_from_ref;
 			sCap23_info.fail_safe_charge_pwr_command = sCap23_info.fail_safe_charge_pwr_ref;
@@ -203,7 +204,7 @@ void superCap_control_loop()
 根据目前使用的超级电容 返回电容组电压和剩余能量
 这里要做的就是返回合理的 传感器数据 不需要在这里考虑掉线
 */
-void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank)
+void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //仅功率控制使用
 {
 	fp32 temp_EBank=0, temp_cap_voltage=0;
 	if(current_superCap == SuperCap_ID)
@@ -247,7 +248,7 @@ void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank)
 /*
 返回超级电容充电功率
 */
-uint16_t get_superCap_charge_pwr()
+uint16_t get_superCap_charge_pwr() //仅功率控制使用
 {
 	fp32 temp_charge_pwr=0;
 	if(current_superCap == SuperCap_ID)
@@ -276,19 +277,23 @@ uint16_t get_superCap_charge_pwr()
 /*下面两个函数; 0->normal/online; 1->error/offline*/
 bool_t current_superCap_is_offline()
 {
-	if(current_superCap == SuperCap_ID)
+	if(current_superCap == sCap23_ID) //SuperCap_ID
 	{
-		return toe_is_error(SUPERCAP_TOE);
+		return toe_is_error(SCAP_23_TOR); //SUPERCAP_TOE
+	}
+	else if(current_superCap == wulie_Cap_CAN_ID) //wulie_Cap_CAN_ID
+	{
+		return toe_is_error(WULIE_CAP_TOE);
 	}
 	else
 	{
-		return toe_is_error(WULIE_CAP_TOE);
+		return toe_is_error(SUPERCAP_TOE); //sCap23_ID
 	}
 }
 
 bool_t all_superCap_is_offline()
 {
-	return toe_is_error(SUPERCAP_TOE) && toe_is_error(WULIE_CAP_TOE);
+	return toe_is_error(SUPERCAP_TOE) && toe_is_error(WULIE_CAP_TOE) && toe_is_error(SCAP_23_TOR);
 }
 
 /*
@@ -448,4 +453,155 @@ bool_t wulie_Cap_is_data_error_proc()
 //			superCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
 //			return 0;
 //		}
+}
+
+//API for UI and other
+fp32 get_current_cap_voltage()
+{
+	//即插即用的超级电容控制板 判断
+	 if(current_superCap == SuperCap_ID)
+	 {
+		 if(toe_is_error(SUPERCAP_TOE))
+		 {
+				return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = superCap_info.EBPct_fromCap;
+			 return superCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == sCap23_ID)
+	 {
+		 if(toe_is_error(SCAP_23_TOR))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = sCap23_info.EBPct;
+		   return sCap23_info.Vbank_f;
+		 }
+	 }
+	 else
+	 {
+		 if(toe_is_error(WULIE_CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 //ui_info.cap_pct = wulie_Cap_info.EBPct;
+		   return wulie_Cap_info.cap_voltage;
+		 }
+	 }
+}
+
+fp32 get_current_cap_pct()
+{
+	//即插即用的超级电容控制板 判断
+	 if(current_superCap == SuperCap_ID)
+	 {
+		 if(toe_is_error(SUPERCAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return superCap_info.EBPct_fromCap;
+			 //ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
+		 }
+	 }
+	 else if(current_superCap == sCap23_ID)
+	 {
+		 if(toe_is_error(SCAP_23_TOR))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return sCap23_info.EBPct;
+		   //ui_info.cap_volt = sCap23_info.Vbank_f;
+		 }
+	 }
+	 else
+	 {
+		 if(toe_is_error(WULIE_CAP_TOE))
+		 {
+			 //ui_info.cap_pct = 0.0f;
+			 //ui_info.cap_volt = 0.0f;
+			 return 0.0f;
+		 }
+		 else
+		 {
+			 return wulie_Cap_info.EBPct;
+		   //ui_info.cap_volt = wulie_Cap_info.cap_voltage;
+		 }
+	 }
+}
+
+///* 获得 当前在线的超级电容, 电压百分比, 13v时为0%
+//*/
+//fp32 get_current_cap_voltage_pct()
+//{
+//}
+extern RC_ctrl_t rc_ctrl;
+/* 计算 获得 当前在线的超级电容, 能量(焦耳)百分比, 13v时为0%
+*/
+//call时 确保 参数的正确性
+fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol)
+{
+	return fp32_constrain( ( (curr_vol - min_vol) * (curr_vol - min_vol) ) / ( (max_vol - min_vol) * (max_vol - min_vol) ), 0.0f, 1.0f);
+}
+
+fp32 get_current_capE_relative_pct()
+{
+//		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
+		//即插即用的超级电容控制板 判断
+		if(current_superCap == SuperCap_ID)
+		{
+			 if(toe_is_error(SUPERCAP_TOE))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return superCap_info.relative_EBpct;
+			 }
+		 }
+		 else if(current_superCap == sCap23_ID)
+		 {
+			 if(toe_is_error(SCAP_23_TOR))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return sCap23_info.relative_EBpct;
+			 }
+		 }
+		 else
+		 {
+			 if(toe_is_error(WULIE_CAP_TOE))
+			 {
+				 return 0.0f;
+			 }
+			 else
+			 {
+				 return wulie_Cap_info.relative_EBpct;
+			 }
+		 }
+}
+
+supercap_can_msg_id_e get_current_superCap()
+{
+		return current_superCap;
 }
