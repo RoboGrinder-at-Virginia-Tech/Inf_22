@@ -144,6 +144,9 @@ void shoot_init(void)
 		PID_init(&shoot_control.left_fric_motor_pid, PID_POSITION, Left_friction_speed_pid, M3508_LEFT_FRICTION_PID_MAX_OUT, M3508_LEFT_FRICTION_PID_MAX_IOUT);
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
 	
+		shoot_control.total_bullets_fired = 0;
+		shoot_control.continuous_shoot_TimeStamp = HAL_GetTick();
+		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
 
 /**
@@ -263,9 +266,19 @@ int16_t shoot_control_loop(void)
     }
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
-        //设置拨弹轮的拨动速度,并开启堵转反转处理
-        shoot_control.trigger_speed_set = CONTINUE_TRIGGER_SPEED;
-        trigger_motor_turn_back_17mm();
+//        //设置拨弹轮的拨动速度,并开启堵转反转处理
+//        shoot_control.trigger_speed_set = CONTINUE_TRIGGER_SPEED;
+//        trigger_motor_turn_back_17mm();
+			
+			 //有PID位置外环后, 连发按标定的射频
+			 if(HAL_GetTick() > shoot_control.continuous_shoot_TimeStamp + (uint32_t)(shoot_control.continuous_continue_shoot_trig_period_s * 1000.0f))
+			 {
+				 shoot_control.continuous_shoot_TimeStamp = HAL_GetTick();
+				 
+				 shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
+				 shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
+				 shoot_bullet_control_absolute_17mm();
+			 }
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -737,7 +750,7 @@ static void shoot_feedback_update(void)
 		
 }
 
-////老的模糊位置控制的退弹
+////老的模糊位置控制的退弹 5-27-2023注释
 //static void trigger_motor_turn_back_17mm(void)
 //{
 //    if( shoot_control.block_time < BLOCK_TIME)
@@ -798,6 +811,11 @@ static void trigger_motor_turn_back_17mm(void)
         shoot_control.block_time = 0;	
     }
 		
+		if(shoot_control.last_block_flag == 0 && shoot_control.block_flag == 1)
+		{//刚发生堵转
+			shoot_control.total_bullets_fired--; //当前子弹未打出去
+		}
+		
 		if(shoot_control.last_block_flag == 1 && shoot_control.block_flag == 0)
 		{//完成一次堵转清除
 			//放弃当前的打弹请求
@@ -811,7 +829,7 @@ static void trigger_motor_turn_back_17mm(void)
 }
 
 ///**
-//  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制
+//  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制 5-27-2023注释
 //  * @param[in]      void
 //  * @retval         void
 //  */
@@ -867,6 +885,7 @@ static void shoot_bullet_control_absolute_17mm(void)
         */
 				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
+			  shoot_control.total_bullets_fired++; //
     }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
@@ -883,11 +902,10 @@ static void shoot_bullet_control_absolute_17mm(void)
         shoot_control.shoot_mode = SHOOT_DONE;
     }
 		//还剩余较小角度时, 算到达了
-		if(shoot_control.set_angle - shoot_control.angle > 0.5f) //(fabs(shoot_control.set_angle - shoot_control.angle) > 0.05f)
+		if(shoot_control.set_angle - shoot_control.angle > 0.05f) //(fabs(shoot_control.set_angle - shoot_control.angle) > 0.05f)
 		{
 				shoot_control.trigger_speed_set = TRIGGER_SPEED;
 				//用于需要直接速度控制时的控制速度这里是堵转后反转速度 TRIGGER_SPEED符号指明正常旋转方向
-//				trigger_motor_turn_back_42mm_absolute_angle();
 				trigger_motor_turn_back_17mm();
 		}
 		else

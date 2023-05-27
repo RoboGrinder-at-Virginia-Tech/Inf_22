@@ -74,9 +74,9 @@
 #define SWITCH_TRIGGER_OFF          1
 
 //卡单时间 以及反转时间
-#define BLOCK_TRIGGER_SPEED         1.0f
+#define BLOCK_TRIGGER_SPEED         0.09f //1.0f
 #define BLOCK_TIME                  700
-#define REVERSE_TIME                500
+#define REVERSE_TIME                200 //500
 #define REVERSE_SPEED_LIMIT         13.0f
 
 #define PI_FOUR                     0.78539816339744830961566084581988f
@@ -99,6 +99,9 @@ Hero; 拨盘3个洞, 2pi/3 = 2.094395102f; 为了保证不过冲 set = 2.05f
 /*仿照云台控制逻辑 新增一个宏定义 电机和转盘安装方向*/
 #define TRIG_MOTOR_TURN 0
 
+//用于PID位置环后, 连续发弹 - 射频; 每秒打这么多课
+#define CONTINUE_SHOOT_TRIG_FREQ 5
+
 /*
 SZL
 Original PID parameter
@@ -113,9 +116,9 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        10.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        25.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
-#define TRIGGER_ANGLE_PID_OUTER_KD        0.2f
+#define TRIGGER_ANGLE_PID_OUTER_KD        0.5f
 
 #define TRIGGER_BULLET_PID_OUTER_MAX_OUT  20.0f //10.0f
 #define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 1.5f //1.0f
@@ -327,6 +330,11 @@ typedef struct
 		uint16_t referee_current_shooter_17mm_speed_limit;
 		
 		uint8_t ammoBox_sts;
+		
+		uint32_t total_bullets_fired; // 总发弹量
+		
+		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
+		fp32 continuous_continue_shoot_trig_period_s;
 		
 } shoot_control_t;
 
