@@ -74,6 +74,8 @@ static void trigger_motor_turn_back_17mm(void); //有绝对位置环退弹
 static void shoot_bullet_control_absolute_17mm(void);
 
 
+static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq);
+
 
 shoot_control_t shoot_control;          //射击数据
 
@@ -145,7 +147,7 @@ void shoot_init(void)
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
 	
 		shoot_control.total_bullets_fired = 0;
-		shoot_control.continuous_shoot_TimeStamp = HAL_GetTick();
+		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
 		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
 
@@ -271,14 +273,18 @@ int16_t shoot_control_loop(void)
 //        trigger_motor_turn_back_17mm();
 			
 			 //有PID位置外环后, 连发按标定的射频
-			 if(HAL_GetTick() > shoot_control.continuous_shoot_TimeStamp + (uint32_t)(shoot_control.continuous_continue_shoot_trig_period_s * 1000.0f))
-			 {
-				 shoot_control.continuous_shoot_TimeStamp = HAL_GetTick();
-				 
-				 shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
-				 shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-				 shoot_bullet_control_absolute_17mm();
-			 }
+//			 if(xTaskGetTickCount() > shoot_control.continuous_shoot_TimeStamp + (uint32_t)(shoot_control.continuous_continue_shoot_trig_period_s * 1000.0f))
+//			 if(xTaskGetTickCount() % (1000 / CONTINUE_SHOOT_TRIG_FREQ) == 0) //1000为tick++的频率
+//			 {
+//				 shoot_control.continuous_shoot_TimeStamp++;
+//				 
+//				 shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
+//				 shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
+//				 shoot_bullet_control_absolute_17mm();
+//			 }
+				shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
+        shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
+				shoot_bullet_control_continuous_17mm(10);
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -777,6 +783,48 @@ static void shoot_feedback_update(void)
 //    }
 //}
 
+///**
+//  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制 5-27-2023注释
+//  * @param[in]      void
+//  * @retval         void
+//  */
+//static void shoot_bullet_control_17mm(void)
+//{
+//    //每次拨动 1/4PI的角度
+//    if (shoot_control.move_flag == 0)
+//    {
+//        shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+//        shoot_control.move_flag = 1;
+//    }
+//		
+//		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
+//		整体的逻辑是: 如果发射机构断电, shoot_mode状态机不会被置为发射相关状态, 不会进入此函数; 这段代码只是在这里保险
+//	  电机掉线, 即发射机构断电特征出现时, 放弃当前发射请求*/
+//		if(shoot_control.trigger_motor_17mm_is_online == 0x00)
+//		{
+//				shoot_control.set_angle = shoot_control.angle;
+//				return;
+//		}
+//		
+//    if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
+//    {
+//        shoot_control.shoot_mode = SHOOT_DONE;
+//    }
+//    //到达角度判断
+//    if ((shoot_control.set_angle - shoot_control.angle) > 0.05f)//(rad_format(shoot_control.set_angle - shoot_control.angle) > 0.0005f)//0.15f) //pr改动前为0.05f shooter_rad_format
+//    {
+//        //没到达一直设置旋转速度
+//        shoot_control.trigger_speed_set = TRIGGER_SPEED;
+//        trigger_motor_turn_back_17mm();
+//    }
+//    else
+//    {
+//        shoot_control.move_flag = 0;
+//			  shoot_control.shoot_mode = SHOOT_DONE; //pr test
+//    }
+//   
+//}
+
 //速度环控制 退弹 新的速度环退弹
 static void trigger_motor_turn_back_17mm(void)
 {
@@ -828,48 +876,6 @@ static void trigger_motor_turn_back_17mm(void)
 		*/
 }
 
-///**
-//  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制 5-27-2023注释
-//  * @param[in]      void
-//  * @retval         void
-//  */
-//static void shoot_bullet_control_17mm(void)
-//{
-//    //每次拨动 1/4PI的角度
-//    if (shoot_control.move_flag == 0)
-//    {
-//        shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
-//        shoot_control.move_flag = 1;
-//    }
-//		
-//		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
-//		整体的逻辑是: 如果发射机构断电, shoot_mode状态机不会被置为发射相关状态, 不会进入此函数; 这段代码只是在这里保险
-//	  电机掉线, 即发射机构断电特征出现时, 放弃当前发射请求*/
-//		if(shoot_control.trigger_motor_17mm_is_online == 0x00)
-//		{
-//				shoot_control.set_angle = shoot_control.angle;
-//				return;
-//		}
-//		
-//    if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
-//    {
-//        shoot_control.shoot_mode = SHOOT_DONE;
-//    }
-//    //到达角度判断
-//    if ((shoot_control.set_angle - shoot_control.angle) > 0.05f)//(rad_format(shoot_control.set_angle - shoot_control.angle) > 0.0005f)//0.15f) //pr改动前为0.05f shooter_rad_format
-//    {
-//        //没到达一直设置旋转速度
-//        shoot_control.trigger_speed_set = TRIGGER_SPEED;
-//        trigger_motor_turn_back_17mm();
-//    }
-//    else
-//    {
-//        shoot_control.move_flag = 0;
-//			  shoot_control.shoot_mode = SHOOT_DONE; //pr test
-//    }
-//   
-//}
-
 /**
   * @brief          射击控制，控制拨弹电机角度，完成一次发射, 精确的角度环PID
   * @param[in]      void
@@ -877,7 +883,7 @@ static void trigger_motor_turn_back_17mm(void)
   */
 static void shoot_bullet_control_absolute_17mm(void)
 {
-	    //每次拨动 120度 的角度
+	  //每次拨动 120度 的角度
     if (shoot_control.move_flag == 0)
     {
 				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
@@ -887,6 +893,71 @@ static void shoot_bullet_control_absolute_17mm(void)
         shoot_control.move_flag = 1;
 			  shoot_control.total_bullets_fired++; //
     }
+		
+		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
+		整体的逻辑是: 如果发射机构断电, shoot_mode状态机不会被置为发射相关状态, 不会进入此函数; 这段代码只是在这里保险
+	  电机掉线, 即发射机构断电特征出现时, 放弃当前发射请求*/
+		if(shoot_control.trigger_motor_17mm_is_online == 0x00)
+		{
+				shoot_control.set_angle = shoot_control.angle;
+				return;
+		}
+		
+		if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
+    {
+        shoot_control.shoot_mode = SHOOT_DONE;
+    }
+		//还剩余较小角度时, 算到达了
+		if(shoot_control.set_angle - shoot_control.angle > 0.05f) //(fabs(shoot_control.set_angle - shoot_control.angle) > 0.05f)
+		{
+				shoot_control.trigger_speed_set = TRIGGER_SPEED;
+				//用于需要直接速度控制时的控制速度这里是堵转后反转速度 TRIGGER_SPEED符号指明正常旋转方向
+				trigger_motor_turn_back_17mm();
+		}
+		else
+		{
+			
+				shoot_control.move_flag = 0;
+				shoot_control.shoot_mode = SHOOT_DONE; 
+		}
+		/*shoot_control.move_flag = 0当前帧发射机构 没有正在执行的发射请求
+			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求
+		*/
+}
+
+//连续发弹控制 每秒多少颗; shoot_freq射频
+static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq)
+{
+//		//每秒增加一次
+//    if (shoot_control.move_flag == 0)
+//    {
+//				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
+//				一次拨一个单位
+//        */
+//				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+//        shoot_control.move_flag = 1;
+//			  shoot_control.total_bullets_fired++; //
+//    }
+//		else if(shoot_freq > 1)
+//		{
+//			if(xTaskGetTickCount() % 1000 == 0) //1000为tick++的频率
+//			{
+//			  shoot_control.set_angle = (shoot_control.angle + ((shoot_freq-1)*PI_TEN));//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+//        shoot_control.move_flag = 1;
+//			  shoot_control.total_bullets_fired++; //
+//			}
+//			else
+//			{
+//				return; //不打
+//			}
+//		}
+		
+		 if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+		 {
+			 	shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+        shoot_control.move_flag = 1;
+			  shoot_control.total_bullets_fired++; //
+		 }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
 		整体的逻辑是: 如果发射机构断电, shoot_mode状态机不会被置为发射相关状态, 不会进入此函数; 这段代码只是在这里保险

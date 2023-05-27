@@ -75,7 +75,7 @@
 
 //卡单时间 以及反转时间
 #define BLOCK_TRIGGER_SPEED         0.09f //1.0f
-#define BLOCK_TIME                  700
+#define BLOCK_TIME                  400 //700
 #define REVERSE_TIME                200 //500
 #define REVERSE_SPEED_LIMIT         13.0f
 
@@ -116,12 +116,12 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        25.0f //25.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        50.0 //30.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
 #define TRIGGER_ANGLE_PID_OUTER_KD        0.5f
 
-#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  20.0f //10.0f
-#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 1.5f //1.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  100.0f //10.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 2.0f//1.5f //1.0f
 /*
 外环的输出是内环的输入 内环输入单位是rad/s 
 */
@@ -205,9 +205,9 @@ typedef struct
 	
 }shoot_pid_t;
 
-#define PID_TRIG_SPEED_INTEGRAL_THRESHOLD 2.0f //速度 弧度制
+#define PID_TRIG_SPEED_INTEGRAL_THRESHOLD 3.0f //2.0f //速度 弧度制
 
-#define PID_TRIG_POSITION_INTEGRAL_THRESHOLD 1.0f //角度 弧度制
+#define PID_TRIG_POSITION_INTEGRAL_THRESHOLD 3.0f //1.0f //角度 弧度制
 
 //PID_DIFFERENTIAL_THRESHOLD 在此积分分离PID中未使用
 
