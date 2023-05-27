@@ -64,14 +64,14 @@ static void shoot_feedback_update(void);
   * @param[in]      void
   * @retval         void
   */
-static void trigger_motor_turn_back_17mm(void);
+static void trigger_motor_turn_back_17mm(void); //有绝对位置环退弹
 
 /**
-  * @brief          射击控制，控制拨弹电机角度，完成一次发射
+  * @brief          射击控制，控制拨弹电机角度，完成一次发射 有绝对位置环
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_17mm(void);
+static void shoot_bullet_control_absolute_17mm(void);
 
 
 
@@ -91,14 +91,21 @@ fp32 temp_speed_setALL = 11.5;//目前 ICRA Only
 void shoot_init(void)
 {
 
-    static const fp32 Trigger_speed_pid[3] = {TRIGGER_ANGLE_PID_KP, TRIGGER_ANGLE_PID_KI, TRIGGER_ANGLE_PID_KD};
+    static const fp32 Trigger_speed_pid[3] = {TRIGGER_SPEED_IN_PID_KP, TRIGGER_SPEED_IN_PID_KI, TRIGGER_SPEED_IN_PID_KD};
+		static const fp32 Trigger_speed_pid_outerLoop[3] = {TRIGGER_ANGLE_PID_OUTER_KP, TRIGGER_ANGLE_PID_OUTER_KI, TRIGGER_ANGLE_PID_OUTER_KD};
+		
     shoot_control.shoot_mode = SHOOT_STOP;
     //遥控器指针
     shoot_control.shoot_rc = get_remote_control_point();
     //电机指针
     shoot_control.shoot_motor_measure = get_trigger_motor_measure_point();
     //初始化PID
-    PID_init(&shoot_control.trigger_motor_pid, PID_POSITION, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
+//    PID_init(&shoot_control.trigger_motor_pid, PID_POSITION, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
+		shoot_PID_init(&shoot_control.trigger_motor_pid, SHOOT_PID_SEPARATED_INTEGRAL_IN_SPEED, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
+		
+		//17mm外环PID
+		shoot_PID_init(&shoot_control.trigger_motor_angle_pid, SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS, Trigger_speed_pid_outerLoop, TRIGGER_BULLET_PID_OUTER_MAX_OUT, TRIGGER_BULLET_PID_OUTER_MAX_IOUT);
+		
     //更新数据
     shoot_feedback_update();
     ramp_init(&shoot_control.fric1_ramp, SHOOT_CONTROL_TIME * 0.001f, FRIC_DOWN, FRIC_OFF);
@@ -226,6 +233,13 @@ int16_t shoot_control_loop(void)
     {
         //设置拨弹轮的速度
         shoot_control.speed_set = 0;
+			  //第一次重置PID
+				shoot_PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_PID_clear(&shoot_control.trigger_motor_angle_pid);
+			
+				//初始化第一次PID帧的计算
+				shoot_control.set_angle = shoot_control.angle;
+				shoot_control.speed_set = shoot_control.speed;
     }
     else if(shoot_control.shoot_mode ==SHOOT_READY_BULLET)
     {
@@ -245,7 +259,7 @@ int16_t shoot_control_loop(void)
     {
         shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-        shoot_bullet_control_17mm();
+        shoot_bullet_control_absolute_17mm();
     }
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
@@ -262,6 +276,12 @@ int16_t shoot_control_loop(void)
     {
         shoot_laser_off();
         shoot_control.given_current = 0;
+				//位置环PID 输入参数重置
+				shoot_control.set_angle = shoot_control.angle;
+			
+				//速度PID 输入参数重置
+				shoot_control.speed_set = shoot_control.speed;
+			
         //摩擦轮需要一个个斜波开启，不能同时直接开启，否则可能电机不转
 //        ramp_calc(&shoot_control.fric1_ramp, -SHOOT_FRIC_PWM_ADD_VALUE);
 //        ramp_calc(&shoot_control.fric2_ramp, -SHOOT_FRIC_PWM_ADD_VALUE);
@@ -279,11 +299,16 @@ int16_t shoot_control_loop(void)
     {
         shoot_laser_on(); //激光开启
 			
-				
-				//6-17未来可能增加串级PID----
+				//5-27-2023增加串级PID----
+			  if(shoot_control.block_flag == 0)
+				{ //退弹不用串级PID
+//					shoot_control.speed_set = PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
+					shoot_control.speed_set = shoot_PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
+        }
 				
         //计算拨弹轮电机PID
-        PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
+//        PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
+				shoot_PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
         
 #if TRIG_MOTOR_TURN
 				shoot_control.given_current = -(int16_t)(shoot_control.trigger_motor_pid.out);
@@ -712,43 +737,135 @@ static void shoot_feedback_update(void)
 		
 }
 
+////老的模糊位置控制的退弹
+//static void trigger_motor_turn_back_17mm(void)
+//{
+//    if( shoot_control.block_time < BLOCK_TIME)
+//    {
+//        shoot_control.speed_set = shoot_control.trigger_speed_set;
+//    }
+//    else
+//    {
+//        shoot_control.speed_set = -shoot_control.trigger_speed_set;
+//    }
+
+//    if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
+//    {
+//        shoot_control.block_time++;
+//        shoot_control.reverse_time = 0;
+//    }
+//    else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
+//    {
+//        shoot_control.reverse_time++;
+//    }
+//    else
+//    {
+//        shoot_control.block_time = 0;
+//    }
+//}
+
+//速度环控制 退弹 新的速度环退弹
 static void trigger_motor_turn_back_17mm(void)
 {
     if( shoot_control.block_time < BLOCK_TIME)
-    {
-        shoot_control.speed_set = shoot_control.trigger_speed_set;
+    {//未发生堵转
+        //shoot_control.speed_set = shoot_control.trigger_speed_set;
+				shoot_control.block_flag = 0;
     }
     else
-    {
+    {		//发生堵转
+//				PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_control.block_flag = 1;//block_flag=1表示发生堵转; block_flag=0表示未发生堵转或已完成堵转清除
         shoot_control.speed_set = -shoot_control.trigger_speed_set;
     }
 
+		//检测堵转时间
     if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
     {
-        shoot_control.block_time++;
+        shoot_control.block_time++;//发生堵转开始计时
         shoot_control.reverse_time = 0;
     }
     else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
     {
-        shoot_control.reverse_time++;
+        shoot_control.reverse_time++;//开始反转 开始计时反转时间
     }
     else
-    {
-        shoot_control.block_time = 0;
+    {//完成反转
+//				PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_control.block_flag = 0;
+        shoot_control.block_time = 0;	
     }
+		
+		if(shoot_control.last_block_flag == 1 && shoot_control.block_flag == 0)
+		{//完成一次堵转清除
+			//放弃当前的打弹请求
+			shoot_control.set_angle = shoot_control.angle;
+		}
+		
+		shoot_control.last_block_flag = shoot_control.block_flag;
+		/*block_flag = 1发生堵转
+			block_flag = 0未发生堵转
+		*/
 }
 
+///**
+//  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制
+//  * @param[in]      void
+//  * @retval         void
+//  */
+//static void shoot_bullet_control_17mm(void)
+//{
+//    //每次拨动 1/4PI的角度
+//    if (shoot_control.move_flag == 0)
+//    {
+//        shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+//        shoot_control.move_flag = 1;
+//    }
+//		
+//		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
+//		整体的逻辑是: 如果发射机构断电, shoot_mode状态机不会被置为发射相关状态, 不会进入此函数; 这段代码只是在这里保险
+//	  电机掉线, 即发射机构断电特征出现时, 放弃当前发射请求*/
+//		if(shoot_control.trigger_motor_17mm_is_online == 0x00)
+//		{
+//				shoot_control.set_angle = shoot_control.angle;
+//				return;
+//		}
+//		
+//    if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
+//    {
+//        shoot_control.shoot_mode = SHOOT_DONE;
+//    }
+//    //到达角度判断
+//    if ((shoot_control.set_angle - shoot_control.angle) > 0.05f)//(rad_format(shoot_control.set_angle - shoot_control.angle) > 0.0005f)//0.15f) //pr改动前为0.05f shooter_rad_format
+//    {
+//        //没到达一直设置旋转速度
+//        shoot_control.trigger_speed_set = TRIGGER_SPEED;
+//        trigger_motor_turn_back_17mm();
+//    }
+//    else
+//    {
+//        shoot_control.move_flag = 0;
+//			  shoot_control.shoot_mode = SHOOT_DONE; //pr test
+//    }
+//   
+//}
+
 /**
-  * @brief          射击控制，控制拨弹电机角度，完成一次发射
+  * @brief          射击控制，控制拨弹电机角度，完成一次发射, 精确的角度环PID
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_17mm(void)
+static void shoot_bullet_control_absolute_17mm(void)
 {
-    //每次拨动 1/4PI的角度
+	    //每次拨动 120度 的角度
     if (shoot_control.move_flag == 0)
     {
-        shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
+				一次拨一个单位
+        */
+				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
     }
 		
@@ -761,23 +878,27 @@ static void shoot_bullet_control_17mm(void)
 				return;
 		}
 		
-    if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
+		if(0)//shoot_control.key == SWITCH_TRIGGER_OFF)
     {
         shoot_control.shoot_mode = SHOOT_DONE;
     }
-    //到达角度判断
-    if ((shoot_control.set_angle - shoot_control.angle) > 0.05f)//(rad_format(shoot_control.set_angle - shoot_control.angle) > 0.0005f)//0.15f) //pr改动前为0.05f shooter_rad_format
-    {
-        //没到达一直设置旋转速度
-        shoot_control.trigger_speed_set = TRIGGER_SPEED;
-        trigger_motor_turn_back_17mm();
-    }
-    else
-    {
-        shoot_control.move_flag = 0;
-			  shoot_control.shoot_mode = SHOOT_DONE; //pr test
-    }
-   
+		//还剩余较小角度时, 算到达了
+		if(shoot_control.set_angle - shoot_control.angle > 0.5f) //(fabs(shoot_control.set_angle - shoot_control.angle) > 0.05f)
+		{
+				shoot_control.trigger_speed_set = TRIGGER_SPEED;
+				//用于需要直接速度控制时的控制速度这里是堵转后反转速度 TRIGGER_SPEED符号指明正常旋转方向
+//				trigger_motor_turn_back_42mm_absolute_angle();
+				trigger_motor_turn_back_17mm();
+		}
+		else
+		{
+			
+				shoot_control.move_flag = 0;
+				shoot_control.shoot_mode = SHOOT_DONE; 
+		}
+		/*shoot_control.move_flag = 0当前帧发射机构 没有正在执行的发射请求
+			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求
+		*/
 }
 
 const shoot_control_t* get_robot_shoot_control()
@@ -785,7 +906,7 @@ const shoot_control_t* get_robot_shoot_control()
 	return &shoot_control;
 }
 
-/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
+/* ---------- getter method 获取数据 ---------- */
 shoot_mode_e get_shoot_mode()
 {
 	return shoot_control.shoot_mode;
@@ -801,3 +922,95 @@ uint8_t get_ammoBox_sts()
 	return shoot_control.ammoBox_sts;
 }
 /* ---------- getter method end ---------- */
+
+/*
+发射机构 拨弹电机 自己的PID, 需要使用积分分离 阈值取决于设备本身
+*/
+void shoot_PID_init(shoot_pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out, fp32 max_iout)
+{
+    if (pid == NULL || PID == NULL)
+    {
+        return;
+    }
+    pid->mode = mode;
+    pid->Kp = PID[0];
+    pid->Ki = PID[1];
+    pid->Kd = PID[2];
+    pid->max_out = max_out;
+    pid->max_iout = max_iout;
+    pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
+    pid->error[0] = pid->error[1] = pid->error[2] = pid->Pout = pid->Iout = pid->Dout = pid->out = 0.0f;
+}
+
+fp32 shoot_PID_calc(shoot_pid_t *pid, fp32 ref, fp32 set)
+{
+    if (pid == NULL)
+    {
+        return 0.0f;
+    }
+		
+		pid->error[2] = pid->error[1];
+    pid->error[1] = pid->error[0];
+    pid->set = set;
+    pid->fdb = ref;
+    pid->error[0] = set - ref;
+
+		//积分分离算法
+    pid->Pout = pid->Kp * pid->error[0];
+		
+		if(pid->mode == SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS)
+		{
+				if(fabs(pid->error[0]) < PID_TRIG_POSITION_INTEGRAL_THRESHOLD)
+				{//在范围内, 对此时的值进行积分
+					pid->Iout += pid->Ki * pid->error[0];
+				}
+				else
+				{//不在范围内, 此时不计分
+					pid->Iout = pid->Iout;
+				}
+
+				pid->Dbuf[2] = pid->Dbuf[1];
+				pid->Dbuf[1] = pid->Dbuf[0];
+				pid->Dbuf[0] = (pid->error[0] - pid->error[1]);
+				pid->Dout = pid->Kd * pid->Dbuf[0];
+				abs_limit(&pid->Iout, pid->max_iout);
+				pid->out = pid->Pout + pid->Iout + pid->Dout;
+				abs_limit(&pid->out, pid->max_out);
+		}
+		else
+		{
+				if(fabs(pid->error[0]) < PID_TRIG_SPEED_INTEGRAL_THRESHOLD)
+				{//在范围内, 对此时的值进行积分
+					pid->Iout += pid->Ki * pid->error[0];
+				}
+				else
+				{//不在范围内, 此时不计分
+					pid->Iout = pid->Iout;
+				}
+
+				pid->Dbuf[2] = pid->Dbuf[1];
+				pid->Dbuf[1] = pid->Dbuf[0];
+				pid->Dbuf[0] = (pid->error[0] - pid->error[1]);
+				pid->Dout = pid->Kd * pid->Dbuf[0];
+				abs_limit(&pid->Iout, pid->max_iout);
+				pid->out = pid->Pout + pid->Iout + pid->Dout;
+				abs_limit(&pid->out, pid->max_out);
+		}
+
+    return pid->out;
+		
+}
+
+//重置PID
+void shoot_PID_clear(shoot_pid_t *pid)
+{
+    if (pid == NULL)
+    {
+        return;
+    }
+
+    pid->error[0] = pid->error[1] = pid->error[2] = 0.0f;
+    pid->Dbuf[0] = pid->Dbuf[1] = pid->Dbuf[2] = 0.0f;
+    pid->out = pid->Pout = pid->Iout = pid->Dout = 0.0f;
+    pid->fdb = pid->set = 0.0f;
+}

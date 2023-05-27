@@ -115,18 +115,17 @@ Original PID parameter
 //拨弹轮电机PID 外环PID
 #define TRIGGER_ANGLE_PID_OUTER_KP        10.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
-#define TRIGGER_ANGLE_PID_OUTER_KD        0.0f
+#define TRIGGER_ANGLE_PID_OUTER_KD        0.2f
 
-#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  10.0f
-#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 1.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  20.0f //10.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 1.5f //1.0f
 /*
 外环的输出是内环的输入 内环输入单位是rad/s 
-只是写在这里 没有用
 */
 //拨弹轮电机PID  这个是速度环的PID
-#define TRIGGER_ANGLE_PID_KP        800.0f//100.0f//800.0f//600//800.0f
-#define TRIGGER_ANGLE_PID_KI        0.5f//1.0//0.5f
-#define TRIGGER_ANGLE_PID_KD        0.0f
+#define TRIGGER_SPEED_IN_PID_KP        800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
+#define TRIGGER_SPEED_IN_PID_KI        0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
+#define TRIGGER_SPEED_IN_PID_KD        0.0f //TRIGGER_ANGLE_PID_KD
 
 #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f//9000.0f 
@@ -170,6 +169,50 @@ M3508_RIGHT_FRICTION_PID_MAX_OUT = M3508_LEFT_FRICTION_PID_MAX_OUT = TRIGGER_REA
 
 //ICRA 子弹速度上线 为 18m/s
 #define ICRA_PROJECTILE_SPEED_LIMIT 18
+
+/*
+发射机构 拨弹电机 自己的PID, 需要使用积分分离 阈值取决于设备本身
+*/
+enum SHOOT_PID_MODE
+{
+    SHOOT_PID_SEPARATED_INTEGRAL_IN_SPEED = 0, // inner speed loop
+		SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS, //outer position loop
+};
+
+typedef struct
+{
+    uint8_t mode;
+    //PID 三参数
+    fp32 Kp;
+    fp32 Ki;
+    fp32 Kd;
+
+    fp32 max_out;  //最大输出
+    fp32 max_iout; //最大积分输出
+
+    fp32 set;
+    fp32 fdb;
+
+    fp32 out;
+    fp32 Pout;
+    fp32 Iout;
+    fp32 Dout;
+    fp32 Dbuf[3];  //微分项 0最新 1上一次 2上上次
+    fp32 error[3]; //误差项 0最新 1上一次 2上上次
+	
+}shoot_pid_t;
+
+#define PID_TRIG_SPEED_INTEGRAL_THRESHOLD 2.0f //速度 弧度制
+
+#define PID_TRIG_POSITION_INTEGRAL_THRESHOLD 1.0f //角度 弧度制
+
+//PID_DIFFERENTIAL_THRESHOLD 在此积分分离PID中未使用
+
+void shoot_PID_init(shoot_pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out, fp32 max_iout);
+fp32 shoot_PID_calc(shoot_pid_t *pid, fp32 ref, fp32 set);
+void shoot_PID_clear(shoot_pid_t *pid);
+
+// --------------------- PID related END ---------------------
 
 typedef enum
 {
@@ -227,8 +270,10 @@ typedef struct
     uint16_t fric_pwm1;
     ramp_function_source_t fric2_ramp;
     uint16_t fric_pwm2;
-    pid_type_def trigger_motor_pid;//内环PID
-		pid_type_def trigger_motor_angle_pid;//外环PID--只是写在这里 没用
+//    pid_type_def trigger_motor_pid;//内环PID
+//		pid_type_def trigger_motor_angle_pid;//外环PID--只是写在这里 没用
+		shoot_pid_t trigger_motor_pid;//17mm拨盘电机 内环PID
+		shoot_pid_t trigger_motor_angle_pid;//17mm拨盘电机 外环PID
     fp32 trigger_speed_set;
     fp32 speed;
     fp32 speed_set;
@@ -248,6 +293,8 @@ typedef struct
     uint16_t block_time;
     uint16_t reverse_time;
     bool_t move_flag;
+		uint8_t block_flag;//17mm堵转标志位
+		uint8_t last_block_flag;
 
     bool_t key; //微动开关 PR 屏蔽掉了
     uint8_t key_time;
