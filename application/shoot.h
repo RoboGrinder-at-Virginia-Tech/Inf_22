@@ -333,8 +333,8 @@ typedef struct
 		
 		uint32_t total_bullets_fired; // 总发弹量
 		
-		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
-		fp32 continuous_continue_shoot_trig_period_s;
+//		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
+//		fp32 continuous_continue_shoot_trig_period_s;
 		
 } shoot_control_t;
 

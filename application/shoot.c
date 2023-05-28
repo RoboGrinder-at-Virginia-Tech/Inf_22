@@ -33,6 +33,7 @@
 #include "referee_usart_task.h"
 
 #include "miniPC_msg.h"
+#include "prog_msg_utility.h"
 
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
 #define shoot_fric2_on(pwm) fric2_on((pwm)) //摩擦轮2pwm宏定义
@@ -147,8 +148,8 @@ void shoot_init(void)
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
 	
 		shoot_control.total_bullets_fired = 0;
-		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
-		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
+//		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
+//		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
 
 /**
@@ -872,8 +873,7 @@ static void trigger_motor_turn_back_17mm(void)
 		
 		shoot_control.last_block_flag = shoot_control.block_flag;
 		/*block_flag = 1发生堵转
-			block_flag = 0未发生堵转
-		*/
+			block_flag = 0未发生堵转*/
 }
 
 /**
@@ -921,38 +921,14 @@ static void shoot_bullet_control_absolute_17mm(void)
 				shoot_control.shoot_mode = SHOOT_DONE; 
 		}
 		/*shoot_control.move_flag = 0当前帧发射机构 没有正在执行的发射请求
-			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求
-		*/
+			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求*/
 }
 
 //连续发弹控制 每秒多少颗; shoot_freq射频
 static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq)
 {
-//		//每秒增加一次
-//    if (shoot_control.move_flag == 0)
-//    {
-//				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
-//				一次拨一个单位
-//        */
-//				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
-//        shoot_control.move_flag = 1;
-//			  shoot_control.total_bullets_fired++; //
-//    }
-//		else if(shoot_freq > 1)
-//		{
-//			if(xTaskGetTickCount() % 1000 == 0) //1000为tick++的频率
-//			{
-//			  shoot_control.set_angle = (shoot_control.angle + ((shoot_freq-1)*PI_TEN));//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
-//        shoot_control.move_flag = 1;
-//			  shoot_control.total_bullets_fired++; //
-//			}
-//			else
-//			{
-//				return; //不打
-//			}
-//		}
-		
-		 if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+		 //if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+		 if( get_para_hz_time_freq_signal_FreeRTOS(shoot_freq) )
 		 {
 			 	shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
@@ -986,8 +962,7 @@ static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq)
 				shoot_control.shoot_mode = SHOOT_DONE; 
 		}
 		/*shoot_control.move_flag = 0当前帧发射机构 没有正在执行的发射请求
-			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求
-		*/
+			shoot_control.move_flag = 1当前帧发射机构 有正在执行的发射请求*/
 }
 
 const shoot_control_t* get_robot_shoot_control()

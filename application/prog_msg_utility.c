@@ -134,3 +134,26 @@ void CPU_info_to_usb(void)
 ---------------------------------------------\r\n",
   CPU_RunInfo);
 }
+
+/*
+对相关时间的封装 - 获取程序Tick运行时间
+*/
+uint32_t get_prog_system_time_HAL()
+{
+	return HAL_GetTick();
+}
+
+bool_t get_para_hz_time_freq_signal_HAL(uint8_t freq)
+{
+	return ( HAL_GetTick() % (Tick_INCREASE_FREQ_HAL_BASED / freq) == 0 );
+}
+
+uint32_t get_prog_system_time_FreeRTOS()
+{
+	return xTaskGetTickCount();
+}
+
+bool_t get_para_hz_time_freq_signal_FreeRTOS(uint8_t freq)
+{
+		return ( xTaskGetTickCount() % (Tick_INCREASE_FREQ_HAL_BASED / freq) == 0 );
+}
