@@ -147,7 +147,12 @@ void shoot_init(void)
 		PID_init(&shoot_control.left_fric_motor_pid, PID_POSITION, Left_friction_speed_pid, M3508_LEFT_FRICTION_PID_MAX_OUT, M3508_LEFT_FRICTION_PID_MAX_IOUT);
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
 	
-		shoot_control.total_bullets_fired = 0;
+		shoot_control.local_bullets_limit = shoot_control.total_bullets_fired = 0;
+		
+		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
+		shoot_control.local_heat_limit = shoot_control.heat_limit;
+		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
+    shoot_control.local_heat = 0;
 //		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
 //		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
@@ -892,6 +897,7 @@ static void shoot_bullet_control_absolute_17mm(void)
 				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
 			  shoot_control.total_bullets_fired++; //
+//			  shoot_control.local_heat += ONEBULLET_HEAT_AMOUNT;
     }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
@@ -1083,10 +1089,21 @@ static uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 {
 	if(!toe_is_error(REFEREE_TOE))
   {
-
+		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
+		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
   }
+	else
+	{
+		//TODO: 处理热量安全值
+		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
+		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
+	}
+	
+	//update total heat
+	shoot_control.local_heat = shoot_control.total_bullets_fired * ONEBULLET_HEAT_AMOUNT; // 5-28-2023
+	
 	/*
-	extern uint16_t get_shooter_id1_17mm_cd_rate(void); get_shooter_id1_17mm_heat_limit_and_heat
+	extern uint16_t get_shooter_id1_17mm_cd_rate(void);
 	shoot_heat->heat_limit;
 	*/
 }

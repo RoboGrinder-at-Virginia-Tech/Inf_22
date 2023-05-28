@@ -136,8 +136,11 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_OUT   10000.0f
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
-/*原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
+/*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
 #define SHOOT_HEAT_REMAIN_VALUE     50//60//5-24之前:40//30
+
+/* 其它热量相关宏定义 - 本地计算热量 */
+#define ONEBULLET_HEAT_AMOUNT 10
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -332,6 +335,7 @@ typedef struct
 		uint8_t ammoBox_sts;
 		
 		uint32_t total_bullets_fired; // 总发弹量
+		uint32_t local_bullets_limit; // 当前允许的发弹量上限
 		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
     uint16_t local_heat; //本地热量
