@@ -219,5 +219,8 @@ uint16_t get_shooter_id2_17mm_speed_limit(void)
 		return robot_state.shooter_id2_17mm_speed_limit;
 }
 
-
+uint16_t get_shooter_id1_17mm_cd_rate(void)
+{
+		return robot_state.shooter_id1_17mm_cooling_rate;
+}
 

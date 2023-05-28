@@ -360,4 +360,7 @@ extern void get_shooter_id2_17mm_heat_limit_and_heat(uint16_t *heat1_limit, uint
 extern uint16_t get_chassis_power_limit(void);
 extern uint16_t get_shooter_id1_17mm_speed_limit(void);
 extern uint16_t get_shooter_id2_17mm_speed_limit(void);
+
+extern uint16_t get_shooter_id1_17mm_cd_rate(void);
+
 #endif

@@ -1078,3 +1078,15 @@ void shoot_PID_clear(shoot_pid_t *pid)
     pid->out = pid->Pout = pid->Iout = pid->Dout = 0.0f;
     pid->fdb = pid->set = 0.0f;
 }
+
+static uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
+{
+	if(!toe_is_error(REFEREE_TOE))
+  {
+
+  }
+	/*
+	extern uint16_t get_shooter_id1_17mm_cd_rate(void); get_shooter_id1_17mm_heat_limit_and_heat
+	shoot_heat->heat_limit;
+	*/
+}

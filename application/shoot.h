@@ -116,19 +116,19 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        50.0 //30.0f //25.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        50.0f //40.0f //50.0 //30.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
-#define TRIGGER_ANGLE_PID_OUTER_KD        0.5f
+#define TRIGGER_ANGLE_PID_OUTER_KD        5.5f
 
-#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  100.0f //10.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  30.0f //10.0f
 #define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 2.0f//1.5f //1.0f
 /*
 外环的输出是内环的输入 内环输入单位是rad/s 
 */
-//拨弹轮电机PID  这个是速度环的PID
-#define TRIGGER_SPEED_IN_PID_KP        800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
-#define TRIGGER_SPEED_IN_PID_KI        0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
-#define TRIGGER_SPEED_IN_PID_KD        0.0f //TRIGGER_ANGLE_PID_KD
+//拨弹轮电机PID  这个是速度环的PID - 600 or 800Kp
+#define TRIGGER_SPEED_IN_PID_KP        650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
+#define TRIGGER_SPEED_IN_PID_KI        0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
+#define TRIGGER_SPEED_IN_PID_KD        0.1f //TRIGGER_ANGLE_PID_KD
 
 #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f//9000.0f 
@@ -332,7 +332,9 @@ typedef struct
 		uint8_t ammoBox_sts;
 		
 		uint32_t total_bullets_fired; // 总发弹量
-		
+		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
+		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
+    uint16_t local_heat; //本地热量
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
 //		fp32 continuous_continue_shoot_trig_period_s;
 		
