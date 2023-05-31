@@ -337,8 +337,8 @@ typedef struct
 		
 		uint8_t ammoBox_sts;
 		
-		uint32_t total_bullets_fired; // 总发弹量
-		uint32_t local_bullets_limit; // 当前允许的发弹量上限
+		uint32_t total_bullets_fired; // 总发弹量 -主要用于debug
+		uint32_t local_bullets_limit; // 当前允许的发弹量上限 -没用
 		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
     fp32 local_heat; //本地热量

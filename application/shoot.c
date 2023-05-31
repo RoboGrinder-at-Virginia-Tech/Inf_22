@@ -1143,7 +1143,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	{
 		//TODO: 处理热量安全值
 		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
-		shoot_heat->local_heat_limit = shoot_heat->heat_limit;
+		 shoot_heat->local_heat_limit = shoot_heat->heat_limit;
 		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
 	}
 	
@@ -1180,7 +1180,8 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	
 	
 	return 0;
-//	//返回弹量上限
+	
+//	//返回弹量上限 5-31-2023不再返回子弹数量, 这样没有必要因为最终ref是按照热量结算
 //	if(shoot_heat->local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE > shoot_heat->local_heat_limit)
 //	{
 //		shoot_heat->local_bullets_limit = shoot_heat->total_bullets_fired;
@@ -1193,10 +1194,5 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //	}
 //	//update total heat
 //	shoot_control.local_heat = shoot_control.total_bullets_fired * ONEBULLET_HEAT_AMOUNT;
-	
-	/*
-	extern uint16_t get_shooter_id1_17mm_cd_rate(void);
-	shoot_heat->heat_limit;
-	*/
 }
 
