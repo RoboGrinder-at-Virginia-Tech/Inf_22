@@ -143,14 +143,26 @@ uint32_t get_prog_system_time_HAL()
 	return HAL_GetTick();
 }
 
+fp32 get_prog_system_time_HAL_1s()
+{
+	return (fp32)(HAL_GetTick() / Tick_INCREASE_FREQ_HAL_BASED);
+}
+
 bool_t get_para_hz_time_freq_signal_HAL(uint8_t freq)
 {
 	return ( HAL_GetTick() % (Tick_INCREASE_FREQ_HAL_BASED / freq) == 0 );
 }
 
+//-------
+
 uint32_t get_prog_system_time_FreeRTOS()
 {
 	return xTaskGetTickCount();
+}
+
+fp32 get_prog_system_time_FreeRTOS_1s()
+{
+	return (fp32)(xTaskGetTickCount() / Tick_INCREASE_FREQ_FREE_RTOS_BASED);
 }
 
 bool_t get_para_hz_time_freq_signal_FreeRTOS(uint8_t freq)

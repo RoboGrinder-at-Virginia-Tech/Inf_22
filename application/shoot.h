@@ -343,6 +343,9 @@ typedef struct
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
     fp32 local_heat; //本地热量
 		fp32 temp_debug;
+		
+		uint32_t local_last_cd_timestamp; //上一次冷却的time stamp
+		
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
 //		fp32 continuous_continue_shoot_trig_period_s;
 		

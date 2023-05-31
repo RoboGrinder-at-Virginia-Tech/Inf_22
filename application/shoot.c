@@ -1099,7 +1099,7 @@ void shoot_PID_clear(shoot_pid_t *pid)
 */
 uint32_t shoot_heat_update_calculate_gimbal_task()
 {
-		if(!toe_is_error(REFEREE_TOE))
+	if(!toe_is_error(REFEREE_TOE))
   {
 		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		 shoot_control.local_heat_limit = shoot_control.heat_limit;
@@ -1131,7 +1131,7 @@ uint32_t shoot_heat_update_calculate_gimbal_task()
 	return 0;
 }
 
-uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)//shoot_heat_update_calculate_gimbal_task shoot_heat_update_calculate
+uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 {
 	if(!toe_is_error(REFEREE_TOE))
   {
@@ -1147,20 +1147,37 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)//shoot_heat_up
 		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
 	}
 	
-			 //if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
-	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
+	//------------------------------------------------------
+//	//使用函数按10Hz算
+//	//if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+//	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
+//	{
+//		 shoot_heat->local_heat -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
+//		 if(shoot_heat->local_heat < 0.0f)
+//		 {
+//			 shoot_heat->local_heat = 0.0f;
+//		 }
+//		 
+//		 shoot_control.temp_debug++;
+//	}
+	//-------------------------------------------------------
+	
+	//使用timestamp算
+	shoot_heat->local_heat -= ( ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED) * (fp32)shoot_heat->local_cd_rate );
+	if(shoot_heat->local_heat < 0.0f)
 	{
-		 shoot_heat->local_heat -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
-		 if(shoot_heat->local_heat < 0.0f)
-		 {
-			 shoot_heat->local_heat = 0.0f;
-		 }
-		 
-		 shoot_control.temp_debug++;
+		shoot_heat->local_heat = 0.0f;
 	}
+		 
+	shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+		 
+	//更新时间戳
+	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
 	
 	//local heat限度
-	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+	
+	
 	
 	return 0;
 //	//返回弹量上限
@@ -1182,3 +1199,4 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)//shoot_heat_up
 	shoot_heat->heat_limit;
 	*/
 }
+

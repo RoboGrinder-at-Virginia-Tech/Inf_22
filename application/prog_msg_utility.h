@@ -19,9 +19,11 @@
 
 uint32_t get_prog_system_time_HAL(void);
 bool_t get_para_hz_time_freq_signal_HAL(uint8_t freq);
+fp32 get_prog_system_time_HAL_1s(void);
 
 uint32_t get_prog_system_time_FreeRTOS(void);
 bool_t get_para_hz_time_freq_signal_FreeRTOS(uint8_t freq);
+fp32 get_prog_system_time_FreeRTOS_1s(void);
 
 void CPU_info_to_usb(void);
 void init_prog_msg_utility(void);
