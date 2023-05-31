@@ -346,6 +346,8 @@ void gimbal_task(void const *pvParameters)
         gimbal_feedback_update(&gimbal_control);             //云台数据反馈
         gimbal_set_control(&gimbal_control);                 //设置云台控制量
         gimbal_control_loop(&gimbal_control);                //云台控制PID计算
+			
+//				shoot_heat_update_calculate_gimbal_task();
         shoot_can_set_current = shoot_control_loop();        //射击任务控制循环
 #if YAW_TURN
         yaw_can_set_current = -gimbal_control.gimbal_yaw_motor.given_current;

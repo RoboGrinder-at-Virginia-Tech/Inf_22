@@ -137,10 +137,13 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     50//60//5-24之前:40//30
+#define SHOOT_HEAT_REMAIN_VALUE     0 //30//50//60//5-24之前:40//30
 
 /* 其它热量相关宏定义 - 本地计算热量 */
-#define ONEBULLET_HEAT_AMOUNT 10
+#define ONE17mm_BULLET_HEAT_AMOUNT 10
+#define MIN_LOCAL_HEAT 0
+#define MAX_LOCAL_HEAT 500
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 0 //5
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -338,7 +341,8 @@ typedef struct
 		uint32_t local_bullets_limit; // 当前允许的发弹量上限
 		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
-    uint16_t local_heat; //本地热量
+    fp32 local_heat; //本地热量
+		fp32 temp_debug;
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
 //		fp32 continuous_continue_shoot_trig_period_s;
 		
@@ -355,4 +359,6 @@ extern const shoot_control_t* get_robot_shoot_control(void);
 extern shoot_mode_e get_shoot_mode(void);
 extern user_fire_ctrl_e get_user_fire_ctrl(void);
 extern uint8_t get_ammoBox_sts(void);
+extern uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
+extern uint32_t shoot_heat_update_calculate_gimbal_task(void);
 #endif

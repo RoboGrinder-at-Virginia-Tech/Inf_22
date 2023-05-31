@@ -73,10 +73,8 @@ static void trigger_motor_turn_back_17mm(void); //有绝对位置环退弹
   * @retval         void
   */
 static void shoot_bullet_control_absolute_17mm(void);
-
-
 static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq);
-
+uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
 
 shoot_control_t shoot_control;          //射击数据
 
@@ -152,7 +150,7 @@ void shoot_init(void)
 		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		shoot_control.local_heat_limit = shoot_control.heat_limit;
 		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
-    shoot_control.local_heat = 0;
+    shoot_control.local_heat = 0.0f;
 //		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
 //		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
@@ -599,15 +597,25 @@ static void shoot_set_mode(void)
 				}
     }
 
+		shoot_heat_update_calculate(&shoot_control);
+		
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+//    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+//    {
+//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//        {
+//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//        }
+//    }
+		//调试: 难道referee uart掉线后 就没有热量保护了?
+		
+		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
     {
         if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
         {
             shoot_control.shoot_mode =SHOOT_READY_BULLET;
         }
     }
-		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
@@ -897,7 +905,7 @@ static void shoot_bullet_control_absolute_17mm(void)
 				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
 			  shoot_control.total_bullets_fired++; //
-//			  shoot_control.local_heat += ONEBULLET_HEAT_AMOUNT;
+			  shoot_control.local_heat += ONE17mm_BULLET_HEAT_AMOUNT;
     }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
@@ -939,6 +947,7 @@ static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq)
 			 	shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
 			  shoot_control.total_bullets_fired++; //
+			  shoot_control.local_heat += ONE17mm_BULLET_HEAT_AMOUNT;
 		 }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
@@ -1085,22 +1094,88 @@ void shoot_PID_clear(shoot_pid_t *pid)
     pid->fdb = pid->set = 0.0f;
 }
 
-static uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
+/*
+获得当前冷却 获得当前热量 获得当前热量限制 - 计算cd
+*/
+uint32_t shoot_heat_update_calculate_gimbal_task()
+{
+		if(!toe_is_error(REFEREE_TOE))
+  {
+		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
+		 shoot_control.local_heat_limit = shoot_control.heat_limit;
+		 shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
+  }
+	else
+	{
+		//TODO: 处理热量安全值
+		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
+		shoot_control.local_heat_limit = shoot_control.heat_limit;
+		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
+	}
+	
+			 //if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
+	{
+		 shoot_control.local_heat -= (fp32)((fp32)shoot_control.local_cd_rate / 10.0f);
+		 if(shoot_control.local_heat < 0.0f)
+		 {
+			 shoot_control.local_heat = 0.0f;
+		 }
+		 
+		 shoot_control.temp_debug++;
+	}
+	
+	//local heat限度
+	shoot_control.local_heat = loop_fp32_constrain(shoot_control.local_heat, MIN_LOCAL_HEAT, MAX_LOCAL_HEAT);
+	
+	return 0;
+}
+
+uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)//shoot_heat_update_calculate_gimbal_task shoot_heat_update_calculate
 {
 	if(!toe_is_error(REFEREE_TOE))
   {
 		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
+		 shoot_heat->local_heat_limit = shoot_heat->heat_limit;
 		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
   }
 	else
 	{
 		//TODO: 处理热量安全值
 		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
+		shoot_heat->local_heat_limit = shoot_heat->heat_limit;
 		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
 	}
 	
-	//update total heat
-	shoot_control.local_heat = shoot_control.total_bullets_fired * ONEBULLET_HEAT_AMOUNT; // 5-28-2023
+			 //if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
+	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
+	{
+		 shoot_heat->local_heat -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
+		 if(shoot_heat->local_heat < 0.0f)
+		 {
+			 shoot_heat->local_heat = 0.0f;
+		 }
+		 
+		 shoot_control.temp_debug++;
+	}
+	
+	//local heat限度
+	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+	
+	return 0;
+//	//返回弹量上限
+//	if(shoot_heat->local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE > shoot_heat->local_heat_limit)
+//	{
+//		shoot_heat->local_bullets_limit = shoot_heat->total_bullets_fired;
+//		return shoot_heat->local_bullets_limit; //已经马上超热量了
+//	}
+//	else
+//	{
+//		shoot_heat->local_bullets_limit = shoot_heat->total_bullets_fired + (uint32_t)((shoot_heat->local_heat_limit - (shoot_heat->local_heat+LOCAL_SHOOT_HEAT_REMAIN_VALUE)) / ONE17mm_BULLET_HEAT_AMOUNT);
+//		return shoot_heat->local_bullets_limit;
+//	}
+//	//update total heat
+//	shoot_control.local_heat = shoot_control.total_bullets_fired * ONEBULLET_HEAT_AMOUNT;
 	
 	/*
 	extern uint16_t get_shooter_id1_17mm_cd_rate(void);
