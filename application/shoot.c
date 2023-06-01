@@ -1192,7 +1192,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	//更新时间戳
 	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
 	
-	//融合裁判系统的heat信息, 修正本地的计算
+	//融合裁判系统的heat信息, 修正本地的计算 --TODO 测试中
 	if( abs( ((int32_t)shoot_control.local_last_cd_timestamp) - ((int32_t)get_last_robot_state_rx_timestamp()) ) > 200 )
 	{
 		shoot_heat->local_heat = shoot_heat->heat;
@@ -1202,6 +1202,46 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
 	
 	//----section end----
+	
+	//用函数10Hz + 里程计信息算
+	//热量增加计算
+	if( get_para_hz_time_freq_signal_HAL(10) )
+	{
+#if TRIG_MOTOR_TURN
+		shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
+//		shoot_heat->rt_odom_angle = -(shoot_heat->angle);
+#else
+		shoot_heat->rt_odom_angle = (get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE; //TODO 里程计 初始值是负数 - 排除问题
+//		shoot_heat->rt_odom_angle = (shoot_heat->angle);
+#endif
+
+//	shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT; //不这样算
+	
+		//用当前发弹量来计算热量
+		shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+		shoot_heat->rt_odom_local_heat = (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
+		
+		//update last
+		shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
+		shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
+		
+		//冷却
+		shoot_heat->rt_odom_local_heat -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
+		if(shoot_heat->rt_odom_local_heat < 0.0f)
+		{
+			shoot_heat->rt_odom_local_heat = 0.0f;
+		}
+			 
+		shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+			 
+		//更新时间戳
+		shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
+		
+		//local heat限度
+		shoot_heat->rt_odom_local_heat = loop_fp32_constrain(shoot_heat->rt_odom_local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+		//----section end----
+	}
+	
 //	//用timestamp + 里程计信息算
 //	//热量增加计算
 //#if TRIG_MOTOR_TURN
@@ -1212,13 +1252,14 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 ////		shoot_heat->rt_odom_angle = (shoot_heat->angle);
 //#endif
 
-//	shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT;
+//	shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT; //不这样算
 //	
-//	//debug用
-//	shoot_heat->rt_odom_delta_bullets_fired = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
-//	shoot_heat->rt_odom_total_bullets_fired = (fp32)(shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+//	//用当前发弹量来计算热量
+//	shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+//	shoot_heat->rt_odom_local_heat = abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * ONE17mm_BULLET_HEAT_AMOUNT;
 //	
 //	//update last
+//	shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
 //	shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
 //	
 //	//冷却

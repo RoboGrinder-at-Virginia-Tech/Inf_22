@@ -41,7 +41,8 @@ extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 //static void usb_printf(const char *fmt,...);
 
 //static uint8_t usb_buf[336]; //256 这就是越界的指针 change to 512 加上换行符336
-uint8_t usb_buf[512]; //256 这就是越界的指针 change to 512 加上换行符336
+//5-31-2023又发生了一次越界 - 从512改为1024
+uint8_t usb_buf[1024]; //256 这就是越界的指针 change to 512 加上换行符336
 //static const char status[2][7] = {"OK", "ERROR!"};
 const error_t *error_list_usb_local;
 

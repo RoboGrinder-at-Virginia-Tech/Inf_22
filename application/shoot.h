@@ -349,11 +349,13 @@ typedef struct
 		
 		uint32_t local_last_cd_timestamp; //上一次冷却的time stamp
 		
-		//实时里程计 - 这些都不好用
+		//实时里程计 - 6-1-2023再次尝试
 		fp32 rt_odom_angle; //当前时刻 里程计 角度
 		fp32 last_rt_odom_angle; //上一时刻里程计角度
-		uint32_t rt_odom_delta_bullets_fired; // 来自实时里程计的发弹 差量 -主要用于debug
-		uint32_t rt_odom_total_bullets_fired; // 来自实时里程计的发弹 差量 -主要用于debug
+		
+		uint32_t rt_odom_total_bullets_fired; // 总的发弹量
+		uint32_t rt_odom_calculated_bullets_fired; // 已经计算过热量的子弹量
+
 		fp32 rt_odom_local_heat; //本地热量
 		
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
