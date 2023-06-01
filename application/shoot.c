@@ -1219,7 +1219,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	
 		//用当前发弹量来计算热量
 		shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
-		shoot_heat->rt_odom_local_heat = (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
+		shoot_heat->rt_odom_local_heat += (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
 		
 		//update last
 		shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
