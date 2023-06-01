@@ -37,6 +37,8 @@
 #include "calibrate_task.h"
 #include "detect_task.h"
 
+#include "odometer_task.h"
+
 
 #define IMU_temp_PWM(pwm)  imu_pwm_set(pwm)                    //pwm¸ø¶¨
 
@@ -352,6 +354,7 @@ void INS_task(void const *pvParameters)
 				
 				quat_matrix_3x3_pre_mult_vector(INS_quat, tpyeC_to_gimbal_QUAT_permutation, INS_gimbal_quat);
 				//
+				odometer_task();//
 
         //because no use ist8310 and save time, no use
         if(mag_update_flag &= 1 << IMU_DR_SHFITS)

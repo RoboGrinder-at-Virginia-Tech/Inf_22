@@ -56,6 +56,7 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "prog_msg_utility.h"
+#include "odometer_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -159,6 +160,8 @@ int main(void)
 	
 	//init CPU stats
 	init_prog_msg_utility();
+	
+	odometer_init(); //里程计初始化
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

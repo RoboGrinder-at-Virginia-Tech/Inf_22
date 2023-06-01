@@ -144,6 +144,8 @@ Original PID parameter
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
 #define LOCAL_SHOOT_HEAT_REMAIN_VALUE 0 //5
+//Infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲 set 0.67f
+#define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -343,8 +345,16 @@ typedef struct
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
     fp32 local_heat; //本地热量
 		fp32 temp_debug;
+		uint8_t local_heat_protection_trig; //触发了本地过热保护
 		
 		uint32_t local_last_cd_timestamp; //上一次冷却的time stamp
+		
+		//实时里程计 - 这些都不好用
+		fp32 rt_odom_angle; //当前时刻 里程计 角度
+		fp32 last_rt_odom_angle; //上一时刻里程计角度
+		uint32_t rt_odom_delta_bullets_fired; // 来自实时里程计的发弹 差量 -主要用于debug
+		uint32_t rt_odom_total_bullets_fired; // 来自实时里程计的发弹 差量 -主要用于debug
+		fp32 rt_odom_local_heat; //本地热量
 		
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
 //		fp32 continuous_continue_shoot_trig_period_s;

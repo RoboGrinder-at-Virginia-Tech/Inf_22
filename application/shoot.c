@@ -34,6 +34,9 @@
 
 #include "miniPC_msg.h"
 #include "prog_msg_utility.h"
+#include "odometer_task.h"
+
+#include "stdlib.h"
 
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
 #define shoot_fric2_on(pwm) fric2_on((pwm)) //摩擦轮2pwm宏定义
@@ -600,6 +603,8 @@ static void shoot_set_mode(void)
 		shoot_heat_update_calculate(&shoot_control);
 		
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
+		
+//		//原来的超热量保护
 //    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
 //    {
 //        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
@@ -609,13 +614,25 @@ static void shoot_set_mode(void)
 //    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
+		//未使用实时里程计的超热量保护
 		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
     {
         if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
         {
             shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
         }
     }
+		
+//		//使用实时里程计的超热量保护
+//		if(shoot_control.rt_odom_local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+//    {
+//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//        {
+//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+////						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
+//        }
+//    }
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
@@ -876,6 +893,7 @@ static void trigger_motor_turn_back_17mm(void)
 		if(shoot_control.last_block_flag == 0 && shoot_control.block_flag == 1)
 		{//刚发生堵转
 			shoot_control.total_bullets_fired--; //当前子弹未打出去
+			shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT;
 		}
 		
 		if(shoot_control.last_block_flag == 1 && shoot_control.block_flag == 0)
@@ -1174,10 +1192,50 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	//更新时间戳
 	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
 	
+	//融合裁判系统的heat信息, 修正本地的计算
+	if( abs( ((int32_t)shoot_control.local_last_cd_timestamp) - ((int32_t)get_last_robot_state_rx_timestamp()) ) > 200 )
+	{
+		shoot_heat->local_heat = shoot_heat->heat;
+	}
+	
 	//local heat限度
 	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
 	
-	
+	//----section end----
+//	//用timestamp + 里程计信息算
+//	//热量增加计算
+//#if TRIG_MOTOR_TURN
+//		shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
+////		shoot_heat->rt_odom_angle = -(shoot_heat->angle);
+//#else
+//		shoot_heat->rt_odom_angle = (get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
+////		shoot_heat->rt_odom_angle = (shoot_heat->angle);
+//#endif
+
+//	shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT;
+//	
+//	//debug用
+//	shoot_heat->rt_odom_delta_bullets_fired = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+//	shoot_heat->rt_odom_total_bullets_fired = (fp32)(shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+//	
+//	//update last
+//	shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
+//	
+//	//冷却
+//	shoot_heat->rt_odom_local_heat -= ( ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED) * (fp32)shoot_heat->local_cd_rate );
+//	if(shoot_heat->rt_odom_local_heat < 0.0f)
+//	{
+//		shoot_heat->rt_odom_local_heat = 0.0f;
+//	}
+//		 
+//	shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+//		 
+//	//更新时间戳
+//	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
+//	
+//	//local heat限度
+//	shoot_heat->rt_odom_local_heat = loop_fp32_constrain(shoot_heat->rt_odom_local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+//	//----section end----
 	
 	return 0;
 	
