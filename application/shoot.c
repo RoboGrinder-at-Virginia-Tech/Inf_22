@@ -614,18 +614,8 @@ static void shoot_set_mode(void)
 //    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
-		//未使用实时里程计的超热量保护
-		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
-        }
-    }
-		
-//		//使用实时里程计的超热量保护
-//		if(shoot_control.rt_odom_local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+//		//未使用实时里程计的超热量保护
+//		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
 //    {
 //        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 //        {
@@ -633,6 +623,16 @@ static void shoot_set_mode(void)
 ////						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
 //        }
 //    }
+		
+		//使用实时里程计的超热量保护
+		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+    {
+        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+        {
+            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
+        }
+    }
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
@@ -1180,28 +1180,28 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //	}
 	//-------------------------------------------------------
 	
-	//使用timestamp算
-	shoot_heat->local_heat -= ( ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED) * (fp32)shoot_heat->local_cd_rate );
-	if(shoot_heat->local_heat < 0.0f)
-	{
-		shoot_heat->local_heat = 0.0f;
-	}
-		 
-	shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
-		 
-	//更新时间戳
-	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
-	
-	//融合裁判系统的heat信息, 修正本地的计算 --TODO 测试中
-	if( abs( ((int32_t)shoot_control.local_last_cd_timestamp) - ((int32_t)get_last_robot_state_rx_timestamp()) ) > 200 )
-	{
-		shoot_heat->local_heat = shoot_heat->heat;
-	}
-	
-	//local heat限度
-	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
-	
-	//----section end----
+//	//使用timestamp算
+//	shoot_heat->local_heat -= ( ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED) * (fp32)shoot_heat->local_cd_rate );
+//	if(shoot_heat->local_heat < 0.0f)
+//	{
+//		shoot_heat->local_heat = 0.0f;
+//	}
+//		 
+//	shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+//		 
+//	//更新时间戳
+//	shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
+//	
+//	//融合裁判系统的heat信息, 修正本地的计算 --TODO 测试中
+//	if( abs( ((int32_t)shoot_control.local_last_cd_timestamp) - ((int32_t)get_last_robot_state_rx_timestamp()) ) > 200 )
+//	{
+//		shoot_heat->local_heat = shoot_heat->heat;
+//	}
+//	
+//	//local heat限度
+//	shoot_heat->local_heat = loop_fp32_constrain(shoot_heat->local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+//	
+//	//----section end----
 	
 	//用函数10Hz + 里程计信息算
 	//热量增加计算
@@ -1219,17 +1219,17 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	
 		//用当前发弹量来计算热量
 		shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
-		shoot_heat->rt_odom_local_heat += (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
+		shoot_heat->rt_odom_local_heat[0] += (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
 		
 		//update last
 		shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
 		shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
 		
 		//冷却
-		shoot_heat->rt_odom_local_heat -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
-		if(shoot_heat->rt_odom_local_heat < 0.0f)
+		shoot_heat->rt_odom_local_heat[0] -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);
+		if(shoot_heat->rt_odom_local_heat[0] < 0.0f)
 		{
-			shoot_heat->rt_odom_local_heat = 0.0f;
+			shoot_heat->rt_odom_local_heat[0] = 0.0f;
 		}
 			 
 		shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
@@ -1237,8 +1237,24 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 		//更新时间戳
 		shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
 		
+		//融合裁判系统的heat信息, 修正本地的计算 --TODO 测试中
+//		if( abs( ((int32_t)shoot_control.local_last_cd_timestamp) - ((int32_t)get_last_robot_state_rx_timestamp()) ) > 200 )
+//		{
+//			shoot_heat->rt_odom_local_heat = shoot_heat->heat;
+//		}
+		 fp32 delta_heat = shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat); // fabs(shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat));
+		 if(fabs(delta_heat) > 12.0f) //差不多一发的热量
+		 {
+			 shoot_heat->rt_odom_local_heat[0] -= delta_heat;
+		 }
+		
 		//local heat限度
-		shoot_heat->rt_odom_local_heat = loop_fp32_constrain(shoot_heat->rt_odom_local_heat, MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+		shoot_heat->rt_odom_local_heat[0] = fp32_constrain(shoot_heat->rt_odom_local_heat[0], MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
+		
+		//存过去的
+		shoot_heat->rt_odom_local_heat[3] = shoot_heat->rt_odom_local_heat[2];
+		shoot_heat->rt_odom_local_heat[2] = shoot_heat->rt_odom_local_heat[1];
+		shoot_heat->rt_odom_local_heat[1] = shoot_heat->rt_odom_local_heat[0];
 		//----section end----
 	}
 	

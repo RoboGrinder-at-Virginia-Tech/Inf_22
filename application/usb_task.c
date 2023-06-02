@@ -32,6 +32,10 @@
 
 #include "prog_msg_utility.h"
 
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t usb_task_high_water;
+#endif
+
 extern pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_aid;
 extern pc_cmd_gimbal_ctrl_t pc_cmd_gimbal_ctrl_full;
 
@@ -41,8 +45,7 @@ extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 //static void usb_printf(const char *fmt,...);
 
 //static uint8_t usb_buf[336]; //256 这就是越界的指针 change to 512 加上换行符336
-//5-31-2023又发生了一次越界 - 从512改为1024
-uint8_t usb_buf[1024]; //256 这就是越界的指针 change to 512 加上换行符336
+uint8_t usb_buf[512]; //256 这就是越界的指针 change to 512 加上换行符336
 //static const char status[2][7] = {"OK", "ERROR!"};
 const error_t *error_list_usb_local;
 
@@ -114,6 +117,9 @@ void usb_task(void const * argument)
 		/* ---------- RTOS tasks stats and info - prog_msg_utility ---------- */
 			  CPU_info_to_usb();
 		/* ---------- RTOS tasks stats and info - prog_msg_utility Ends ---------- */
+#if INCLUDE_uxTaskGetStackHighWaterMark
+    usb_task_high_water = uxTaskGetStackHighWaterMark(NULL);
+#endif	
     }
 
 }

@@ -143,7 +143,7 @@ Original PID parameter
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
-#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 0 //5
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 10 //5
 //Infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲 set 0.67f
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 
@@ -356,7 +356,7 @@ typedef struct
 		uint32_t rt_odom_total_bullets_fired; // 总的发弹量
 		uint32_t rt_odom_calculated_bullets_fired; // 已经计算过热量的子弹量
 
-		fp32 rt_odom_local_heat; //本地热量
+		fp32 rt_odom_local_heat[4]; //本地热量 [0] 当前 [1]上一次 [2]上上次
 		
 //		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
 //		fp32 continuous_continue_shoot_trig_period_s;

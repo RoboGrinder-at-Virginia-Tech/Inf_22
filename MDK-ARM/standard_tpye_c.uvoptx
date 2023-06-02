@@ -183,87 +183,97 @@
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>miniPC_comm_task_high_water</ItemText>
+          <ItemText>pc_ui_msg</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>pc_ui_msg</ItemText>
+          <ItemText>pc_comm_fifo</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>pc_comm_fifo</ItemText>
+          <ItemText>embed_send</ItemText>
         </Ww>
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_send</ItemText>
+          <ItemText>embed_send_protocol</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_send_protocol</ItemText>
+          <ItemText>size,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>size,0x0A</ItemText>
+          <ItemText>sCap23_info</ItemText>
         </Ww>
         <Ww>
           <count>11</count>
           <WinNumber>1</WinNumber>
-          <ItemText>sCap23_info</ItemText>
+          <ItemText>robot_state</ItemText>
         </Ww>
         <Ww>
           <count>12</count>
           <WinNumber>1</WinNumber>
-          <ItemText>robot_state</ItemText>
+          <ItemText>pc_info</ItemText>
         </Ww>
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>pc_info</ItemText>
+          <ItemText>embed_gimbal_info</ItemText>
         </Ww>
         <Ww>
           <count>14</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_gimbal_info</ItemText>
+          <ItemText>embed_msg_to_pc</ItemText>
         </Ww>
         <Ww>
           <count>15</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_msg_to_pc</ItemText>
+          <ItemText>embed_send_protocol</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_send_protocol</ItemText>
+          <ItemText>embed_send</ItemText>
         </Ww>
         <Ww>
           <count>17</count>
           <WinNumber>1</WinNumber>
-          <ItemText>embed_send</ItemText>
+          <ItemText>now_oled_errror</ItemText>
         </Ww>
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>now_oled_errror</ItemText>
+          <ItemText>rc_ctrl</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rc_ctrl</ItemText>
+          <ItemText>trig_M2006_odom</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>trig_M2006_odom</ItemText>
+          <ItemText>last_robot_state_rx_timestamp</ItemText>
         </Ww>
         <Ww>
           <count>21</count>
           <WinNumber>1</WinNumber>
-          <ItemText>last_robot_state_rx_timestamp</ItemText>
+          <ItemText>usb_task_high_water</ItemText>
+        </Ww>
+        <Ww>
+          <count>22</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>client_ui_task_high_water</ItemText>
+        </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CPU_RunInfo</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
