@@ -1243,7 +1243,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //			shoot_heat->rt_odom_local_heat = shoot_heat->heat;
 //		}
 		 fp32 delta_heat = shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat); // fabs(shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat));
-		 if(fabs(delta_heat) > 12.0f) //差不多一发的热量
+		 if(delta_heat > 12.0f) //差不多一发的热量 fabs(delta_heat) 
 		 {
 			 shoot_heat->rt_odom_local_heat[0] -= delta_heat;
 		 }
