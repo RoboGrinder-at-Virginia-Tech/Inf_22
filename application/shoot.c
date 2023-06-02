@@ -1242,11 +1242,11 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //		{
 //			shoot_heat->rt_odom_local_heat = shoot_heat->heat;
 //		}
-		 fp32 delta_heat = shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat); // fabs(shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat));
-		 if(delta_heat > 12.0f) //差不多一发的热量 fabs(delta_heat) 
-		 {
-			 shoot_heat->rt_odom_local_heat[0] -= delta_heat;
-		 }
+//		 fp32 delta_heat = shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat); // fabs(shoot_heat->rt_odom_local_heat[3] - ((fp32)shoot_heat->heat));
+//		 if(delta_heat > 12.0f) //差不多一发的热量 fabs(delta_heat) 
+//		 {
+//			 shoot_heat->rt_odom_local_heat[0] -= delta_heat;
+//		 }
 		
 		//local heat限度
 		shoot_heat->rt_odom_local_heat[0] = fp32_constrain(shoot_heat->rt_odom_local_heat[0], MIN_LOCAL_HEAT, (fp32)shoot_heat->local_heat_limit*2.0f); //MAX_LOCAL_HEAT); //(fp32)shoot_heat->local_heat_limit
