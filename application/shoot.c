@@ -604,14 +604,14 @@ static void shoot_set_mode(void)
 		
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		
-//		//原来的超热量保护
-//    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
-//    {
-//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-//        {
-//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-//        }
-//    }
+		//原来的超热量保护
+    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+    {
+        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+        {
+            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+        }
+    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
 //		//未使用实时里程计的超热量保护
@@ -624,15 +624,15 @@ static void shoot_set_mode(void)
 //        }
 //    }
 		
-		//使用实时里程计的超热量保护
-		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
-        }
-    }
+//		//使用实时里程计的超热量保护
+//		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+//    {
+//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//        {
+//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+////						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
+//        }
+//    }
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
