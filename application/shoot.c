@@ -279,16 +279,7 @@ int16_t shoot_control_loop(void)
 //        shoot_control.trigger_speed_set = CONTINUE_TRIGGER_SPEED;
 //        trigger_motor_turn_back_17mm();
 			
-			 //有PID位置外环后, 连发按标定的射频
-//			 if(xTaskGetTickCount() > shoot_control.continuous_shoot_TimeStamp + (uint32_t)(shoot_control.continuous_continue_shoot_trig_period_s * 1000.0f))
-//			 if(xTaskGetTickCount() % (1000 / CONTINUE_SHOOT_TRIG_FREQ) == 0) //1000为tick++的频率
-//			 {
-//				 shoot_control.continuous_shoot_TimeStamp++;
-//				 
-//				 shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
-//				 shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-//				 shoot_bullet_control_absolute_17mm();
-//			 }
+				//有PID位置外环后, 连发按标定的射频
 				shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
 				shoot_bullet_control_continuous_17mm(10);
