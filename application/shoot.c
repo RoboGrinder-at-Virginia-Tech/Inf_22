@@ -275,7 +275,7 @@ int16_t shoot_control_loop(void)
     }
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
-//        //设置拨弹轮的拨动速度,并开启堵转反转处理
+//        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
 //        shoot_control.trigger_speed_set = CONTINUE_TRIGGER_SPEED;
 //        trigger_motor_turn_back_17mm();
 			
@@ -600,6 +600,7 @@ static void shoot_set_mode(void)
 				}
     }
 
+		//以下开始热量环
 		shoot_heat_update_calculate(&shoot_control);
 		
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
@@ -787,7 +788,7 @@ static void shoot_feedback_update(void)
 		
 }
 
-////老的模糊位置控制的退弹 5-27-2023注释
+////老的模糊位置控制 -的退弹 5-27-2023注释
 //static void trigger_motor_turn_back_17mm(void)
 //{
 //    if( shoot_control.block_time < BLOCK_TIME)
@@ -1128,7 +1129,6 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 		 shoot_heat->local_cd_rate = LOCAL_CD_RATE_SAFE_VAL;
 	}
 	
-	//------------------------------------------------------
 //	//使用函数按10Hz算
 //	//if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
 //	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
@@ -1141,7 +1141,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //		 
 //		 shoot_control.temp_debug++;
 //	}
-	//-------------------------------------------------------
+//	//----section end----
 	
 //	//使用timestamp算
 //	shoot_heat->local_heat -= ( ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED) * (fp32)shoot_heat->local_cd_rate );
@@ -1230,7 +1230,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 		//----section end----
 	}
 	
-//	//用timestamp + 里程计信息算
+//	//用timestamp + 里程计信息算 6-3-2023未试过
 //	//热量增加计算
 //#if TRIG_MOTOR_TURN
 //		shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
@@ -1267,19 +1267,5 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 //	//----section end----
 	
 	return 0;
-	
-//	//返回弹量上限 5-31-2023不再返回子弹数量, 这样没有必要因为最终ref是按照热量结算
-//	if(shoot_heat->local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE > shoot_heat->local_heat_limit)
-//	{
-//		shoot_heat->local_bullets_limit = shoot_heat->total_bullets_fired;
-//		return shoot_heat->local_bullets_limit; //已经马上超热量了
-//	}
-//	else
-//	{
-//		shoot_heat->local_bullets_limit = shoot_heat->total_bullets_fired + (uint32_t)((shoot_heat->local_heat_limit - (shoot_heat->local_heat+LOCAL_SHOOT_HEAT_REMAIN_VALUE)) / ONE17mm_BULLET_HEAT_AMOUNT);
-//		return shoot_heat->local_bullets_limit;
-//	}
-//	//update total heat
-//	shoot_control.local_heat = shoot_control.total_bullets_fired * ONEBULLET_HEAT_AMOUNT;
 }
 
