@@ -343,10 +343,9 @@ typedef struct
 		uint8_t ammoBox_sts;
 		
 		uint32_t total_bullets_fired; // 总发弹量 -主要用于debug
-		uint32_t local_bullets_limit; // 当前允许的发弹量上限 -没用
 		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
-    fp32 local_heat; //本地热量
+    fp32 local_heat; //本地热量未使用 实时里程计 只是开发时的一个测试未移植到其他机器人
 		fp32 temp_debug;
 		uint8_t local_heat_protection_trig; //触发了本地过热保护
 		
@@ -359,11 +358,7 @@ typedef struct
 		uint32_t rt_odom_total_bullets_fired; // 总的发弹量
 		uint32_t rt_odom_calculated_bullets_fired; // 已经计算过热量的子弹量
 
-		fp32 rt_odom_local_heat[4]; //本地热量 [0] 当前 [1]上一次 [2]上上次
-		
-//		uint32_t continuous_shoot_TimeStamp; //连续发单时上一次发射时间
-//		fp32 continuous_continue_shoot_trig_period_s;
-		
+		fp32 rt_odom_local_heat[4]; //本地热量 [0] 当前 [1]上一次 [2]上上次 受到射频影响		
 } shoot_control_t;
 
 //shoot motor 是 拨弹轮 M2006 motor

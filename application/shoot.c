@@ -148,14 +148,12 @@ void shoot_init(void)
 		PID_init(&shoot_control.left_fric_motor_pid, PID_POSITION, Left_friction_speed_pid, M3508_LEFT_FRICTION_PID_MAX_OUT, M3508_LEFT_FRICTION_PID_MAX_IOUT);
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
 	
-		shoot_control.local_bullets_limit = shoot_control.total_bullets_fired = 0;
+		shoot_control.total_bullets_fired = 0;
 		
 		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-		shoot_control.local_heat_limit = shoot_control.heat_limit;
-		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
+		shoot_control.local_heat_limit = shoot_control.heat_limit; //通用 数据
+		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate(); //通用 数据
     shoot_control.local_heat = 0.0f;
-//		shoot_control.continuous_shoot_TimeStamp = 0; //HAL_GetTick();
-//		shoot_control.continuous_continue_shoot_trig_period_s = (fp32)(1.0f / (fp32)CONTINUE_SHOOT_TRIG_FREQ);
 }
 
 /**
@@ -593,10 +591,9 @@ static void shoot_set_mode(void)
 
 		//以下开始热量环
 		shoot_heat_update_calculate(&shoot_control);
-		
+		//17mm ref热量限制
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-		
-//		//原来的超热量保护
+//		//只用裁判系统数据的超热量保护
 //    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
 //    {
 //        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
@@ -606,8 +603,8 @@ static void shoot_set_mode(void)
 //    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
-//		//未使用实时里程计的超热量保护
-//		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+//		//未使用实时里程计的超热量保护 - 只是开发时的一个测试未移植到其他机器人
+//		if(shoot_control.local_heat + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
 //    {
 //        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 //        {
@@ -617,12 +614,11 @@ static void shoot_set_mode(void)
 //    }
 		
 		//使用实时里程计的超热量保护
-		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
     {
         if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
         {
             shoot_control.shoot_mode =SHOOT_READY_BULLET;
-//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
         }
     }
 		
