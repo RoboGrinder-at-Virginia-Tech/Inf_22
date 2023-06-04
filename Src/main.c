@@ -56,6 +56,7 @@
 #include "usb_device.h"
 #include "usbd_cdc_if.h"
 #include "prog_msg_utility.h"
+#include "odometer_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
