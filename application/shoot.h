@@ -143,9 +143,12 @@ Original PID parameter
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
-#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 10 //5
-//Infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲 set 0.67f
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //5
+/*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
+//Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级
+#define LOCAL_HEAT_LIMIT_SAFE_VAL 50
+#define LOCAL_CD_RATE_SAFE_VAL 40
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -375,5 +378,4 @@ extern shoot_mode_e get_shoot_mode(void);
 extern user_fire_ctrl_e get_user_fire_ctrl(void);
 extern uint8_t get_ammoBox_sts(void);
 extern uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
-extern uint32_t shoot_heat_update_calculate_gimbal_task(void);
 #endif

@@ -604,14 +604,14 @@ static void shoot_set_mode(void)
 		
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
 		
-		//原来的超热量保护
-    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-        }
-    }
+//		//原来的超热量保护
+//    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+//    {
+//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//        {
+//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//        }
+//    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
 //		//未使用实时里程计的超热量保护
@@ -624,15 +624,15 @@ static void shoot_set_mode(void)
 //        }
 //    }
 		
-//		//使用实时里程计的超热量保护
-//		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
-//    {
-//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-//        {
-//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-////						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
-//        }
-//    }
+		//使用实时里程计的超热量保护
+		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)//(shoot_control.total_bullets_fired > shoot_control.local_bullets_limit)
+    {
+        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+        {
+            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//						shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT; //当前子弹未打出去 -- 会出问题
+        }
+    }
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
@@ -1112,43 +1112,6 @@ void shoot_PID_clear(shoot_pid_t *pid)
     pid->fdb = pid->set = 0.0f;
 }
 
-/*
-获得当前冷却 获得当前热量 获得当前热量限制 - 计算cd
-*/
-uint32_t shoot_heat_update_calculate_gimbal_task()
-{
-	if(!toe_is_error(REFEREE_TOE))
-  {
-		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-		 shoot_control.local_heat_limit = shoot_control.heat_limit;
-		 shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
-  }
-	else
-	{
-		//TODO: 处理热量安全值
-		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-		shoot_control.local_heat_limit = shoot_control.heat_limit;
-		shoot_control.local_cd_rate = get_shooter_id1_17mm_cd_rate();
-	}
-	
-			 //if(xTaskGetTickCount() % (1000 / shoot_freq) == 0) //1000为tick++的频率
-	if( get_para_hz_time_freq_signal_HAL(10) ) //10Hz (shoot_control.local_heat > 0) && 
-	{
-		 shoot_control.local_heat -= (fp32)((fp32)shoot_control.local_cd_rate / 10.0f);
-		 if(shoot_control.local_heat < 0.0f)
-		 {
-			 shoot_control.local_heat = 0.0f;
-		 }
-		 
-		 shoot_control.temp_debug++;
-	}
-	
-	//local heat限度
-	shoot_control.local_heat = loop_fp32_constrain(shoot_control.local_heat, MIN_LOCAL_HEAT, MAX_LOCAL_HEAT);
-	
-	return 0;
-}
-
 uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 {
 	if(!toe_is_error(REFEREE_TOE))
@@ -1159,10 +1122,10 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
   }
 	else
 	{
-		//TODO: 处理热量安全值
-		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
-		 shoot_heat->local_heat_limit = shoot_heat->heat_limit;
-		 shoot_heat->local_cd_rate = get_shooter_id1_17mm_cd_rate();
+		 //裁判系统离线时 hard code 一个默认的冷却和上限
+//		 get_shooter_id1_17mm_heat_limit_and_heat(&shoot_heat->heat_limit, &shoot_heat->heat);
+		 shoot_heat->local_heat_limit = LOCAL_HEAT_LIMIT_SAFE_VAL;
+		 shoot_heat->local_cd_rate = LOCAL_CD_RATE_SAFE_VAL;
 	}
 	
 	//------------------------------------------------------
@@ -1207,23 +1170,32 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 	//热量增加计算
 	if( get_para_hz_time_freq_signal_HAL(10) )
 	{
+		/*当发射机构断电时, 也就是当拨弹电机断电时, 热量不会增加, 只考虑冷却*/
+		if(shoot_control.trigger_motor_17mm_is_online)
+		{ //发射机构未断电
 #if TRIG_MOTOR_TURN
-		shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
+			shoot_heat->rt_odom_angle = -(get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE;
 //		shoot_heat->rt_odom_angle = -(shoot_heat->angle);
 #else
-		shoot_heat->rt_odom_angle = (get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE; //TODO 里程计 初始值是负数 - 排除问题
+			shoot_heat->rt_odom_angle = (get_trig_modor_odom_count()) * MOTOR_ECD_TO_ANGLE; //TODO 里程计 初始值是负数 - 排除问题
 //		shoot_heat->rt_odom_angle = (shoot_heat->angle);
 #endif
 
-//	shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT; //不这样算
+//		shoot_heat->rt_odom_local_heat = (fp32)(shoot_heat->rt_odom_angle - shoot_heat->last_rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC) * ONE17mm_BULLET_HEAT_AMOUNT; //不这样算
 	
-		//用当前发弹量来计算热量
-		shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
-		shoot_heat->rt_odom_local_heat[0] += (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
-		
-		//update last
-		shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
-		shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
+			//用当前发弹量来计算热量
+			shoot_heat->rt_odom_total_bullets_fired = ((fp32)shoot_heat->rt_odom_angle) / ((fp32)RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC);
+			shoot_heat->rt_odom_local_heat[0] += (fp32)abs( ((int32_t)shoot_heat->rt_odom_total_bullets_fired) - ((int32_t)shoot_heat->rt_odom_calculated_bullets_fired) ) * (fp32)ONE17mm_BULLET_HEAT_AMOUNT;
+			
+			//update last
+			shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
+			shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
+		}
+		else
+		{ //发射机构断电 - TODO 是否加一个时间上的缓冲
+			shoot_heat->rt_odom_calculated_bullets_fired = shoot_heat->rt_odom_total_bullets_fired;
+			shoot_heat->last_rt_odom_angle = shoot_heat->rt_odom_angle;
+		}
 		
 		//冷却
 		shoot_heat->rt_odom_local_heat[0] -= (fp32)((fp32)shoot_heat->local_cd_rate / 10.0f);

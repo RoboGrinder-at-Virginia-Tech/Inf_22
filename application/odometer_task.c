@@ -41,18 +41,27 @@ void odometer_init(void)
 	
 	//初始化需要的具体信息
 	trig_M2006_odom.motor_ptr = get_trigger_motor_measure_point();
+	
+//	trig_M2006_odom.init_total_ecd = trig_M2006_odom.motor_ptr->total_ecd;
 }
 
 //void odometer_task(void const * argument) //注册为RTOS task
-void odometer_task(void)//不注册为RTOS task
+//void odometer_task(void)//不注册为RTOS task
+//{
+////	odometer_init();
+//	
+////  while(1)
+////  {
+//		trig_M2006_odom.total_ecd_count = (fp32)(trig_M2006_odom.motor_ptr->total_ecd + trig_M2006_odom.motor_ptr->delta_ecd);
+////	trig_M2006_odom.total_ecd_count = 1.0f;
+////	}
+//}
+
+void odometer_loop(void)
 {
-//	odometer_init();
-	
-//  while(1)
-//  {
-		trig_M2006_odom.total_ecd_count = (fp32)(trig_M2006_odom.motor_ptr->total_ecd + trig_M2006_odom.motor_ptr->delta_ecd);
-//	trig_M2006_odom.total_ecd_count = 1.0f;
-//	}
+	//上面这样不对 会导致不准, 不知道为啥
+//	trig_M2006_odom.total_ecd_count = (fp32)(trig_M2006_odom.motor_ptr->total_ecd - trig_M2006_odom.init_total_ecd + trig_M2006_odom.motor_ptr->delta_ecd);
+	trig_M2006_odom.total_ecd_count = (fp32)(trig_M2006_odom.motor_ptr->total_ecd + trig_M2006_odom.motor_ptr->delta_ecd);
 }
 
 //Getter method

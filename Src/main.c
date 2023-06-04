@@ -160,8 +160,6 @@ int main(void)
 	
 	//init CPU stats
 	init_prog_msg_utility();
-	
-	odometer_init(); //里程计初始化
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

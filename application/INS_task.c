@@ -294,6 +294,7 @@ void INS_task(void const *pvParameters)
 
     imu_start_dma_flag = 1;
     
+		odometer_init(); //里程计初始化
     while (1)
     {
         //wait spi DMA tansmit done
@@ -353,8 +354,8 @@ void INS_task(void const *pvParameters)
 				matrix_3x3_pre_mult_vector(INS_angle, tpyeC_to_gimbal_permutation, INS_gimbal_angle);
 				
 				quat_matrix_3x3_pre_mult_vector(INS_quat, tpyeC_to_gimbal_QUAT_permutation, INS_gimbal_quat);
-				//
-				odometer_task();//
+				
+				odometer_loop(); //里程计 函数
 
         //because no use ist8310 and save time, no use
         if(mag_update_flag &= 1 << IMU_DR_SHFITS)
