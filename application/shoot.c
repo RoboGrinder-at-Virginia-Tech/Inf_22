@@ -306,9 +306,15 @@ int16_t shoot_control_loop(void)
 				//关闭不需要斜坡关闭
 			
 			
-			//SZL添加, 也可以使用斜波开启 低通滤波
+			//先刹车 -然后在0电流
 			shoot_control.currentLeft_speed_set = M3508_FRIC_STOP;
 			shoot_control.currentRight_speed_set = M3508_FRIC_STOP;
+			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);
+			//先刹车然后0电流
+			if(shoot_control.left_fricMotor.fricW_speed < 1.1f && shoot_control.right_fricMotor.fricW_speed < 1.1f)
+			{
+				CAN_cmd_friction_wheel(0, 0); //已完成刹车, 开始 no power
+			}
     }
     else
     {
@@ -338,10 +344,11 @@ int16_t shoot_control_loop(void)
         ramp_calc(&shoot_control.fric1_ramp, SHOOT_FRIC_PWM_ADD_VALUE);
         ramp_calc(&shoot_control.fric2_ramp, SHOOT_FRIC_PWM_ADD_VALUE);
 				
-				//SZL添加, 也可以使用斜波开启 低通滤波
+				//设置摩擦轮速度
 				shoot_control.currentLeft_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				shoot_control.currentRight_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
-
+				
+				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面
     }
 
     shoot_control.fric_pwm1 = (uint16_t)(shoot_control.fric1_ramp.out);// + 19);
@@ -355,7 +362,7 @@ int16_t shoot_control_loop(void)
 		//vTaskDelay(5);
 		
 		//M3508_fric_wheel_spin_control(-tempLeft_speed_set, tempRight_speed_set);
-		M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);
+//		M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);
 		
     return shoot_control.given_current;
 }

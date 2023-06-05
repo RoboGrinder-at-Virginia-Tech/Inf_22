@@ -342,12 +342,12 @@ typedef struct
 		
 		uint8_t ammoBox_sts;
 		
-		uint32_t total_bullets_fired; // 总发弹量 -主要用于debug
+		uint32_t total_bullets_fired; // 总发弹量 -主要用于debug --没用
 		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
 		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
-    fp32 local_heat; //本地热量未使用 实时里程计 只是开发时的一个测试未移植到其他机器人
-		fp32 temp_debug;
-		uint8_t local_heat_protection_trig; //触发了本地过热保护
+    fp32 local_heat; //本地热量未使用 实时里程计 只是开发时的一个测试未移植到其他机器人 --没用
+		fp32 temp_debug; //--没用
+		uint8_t local_heat_protection_trig; //触发了本地过热保护 --没用
 		
 		uint32_t local_last_cd_timestamp; //上一次冷却的time stamp
 		
