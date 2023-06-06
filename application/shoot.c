@@ -96,7 +96,7 @@ void shoot_init(void)
 {
 
     static const fp32 Trigger_speed_pid[3] = {TRIGGER_SPEED_IN_PID_KP, TRIGGER_SPEED_IN_PID_KI, TRIGGER_SPEED_IN_PID_KD};
-		static const fp32 Trigger_speed_pid_outerLoop[3] = {TRIGGER_ANGLE_PID_OUTER_KP, TRIGGER_ANGLE_PID_OUTER_KI, TRIGGER_ANGLE_PID_OUTER_KD};
+		static const fp32 Trigger_position_pid_17mm_outerLoop[3] = {TRIGGER_ANGLE_PID_OUTER_KP, TRIGGER_ANGLE_PID_OUTER_KI, TRIGGER_ANGLE_PID_OUTER_KD};
 		
     shoot_control.shoot_mode = SHOOT_STOP;
     //遥控器指针
@@ -108,7 +108,7 @@ void shoot_init(void)
 		shoot_PID_init(&shoot_control.trigger_motor_pid, SHOOT_PID_SEPARATED_INTEGRAL_IN_SPEED, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
 		
 		//17mm外环PID
-		shoot_PID_init(&shoot_control.trigger_motor_angle_pid, SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS, Trigger_speed_pid_outerLoop, TRIGGER_BULLET_PID_OUTER_MAX_OUT, TRIGGER_BULLET_PID_OUTER_MAX_IOUT);
+		shoot_PID_init(&shoot_control.trigger_motor_angle_pid, SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS, Trigger_position_pid_17mm_outerLoop, TRIGGER_BULLET_PID_OUTER_MAX_OUT, TRIGGER_BULLET_PID_OUTER_MAX_IOUT);
 		
     //更新数据
     shoot_feedback_update();
@@ -147,7 +147,7 @@ void shoot_init(void)
 		//初始化PID
 		PID_init(&shoot_control.left_fric_motor_pid, PID_POSITION, Left_friction_speed_pid, M3508_LEFT_FRICTION_PID_MAX_OUT, M3508_LEFT_FRICTION_PID_MAX_IOUT);
 		PID_init(&shoot_control.right_fric_motor_pid, PID_POSITION, Right_friction_speed_pid, M3508_RIGHT_FRICTION_PID_MAX_OUT, M3508_RIGHT_FRICTION_PID_MAX_IOUT);
-	
+		//本地热量
 		shoot_control.total_bullets_fired = 0;
 		
 		get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
