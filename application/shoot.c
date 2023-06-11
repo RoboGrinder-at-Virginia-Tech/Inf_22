@@ -448,7 +448,8 @@ static void shoot_set_mode(void)
 			shoot_control.user_fire_ctrl = user_SHOOT_OFF;
 		}
 		//---------Q按键计数以及相关检测结束---------
-		
+		/*这里是对老DJI开源代码的兼容 - 通过按键 低通滤波值 之前的shoot_mode, 前面有(按键<-map->user_fire_ctrl);
+			先对当前 shoot_mode 赋值一次(按键其它<-map->shoot_mode), 后面根据user_fire_ctrl会给shoot_mode赋值第二次(user_fire_mode<-map->shoot_mode) - 是因为shoot_mode切换很快, 控制会直接用这个状态机*/
     if(shoot_control.shoot_mode == SHOOT_READY_FRIC && shoot_control.fric1_ramp.out == shoot_control.fric1_ramp.max_value && shoot_control.fric2_ramp.out == shoot_control.fric2_ramp.max_value)
     {
         shoot_control.shoot_mode = SHOOT_READY_BULLET; //当摩擦轮完成预热 //A
