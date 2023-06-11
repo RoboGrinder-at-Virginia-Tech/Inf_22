@@ -958,7 +958,7 @@ static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq)
 		 if( get_para_hz_time_freq_signal_FreeRTOS(shoot_freq) )
 		 {
 			 	shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
-        shoot_control.move_flag = 1;
+        shoot_control.move_flag = 1; //固定频率连续发射时, move_flag并没有使用, 依靠时间进行角度增加
 			  shoot_control.total_bullets_fired++; //
 			  shoot_control.local_heat += ONE17mm_BULLET_HEAT_AMOUNT;
 		 }
