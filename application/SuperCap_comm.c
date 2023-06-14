@@ -150,6 +150,8 @@ void superCap_control_loop()
 //				superCap_info.fail_safe_charge_pwr_command = 40;
 //			}
 			
+			//TODO: remove debug 并添加限制幅度
+			
 			//For Debug Only------------------------------------------------------------------------------------------------------------------------------------
 			superCap_info.max_charge_pwr_command = 10;//2.5f;// 40 档 offset 2.5f
 			superCap_info.fail_safe_charge_pwr_command = superCap_info.max_charge_pwr_command;
@@ -161,7 +163,7 @@ void superCap_control_loop()
 			//计算max_charge_pwr_from_ref
 			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
 			
-			if(sCap23_info.max_charge_pwr_from_ref > MAX_REASONABLE_CHARGE_PWR)//101.0f)
+			if(sCap23_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
 			{
 				sCap23_info.max_charge_pwr_from_ref = 40;
 			}
@@ -176,16 +178,22 @@ void superCap_control_loop()
 			sCap23_info.charge_pwr_command = sCap23_info.max_charge_pwr_from_ref;
 			sCap23_info.fail_safe_charge_pwr_command = sCap23_info.fail_safe_charge_pwr_ref;
 			
+			//限制幅度
+			sCap23_info.charge_pwr_command = uint8_constrain(sCap23_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			sCap23_info.fail_safe_charge_pwr_command = uint8_constrain(sCap23_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			
 			CAN_command_sCap23(sCap23_info.charge_pwr_command, sCap23_info.fail_safe_charge_pwr_command);
 		}
 		else //if(current_superCap == wulie_Cap_CAN_ID)
 		{//雾列控制板
 			wulie_Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 2.5f;
 				
-			if(wulie_Cap_info.max_charge_pwr_from_ref > MAX_REASONABLE_CHARGE_PWR)//101.0f)
+			if(wulie_Cap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
 			{
 				wulie_Cap_info.max_charge_pwr_from_ref = 40;
 			}
+			
+			//TODO: remove debug 并添加限制幅度
 			
 			//Only for Debug
 			wulie_Cap_info.max_charge_pwr_from_ref = 30;
@@ -254,21 +262,21 @@ uint16_t get_superCap_charge_pwr() //仅功率控制使用
 	if(current_superCap == SuperCap_ID)
 	{
 		temp_charge_pwr = superCap_info.max_charge_pwr_command;
-		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, MAX_REASONABLE_CHARGE_PWR);//确保数据的正确和合理性
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//确保数据的正确和合理性
 		
 		return (uint16_t)temp_charge_pwr;
 	}
 	else if(current_superCap == sCap23_ID)
 	{
 		temp_charge_pwr = sCap23_info.charge_pwr_command;
-		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, MAX_REASONABLE_CHARGE_PWR);//确保数据的正确和合理性
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//确保数据的正确和合理性
 		
 		return (uint16_t)temp_charge_pwr;
 	}
 	else
 	{
 		temp_charge_pwr = wulie_Cap_info.max_charge_pwr_from_ref;
-		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, MAX_REASONABLE_CHARGE_PWR);//确保数据的正确和合理性
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//确保数据的正确和合理性
 		
 		return (uint16_t)temp_charge_pwr;
 	}
