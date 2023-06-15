@@ -74,9 +74,9 @@
 #define SWITCH_TRIGGER_OFF          1
 
 //卡单时间 以及反转时间
-#define BLOCK_TRIGGER_SPEED         1.0f
-#define BLOCK_TIME                  700
-#define REVERSE_TIME                500
+#define BLOCK_TRIGGER_SPEED         0.09f //1.0f
+#define BLOCK_TIME                  400 //700
+#define REVERSE_TIME                200 //500
 #define REVERSE_SPEED_LIMIT         13.0f
 
 #define PI_FOUR                     0.78539816339744830961566084581988f
@@ -99,6 +99,9 @@ Hero; 拨盘3个洞, 2pi/3 = 2.094395102f; 为了保证不过冲 set = 2.05f
 /*仿照云台控制逻辑 新增一个宏定义 电机和转盘安装方向*/
 #define TRIG_MOTOR_TURN 0
 
+//用于PID位置环后, 连续发弹 - 射频; 每秒打这么多课
+#define CONTINUE_SHOOT_TRIG_FREQ 5
+
 /*
 SZL
 Original PID parameter
@@ -113,20 +116,19 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        10.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        50.0f //40.0f //50.0 //30.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
-#define TRIGGER_ANGLE_PID_OUTER_KD        0.0f
+#define TRIGGER_ANGLE_PID_OUTER_KD        5.5f
 
-#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  10.0f
-#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 1.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_OUT  30.0f //10.0f
+#define TRIGGER_BULLET_PID_OUTER_MAX_IOUT 2.0f//1.5f //1.0f
 /*
 外环的输出是内环的输入 内环输入单位是rad/s 
-只是写在这里 没有用
 */
-//拨弹轮电机PID  这个是速度环的PID
-#define TRIGGER_ANGLE_PID_KP        800.0f//100.0f//800.0f//600//800.0f
-#define TRIGGER_ANGLE_PID_KI        0.5f//1.0//0.5f
-#define TRIGGER_ANGLE_PID_KD        0.0f
+//拨弹轮电机PID  这个是速度环的PID - 600 or 800Kp
+#define TRIGGER_SPEED_IN_PID_KP        650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
+#define TRIGGER_SPEED_IN_PID_KI        0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
+#define TRIGGER_SPEED_IN_PID_KD        0.1f //TRIGGER_ANGLE_PID_KD
 
 #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f//9000.0f 
@@ -134,8 +136,19 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_OUT   10000.0f
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
-/*原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     40//60//5-24之前:40//30
+/*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
+#define SHOOT_HEAT_REMAIN_VALUE     50 //30//50//60//5-24之前:40//30
+
+/* 其它热量相关宏定义 - 本地计算热量 */
+#define ONE17mm_BULLET_HEAT_AMOUNT 10
+#define MIN_LOCAL_HEAT 0
+#define MAX_LOCAL_HEAT 500
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //5
+/*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
+#define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
+//Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级
+#define LOCAL_HEAT_LIMIT_SAFE_VAL 50
+#define LOCAL_CD_RATE_SAFE_VAL 40
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -170,6 +183,50 @@ M3508_RIGHT_FRICTION_PID_MAX_OUT = M3508_LEFT_FRICTION_PID_MAX_OUT = TRIGGER_REA
 
 //ICRA 子弹速度上线 为 18m/s
 #define ICRA_PROJECTILE_SPEED_LIMIT 18
+
+/*
+发射机构 拨弹电机 自己的PID, 需要使用积分分离 阈值取决于设备本身
+*/
+enum SHOOT_PID_MODE
+{
+    SHOOT_PID_SEPARATED_INTEGRAL_IN_SPEED = 0, // inner speed loop
+		SHOOT_PID_SEPARATED_INTEGRAL_OUT_POS, //outer position loop
+};
+
+typedef struct
+{
+    uint8_t mode;
+    //PID 三参数
+    fp32 Kp;
+    fp32 Ki;
+    fp32 Kd;
+
+    fp32 max_out;  //最大输出
+    fp32 max_iout; //最大积分输出
+
+    fp32 set;
+    fp32 fdb;
+
+    fp32 out;
+    fp32 Pout;
+    fp32 Iout;
+    fp32 Dout;
+    fp32 Dbuf[3];  //微分项 0最新 1上一次 2上上次
+    fp32 error[3]; //误差项 0最新 1上一次 2上上次
+	
+}shoot_pid_t;
+
+#define PID_TRIG_SPEED_INTEGRAL_THRESHOLD 3.0f //2.0f //速度 弧度制
+
+#define PID_TRIG_POSITION_INTEGRAL_THRESHOLD 3.0f //1.0f //角度 弧度制
+
+//PID_DIFFERENTIAL_THRESHOLD 在此积分分离PID中未使用
+
+void shoot_PID_init(shoot_pid_t *pid, uint8_t mode, const fp32 PID[3], fp32 max_out, fp32 max_iout);
+fp32 shoot_PID_calc(shoot_pid_t *pid, fp32 ref, fp32 set);
+void shoot_PID_clear(shoot_pid_t *pid);
+
+// --------------------- PID related END ---------------------
 
 typedef enum
 {
@@ -227,8 +284,10 @@ typedef struct
     uint16_t fric_pwm1;
     ramp_function_source_t fric2_ramp;
     uint16_t fric_pwm2;
-    pid_type_def trigger_motor_pid;//内环PID
-		pid_type_def trigger_motor_angle_pid;//外环PID--只是写在这里 没用
+//    pid_type_def trigger_motor_pid;//内环PID
+//		pid_type_def trigger_motor_angle_pid;//外环PID--只是写在这里 没用
+		shoot_pid_t trigger_motor_pid;//17mm拨盘电机 内环PID
+		shoot_pid_t trigger_motor_angle_pid;//17mm拨盘电机 外环PID
     fp32 trigger_speed_set;
     fp32 speed;
     fp32 speed_set;
@@ -248,6 +307,8 @@ typedef struct
     uint16_t block_time;
     uint16_t reverse_time;
     bool_t move_flag;
+		uint8_t block_flag;//17mm堵转标志位
+		uint8_t last_block_flag;
 
     bool_t key; //微动开关 PR 屏蔽掉了
     uint8_t key_time;
@@ -281,6 +342,23 @@ typedef struct
 		
 		uint8_t ammoBox_sts;
 		
+		uint32_t total_bullets_fired; // 总发弹量 -主要用于debug --没用
+		uint16_t local_heat_limit; //用于当前 本地计算的热量上线
+		uint16_t local_cd_rate; //用于当前 本地计算的冷却数值 率
+    fp32 local_heat; //本地热量未使用 实时里程计 只是开发时的一个测试未移植到其他机器人 --没用
+		fp32 temp_debug; //--没用
+		uint8_t local_heat_protection_trig; //触发了本地过热保护 --没用
+		
+		uint32_t local_last_cd_timestamp; //上一次冷却的time stamp
+		
+		//实时里程计 - 6-1-2023再次尝试
+		fp32 rt_odom_angle; //当前时刻 里程计 角度
+		fp32 last_rt_odom_angle; //上一时刻里程计角度
+		
+		uint32_t rt_odom_total_bullets_fired; // 总的发弹量
+		uint32_t rt_odom_calculated_bullets_fired; // 已经计算过热量的子弹量
+
+		fp32 rt_odom_local_heat[4]; //本地热量 [0] 当前 [1]上一次 [2]上上次 受到射频影响		
 } shoot_control_t;
 
 //shoot motor 是 拨弹轮 M2006 motor
@@ -294,4 +372,5 @@ extern const shoot_control_t* get_robot_shoot_control(void);
 extern shoot_mode_e get_shoot_mode(void);
 extern user_fire_ctrl_e get_user_fire_ctrl(void);
 extern uint8_t get_ammoBox_sts(void);
+extern uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
 #endif

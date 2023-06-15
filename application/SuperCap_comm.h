@@ -11,6 +11,10 @@
 //#define ICRA_superCap_max_power 65//40
 //#define ICRA_superCap_fail_safe_power 65//40
 
+//发送给超级电容数据数值限制
+#define CMD_CHARGE_PWR_MAX 150
+#define CMD_CHARGE_PWR_MIN 45
+
 /*超级电容电容组数据*/
 //2023新超级电容
 #define CHARACTERISTIC_VOLTAGE_23_CAP 26.5f//26.5f //特征电压是充电电路输出电压，对于C620必须低一些，否则会触发保护
@@ -129,7 +133,8 @@ typedef struct
 	fp32 Vin_f; //输入电压**
 	fp32 Vbank_f; //电容电压**
 	fp32 Ibank_f; //电容电流
-	fp32 Vchassis_f; //给底盘电压**
+	fp32 Vchassis_f; //给底盘电压** -6-14不用了 
+	fp32 Cap_fb_set_power; //-6-14超级电容返回的当前充电功率
 	fp32 Ichassis_f; //底盘电流**
 	fp32 Pbank_f; //
 	fp32 Energy; //

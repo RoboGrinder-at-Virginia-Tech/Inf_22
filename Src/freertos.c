@@ -208,14 +208,14 @@ void MX_FREERTOS_Init(void) {
 		//pc_communication_task saperate into 2
 //		osThreadDef(PCCOMMU, pc_communication_task, osPriorityNormal, 0, 256);
 //    pc_communication_task_handle = osThreadCreate(osThread(PCCOMMU), NULL);
-//		osThreadDef(EMBEDRX, embed_receive_Main_communication_task, osPriorityNormal, 0, 256);
-//    embed_receive_Main_communication_task_handle = osThreadCreate(osThread(EMBEDRX), NULL);
-//		
-//		osThreadDef(EMBEDTX, embed_send_communication_task, osPriorityNormal, 0, 256);
-//    embed_send_communication_task_handle = osThreadCreate(osThread(EMBEDTX), NULL);
+		osThreadDef(EMBEDRX, embed_receive_Main_communication_task, osPriorityNormal, 0, 256);
+    embed_receive_Main_communication_task_handle = osThreadCreate(osThread(EMBEDRX), NULL);
+		
+		osThreadDef(EMBEDTX, embed_send_communication_task, osPriorityNormal, 0, 256);
+    embed_send_communication_task_handle = osThreadCreate(osThread(EMBEDTX), NULL);
 
 		//Created task is either usb_task or usb_ano_task; Never both at the same time
-    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
+    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 512); //´Ó128¸ÄÎª512
     usb_task_handle = osThreadCreate(osThread(USBTask), NULL);
 		
 //		osThreadDef(USBANOTask, usb_ano_task, osPriorityHigh, 0, 512); //osPriorityNormal osPriorityHigh 128
