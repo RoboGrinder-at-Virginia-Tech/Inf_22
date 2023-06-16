@@ -364,7 +364,7 @@ uint8_t uart6_poll_dma_tx(void);
 uint8_t get_uart6_ui_send_status(void);
 //Ïß³Ì
 void client_ui_task(void const *pvParameters);
-void client_ui_poll_dma_task(void const *pvParameters);
+//void client_ui_poll_dma_task(void const *pvParameters);
 
 #endif
 

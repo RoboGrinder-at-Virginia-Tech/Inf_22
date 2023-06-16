@@ -66,7 +66,7 @@ osThreadId usb_task_handle;
 
 osThreadId battery_voltage_handle;
 osThreadId servo_task_handle;
-osThreadId client_ui_poll_dma_task_handle;
+//osThreadId client_ui_poll_dma_task_handle;
 osThreadId client_ui_task_handle;
 
 /* USER CODE END PTD */
@@ -230,8 +230,8 @@ void MX_FREERTOS_Init(void) {
 		osThreadDef(UI, client_ui_task, osPriorityNormal, 0, 512);
 		client_ui_task_handle =  osThreadCreate(osThread(UI), NULL);
 		
-		osThreadDef(UIDMA, client_ui_poll_dma_task, osPriorityHigh, 0, 512);
-		client_ui_poll_dma_task_handle =  osThreadCreate(osThread(UIDMA), NULL);
+//		osThreadDef(UIDMA, client_ui_poll_dma_task, osPriorityHigh, 0, 512);
+//		client_ui_poll_dma_task_handle =  osThreadCreate(osThread(UIDMA), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }

@@ -23,6 +23,7 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include <string.h>
 #include "fifo.h"
 #include "bsp_usart.h"
+#include "prog_msg_utility.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
@@ -327,6 +328,110 @@ void client_ui_tx_fifo_init()
 	//usart6_tx_dma_init called in main
 }
 
+//全部静态UI 画一次
+void client_static_ui_draw_all()
+{
+	//先画静态图像; 占用图层 0, 1, 2, 3
+		//右上角
+		ui_error_code_str_clear(); 
+		/*右上角 各种设备的error code*/
+		// 5-26-2023 不显示那么详细 错误时才显示
+		Char_Draw(&strChassis, "030", ui_info.chassis_error_flag, 2, UI_Color_Yellow, 20, strlen("CH:"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH:");
+		Char_Draw(&strGimbal, "031", ui_info.gimbal_error_flag, 2, UI_Color_Yellow, 20, strlen("GY:"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY:");
+		Char_Draw(&strShoot, "032", ui_info.shoot_error_flag, 2, UI_Color_Yellow, 20, strlen("FD:"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD:");
+		Char_Draw(&strSuperCap, "033", ui_info.superCap_error_flag, 2, UI_Color_Yellow, 20, strlen("SC:"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC:");
+//				Char_Draw(&strReferee, "034", ui_info.referee_error_flag, 2, UI_Color_Yellow, 20, strlen("RF:"), 3, REFEREE_ERROR_CODE_X, REFEREE_ERROR_CODE_Y, "RF:");
+		
+		//Cap Pct:字样 封装字号20 和 图形线宽 3
+		//Char_Draw(&strCapPct, "008", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 17, 3, CAP_PCT_X, CAP_PCT_Y,   "Cap Pct:        %");
+		//Cap Volt:字样 封装字号20 和 图形线宽 3
+		//Char_Draw(&strCapVolt, "009", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, CAP_VOLT_X, CAP_VOLT_Y, "Cap Volt:");  
+
+		//底盘状态		
+		//Char_Draw(&strChassisSts, "010", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, CHASSIS_STS_X, CHASSIS_STS_Y, "NORM BOOST");
+		//Char_Draw(&strSPINSts, "011", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, SPIN_STS_X, SPIN_STS_Y,           "FOLL SPIN");
+		//New position 底盘状态
+		Char_Draw(&strChassisSts, "010", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, CHASSIS_STS_X, CHASSIS_STS_Y, "NORM BOOST");
+		Char_Draw(&strSPINSts, "011", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, SPIN_STS_X, SPIN_STS_Y,           "FOLL SPIN");
+	
+		//中间
+		//Aim 竖线
+		Line_Draw(&gAimVertL, "001", UI_Graph_ADD, 2, UI_Color_Orange, 1, 960-9, 540, 960-9, 0);
+			
+		//2m
+		//Line_Draw(&gAimHorizL2m, "003", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-50), (540-24), (960+50), (540-24));//big armor plate
+		Line_Draw(&gAimHorizL2m, "003", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-30-9), (540-24), (960+30-9), (540-24)); // small armor plate
+		//4m
+		//Line_Draw(&gAimHorizL4m, "004", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-25), (540-45), (960+25), (540-45));
+		Line_Draw(&gAimHorizL4m, "004", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15-9), (540-45), (960+15-9), (540-45));		
+		//5 (540-150) "010"
+	//	Line_Draw(&gAimHorizL5m, "005", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-21), (540-66), (960+21), (540-66));
+		Line_Draw(&gAimHorizL5m, "005", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12-9), (540-66), (960+12-9), (540-66));
+		//7 (540-170) "011"
+		//Line_Draw(&gAimHorizL7m, "006", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15), (540-95), (960+15), (540-95));
+		Line_Draw(&gAimHorizL7m, "006", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-9-9), (540-95), (960+9-9), (540-95));		
+		//8 (540-190) "012"
+		//Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12), (540-113), (960+12), (540-113));
+		Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-7-9), (540-113), (960+7-9), (540-113));
+		// left side line drawing
+		Line_Draw(&left8to7, "017", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12-9), (540-113), (960-15-9),(540-95) );
+		Line_Draw(&left7to5, "018", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15-9), (540-95), (960-21-9), (540-66));
+		Line_Draw(&left5to4, "019", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-21-9), (540-66), (960-25-9), (540-45));
+		Line_Draw(&left4to2, "020", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-25-9), (540-45), (960-50-9), (540-24));
+		// right side line drawing
+		Line_Draw(&right8to7, "021", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+12-9), (540-113), (960+15-9),(540-95) );
+		Line_Draw(&right7to5, "022", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+15-9), (540-95), (960+21-9), (540-66));
+		Line_Draw(&right5to4, "023", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+21-9), (540-66), (960+25-9), (540-45));
+		Line_Draw(&right4to2, "024", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+25-9), (540-45), (960+50-9), (540-24));
+
+
+		//左边火控相关信息
+		Char_Draw(&strCVSts, "012", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, CV_STS_X, CV_STS_Y,                              			   "CV:  OFF  AID  LOCK");  
+		Char_Draw(&strGunSts, "013", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, GUN_STS_X, GUN_STS_Y,                           			   "GUN: OFF  SEMI AUTO");  
+		Char_Draw(&strABoxSts, "014", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 14, 3, AmmoBox_cover_STS_X, AmmoBox_cover_STS_Y,      			   "ABC: OFF  OPEN");
+		Char_Draw(&strProjSLimSts, "015", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 8, 3, Enemy_dis_STS_X, Enemy_dis_STS_Y, 									 "DS:    m");
+		Char_Draw(&strDisSts, "016", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, Projectile_speed_lim_STS_X, Projectile_speed_lim_STS_Y,  "PL:    m/s");
+		
+		//超级电容 容量静态外框
+		Rectangle_Draw(&superCapFrame, "025", UI_Graph_ADD, 3, UI_Color_Main, 3, Center_Bottom_SuperCap_Frame_Start_X, Center_Bottom_SuperCap_Frame_Start_Y, Center_Bottom_SuperCap_Frame_End_X, Center_Bottom_SuperCap_Frame_End_Y);
+		//026 027
+		//底盘对位线
+		ui_info.chassis_drive_pos_line_left_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_left_var_endX - ui_info.chassis_drive_pos_line_left_var_startX) ) * ui_info.chassis_drive_pos_line_left_slope_var + ui_info.chassis_drive_pos_line_left_var_startY;
+		ui_info.chassis_drive_pos_line_right_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_right_var_endX - ui_info.chassis_drive_pos_line_right_var_startX) ) * ui_info.chassis_drive_pos_line_right_slope_var + ui_info.chassis_drive_pos_line_right_var_startY;
+//				Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, Chassis_Drive_Pos_Line_Left_Start_X, Chassis_Drive_Pos_Line_Left_Start_Y, Chassis_Drive_Pos_Line_Left_End_X, Chassis_Drive_Pos_Line_Left_End_Y);
+		Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_left_var_startX, ui_info.chassis_drive_pos_line_left_var_startY, ui_info.chassis_drive_pos_line_left_var_endX, ui_info.chassis_drive_pos_line_left_var_endY);
+		Line_Draw(&chassisPosAimRightLine, "029", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_right_var_startX, ui_info.chassis_drive_pos_line_right_var_startY, ui_info.chassis_drive_pos_line_right_var_endX, ui_info.chassis_drive_pos_line_right_var_endY);
+
+				//完成绘制 开始发送 先发静态
+		//refresh UI and String(Char)
+//				UI_ReFresh(2, turretCir, gunLine);
+		Char_ReFresh(strChassis);
+		Char_ReFresh(strGimbal); 
+		Char_ReFresh(strShoot); 
+		Char_ReFresh(strSuperCap); 
+//				Char_ReFresh(strReferee);
+		
+		UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
+		UI_ReFresh(2, gAimVertL, superCapFrame);
+		UI_ReFresh(5, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m, gAimHorizL8m);
+		UI_ReFresh(5, left8to7, left7to5,left5to4,left4to2, right8to7);
+		UI_ReFresh(5,right5to4,right4to2 );
+		UI_ReFresh(5, right7to5);
+		//Right
+		//Char_ReFresh(strCapVolt);
+		//Char_ReFresh(strCapPct);	
+		Char_ReFresh(strChassisSts);
+		Char_ReFresh(strSPINSts);
+		//Left
+		Char_ReFresh(strCVSts);
+		Char_ReFresh(strGunSts);
+		Char_ReFresh(strABoxSts);
+		Char_ReFresh(strProjSLimSts);
+		Char_ReFresh(strDisSts);
+		//fifo发送使能
+//		uart6_poll_dma_tx();
+}
+
 void client_ui_task(void const *pvParameters)
 {
 		//等待referee_usart_task中完成对MCU UART6的初始化
@@ -424,7 +529,7 @@ void client_ui_task(void const *pvParameters)
 	  //UI 初始创建 + 发送结束
 		
 		//fifo发送使能
-//		uart6_poll_dma_tx();
+		uart6_poll_dma_tx();
 		
 		//底盘 对位线计算 初始化 左
 		ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
@@ -438,9 +543,22 @@ void client_ui_task(void const *pvParameters)
 		ui_info.chassis_drive_pos_line_right_var_startY = Chassis_Drive_Pos_Line_Right_Start_Y;
 		ui_info.chassis_drive_pos_line_right_var_endX = Chassis_Drive_Pos_Line_Right_End_X;
 		
-	
+		//保证动态UI的第一次创建
+		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+	  {
+		  vTaskDelay(1);
+			uart6_poll_dma_tx();
+		}
 		/*	大装甲板宽 230mm 
 		*/
+		
+		client_static_ui_draw_all();
+		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+	  {
+		  vTaskDelay(1);
+			uart6_poll_dma_tx();
+		}
+		
 		while (1)
     {
 				//
@@ -449,76 +567,7 @@ void client_ui_task(void const *pvParameters)
 //			 //int _temp_a = 0;
 //			 _temp_a++;
 			
-				//先画静态图像; 占用图层 0, 1, 2, 3
-				//右上角
-				ui_error_code_str_clear(); 
-				/*右上角 各种设备的error code*/
-			  // 5-26-2023 不显示那么详细 错误时才显示
-				Char_Draw(&strChassis, "030", ui_info.chassis_error_flag, 2, UI_Color_Yellow, 20, strlen("CH:"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH:");
-				Char_Draw(&strGimbal, "031", ui_info.gimbal_error_flag, 2, UI_Color_Yellow, 20, strlen("GY:"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY:");
-				Char_Draw(&strShoot, "032", ui_info.shoot_error_flag, 2, UI_Color_Yellow, 20, strlen("FD:"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD:");
-				Char_Draw(&strSuperCap, "033", ui_info.superCap_error_flag, 2, UI_Color_Yellow, 20, strlen("SC:"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC:");
-//				Char_Draw(&strReferee, "034", ui_info.referee_error_flag, 2, UI_Color_Yellow, 20, strlen("RF:"), 3, REFEREE_ERROR_CODE_X, REFEREE_ERROR_CODE_Y, "RF:");
 				
-				//Cap Pct:字样 封装字号20 和 图形线宽 3
-				//Char_Draw(&strCapPct, "008", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 17, 3, CAP_PCT_X, CAP_PCT_Y,   "Cap Pct:        %");
-			  //Cap Volt:字样 封装字号20 和 图形线宽 3
-				//Char_Draw(&strCapVolt, "009", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, CAP_VOLT_X, CAP_VOLT_Y, "Cap Volt:");  
-
-				//底盘状态		
-				//Char_Draw(&strChassisSts, "010", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, CHASSIS_STS_X, CHASSIS_STS_Y, "NORM BOOST");
-				//Char_Draw(&strSPINSts, "011", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, SPIN_STS_X, SPIN_STS_Y,           "FOLL SPIN");
-				//New position 底盘状态
-				Char_Draw(&strChassisSts, "010", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, CHASSIS_STS_X, CHASSIS_STS_Y, "NORM BOOST");
-				Char_Draw(&strSPINSts, "011", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, SPIN_STS_X, SPIN_STS_Y,           "FOLL SPIN");
-			
-				//中间
-				//Aim 竖线
-				Line_Draw(&gAimVertL, "001", UI_Graph_ADD, 2, UI_Color_Orange, 1, 960-9, 540, 960-9, 0);
-					
-				//2m
-				//Line_Draw(&gAimHorizL2m, "003", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-50), (540-24), (960+50), (540-24));//big armor plate
-				Line_Draw(&gAimHorizL2m, "003", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-30-9), (540-24), (960+30-9), (540-24)); // small armor plate
-				//4m
-				//Line_Draw(&gAimHorizL4m, "004", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-25), (540-45), (960+25), (540-45));
-				Line_Draw(&gAimHorizL4m, "004", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15-9), (540-45), (960+15-9), (540-45));		
-				//5 (540-150) "010"
-			//	Line_Draw(&gAimHorizL5m, "005", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-21), (540-66), (960+21), (540-66));
-				Line_Draw(&gAimHorizL5m, "005", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12-9), (540-66), (960+12-9), (540-66));
-				//7 (540-170) "011"
-				//Line_Draw(&gAimHorizL7m, "006", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15), (540-95), (960+15), (540-95));
-				Line_Draw(&gAimHorizL7m, "006", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-9-9), (540-95), (960+9-9), (540-95));		
-				//8 (540-190) "012"
-				//Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12), (540-113), (960+12), (540-113));
-				Line_Draw(&gAimHorizL8m, "007", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-7-9), (540-113), (960+7-9), (540-113));
-				// left side line drawing
-				Line_Draw(&left8to7, "017", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-12-9), (540-113), (960-15-9),(540-95) );
-				Line_Draw(&left7to5, "018", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-15-9), (540-95), (960-21-9), (540-66));
-				Line_Draw(&left5to4, "019", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-21-9), (540-66), (960-25-9), (540-45));
-				Line_Draw(&left4to2, "020", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960-25-9), (540-45), (960-50-9), (540-24));
-				// right side line drawing
-				Line_Draw(&right8to7, "021", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+12-9), (540-113), (960+15-9),(540-95) );
-				Line_Draw(&right7to5, "022", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+15-9), (540-95), (960+21-9), (540-66));
-				Line_Draw(&right5to4, "023", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+21-9), (540-66), (960+25-9), (540-45));
-				Line_Draw(&right4to2, "024", UI_Graph_ADD, 2, UI_Color_Yellow, 1, (960+25-9), (540-45), (960+50-9), (540-24));
-
-
-				//左边火控相关信息
-				Char_Draw(&strCVSts, "012", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, CV_STS_X, CV_STS_Y,                              			   "CV:  OFF  AID  LOCK");  
-				Char_Draw(&strGunSts, "013", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 19, 3, GUN_STS_X, GUN_STS_Y,                           			   "GUN: OFF  SEMI AUTO");  
-				Char_Draw(&strABoxSts, "014", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 14, 3, AmmoBox_cover_STS_X, AmmoBox_cover_STS_Y,      			   "ABC: OFF  OPEN");
-				Char_Draw(&strProjSLimSts, "015", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 8, 3, Enemy_dis_STS_X, Enemy_dis_STS_Y, 									 "DS:    m");
-				Char_Draw(&strDisSts, "016", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, Projectile_speed_lim_STS_X, Projectile_speed_lim_STS_Y,  "PL:    m/s");
-				
-				//超级电容 容量静态外框
-				Rectangle_Draw(&superCapFrame, "025", UI_Graph_ADD, 3, UI_Color_Main, 3, Center_Bottom_SuperCap_Frame_Start_X, Center_Bottom_SuperCap_Frame_Start_Y, Center_Bottom_SuperCap_Frame_End_X, Center_Bottom_SuperCap_Frame_End_Y);
-				//026 027
-				//底盘对位线
-				ui_info.chassis_drive_pos_line_left_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_left_var_endX - ui_info.chassis_drive_pos_line_left_var_startX) ) * ui_info.chassis_drive_pos_line_left_slope_var + ui_info.chassis_drive_pos_line_left_var_startY;
-				ui_info.chassis_drive_pos_line_right_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_right_var_endX - ui_info.chassis_drive_pos_line_right_var_startX) ) * ui_info.chassis_drive_pos_line_right_slope_var + ui_info.chassis_drive_pos_line_right_var_startY;
-//				Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, Chassis_Drive_Pos_Line_Left_Start_X, Chassis_Drive_Pos_Line_Left_Start_Y, Chassis_Drive_Pos_Line_Left_End_X, Chassis_Drive_Pos_Line_Left_End_Y);
-				Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_left_var_startX, ui_info.chassis_drive_pos_line_left_var_startY, ui_info.chassis_drive_pos_line_left_var_endX, ui_info.chassis_drive_pos_line_left_var_endY);
-				Line_Draw(&chassisPosAimRightLine, "029", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_right_var_startX, ui_info.chassis_drive_pos_line_right_var_startY, ui_info.chassis_drive_pos_line_right_var_endX, ui_info.chassis_drive_pos_line_right_var_endY);
 				
 				//更新 同态图标的坐标数据------------
 				ui_coord_update();
@@ -580,35 +629,9 @@ void client_ui_task(void const *pvParameters)
 				
 				//****在这里 上面 加/改了东西之后记得要在ui_dynamic_crt_send_fuc() 里也加/改****
 				
-				//完成绘制 开始发送 先发静态
-				//refresh UI and String(Char)
-//				UI_ReFresh(2, turretCir, gunLine);
-				Char_ReFresh(strChassis);
-				Char_ReFresh(strGimbal); 
-				Char_ReFresh(strShoot); 
-				Char_ReFresh(strSuperCap); 
-//				Char_ReFresh(strReferee);
-				
-				UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
-				UI_ReFresh(2, gAimVertL, superCapFrame);
-				UI_ReFresh(5, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m, gAimHorizL8m);
-				UI_ReFresh(5, left8to7, left7to5,left5to4,left4to2, right8to7);
-				UI_ReFresh(5,right5to4,right4to2 );
-				UI_ReFresh(5, right7to5);
-				//Right
-				//Char_ReFresh(strCapVolt);
-				//Char_ReFresh(strCapPct);	
-				Char_ReFresh(strChassisSts);
-				Char_ReFresh(strSPINSts);
-				//Left
-				Char_ReFresh(strCVSts);
-				Char_ReFresh(strGunSts);
-				Char_ReFresh(strABoxSts);
-				Char_ReFresh(strProjSLimSts);
-				Char_ReFresh(strDisSts);
-				//fifo发送使能
-//				uart6_poll_dma_tx();
-				
+				//静态-发送 挪走了
+			if(get_para_hz_time_freq_signal_FreeRTOS(10))
+			{
 				//动态的修改 发送
 				UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
 				UI_ReFresh(2, fCapPct, superCapLine);
@@ -638,16 +661,28 @@ void client_ui_task(void const *pvParameters)
 //				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
 				//fifo发送使能
-//				uart6_poll_dma_tx();
+				uart6_poll_dma_tx();
+				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+				{
+					vTaskDelay(1);
+					uart6_poll_dma_tx();
+				}
+			}
 				
 				//定时创建一次动态的--------------
-				if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
+				if(xTaskGetTickCount() - ui_dynamic_crt_send_TimeStamp > ui_dynamic_crt_sendFreq)
 				{
 						ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 						ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
 						//fifo发送使能
-//						uart6_poll_dma_tx();
+						uart6_poll_dma_tx();
+						while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+						{
+							vTaskDelay(1);
+							uart6_poll_dma_tx();
+						}
 				}
+				
 //				temp_time_check_RTOS = xTaskGetTickCount();
 //			 temp_time_check_HAL = HAL_GetTick();
 //			 _temp_a++;
@@ -667,8 +702,8 @@ void client_ui_task(void const *pvParameters)
 //				Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
 				
-				vTaskDelay(100); //100
-//				vTaskDelay(10); //100
+//				vTaskDelay(100); //100
+				vTaskDelay(10); //100
 				
 				//其它debug使用的不重要变量
 				client_ui_count_ref++;
@@ -1870,28 +1905,28 @@ void client_ui_poll_dma_task(void const *pvParameters)
 			//fifo发送使能
 			uart6_poll_dma_tx();
 			
-//			//强制性保证发送成功; enable uart tx DMA which is the DMA poll
-//			if(uart6_poll_dma_tx())
-//			{
-//				ui_fifo_send.relative_send_fail_cnts++;
-//			}
-//			else
-//			{
-//				ui_fifo_send.relative_send_fail_cnts = 0;
-//			}
-//			
-//			//if reach a certain number, enforce sending, ensure fifo will not be used out
-//			if(ui_fifo_send.relative_send_fail_cnts >= 10)
-//			{
-//				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-//				{
-//					vTaskDelay(1);
-//					uart6_poll_dma_tx();
-//				}
-//				
-//		//					uart6_poll_dma_tx();
-//				ui_fifo_send.relative_send_fail_cnts = 0;
-//			}
+			//强制性保证发送成功; enable uart tx DMA which is the DMA poll
+			if(uart6_poll_dma_tx())
+			{
+				ui_fifo_send.relative_send_fail_cnts++;
+			}
+			else
+			{
+				ui_fifo_send.relative_send_fail_cnts = 0;
+			}
+			
+			//if reach a certain number, enforce sending, ensure fifo will not be used out
+			if(ui_fifo_send.relative_send_fail_cnts >= 10)
+			{
+				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+				{
+					vTaskDelay(1);
+					uart6_poll_dma_tx();
+				}
+				
+		//					uart6_poll_dma_tx();
+				ui_fifo_send.relative_send_fail_cnts = 0;
+			}
 			
 			vTaskDelay(5);
 	
