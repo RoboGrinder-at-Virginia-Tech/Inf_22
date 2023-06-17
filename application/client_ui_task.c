@@ -87,8 +87,10 @@ uint32_t client_ui_count_ref = 0;
 uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
+uint32_t ui_dynamic_draw_TimeStamp;
+
 //const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
-const uint16_t ui_dynamic_crt_sendFreq = 1000;
+const uint16_t ui_dynamic_crt_sendFreq = 2000;
 
 uint16_t ui_cv_circle_size_debug = TopLeft_Cir_on_cv_DET_Pen_Size;
 
@@ -328,6 +330,17 @@ void client_ui_tx_fifo_init()
 	//usart6_tx_dma_init called in main
 }
 
+static void client_ui_force_send()
+{
+	uart6_poll_dma_tx();
+	while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+	{
+		vTaskDelay(1);
+		uart6_poll_dma_tx();
+	}
+	vTaskDelay(1);
+}
+
 //全部静态UI 画一次
 void client_static_ui_draw_all()
 {
@@ -507,16 +520,21 @@ void client_ui_task(void const *pvParameters)
 		Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 				
 		UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
+		vTaskDelay(10);
 		UI_ReFresh(2, fCapPct, superCapLine);
+		vTaskDelay(10);
 //		UI_ReFresh(1, superCapLine);
 //		UI_ReFresh(2, superCapLine, chassisLine);
 //  	UI_ReFresh(2, fCapVolt, fCapPct);
 //		UI_ReFresh(1, chassisLightBar);
 //		UI_ReFresh(5, chassisLightBar, superCapLine, chassisLine, fCapVolt, fCapPct);
 		UI_ReFresh(2, fProjSLim, fDis);
+		vTaskDelay(10);
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
+		vTaskDelay(10);
 		//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
 		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+		vTaskDelay(10);
 //		Char_ReFresh(strVarChassis); // 5-26-2023 不显示那么详细
 //		Char_ReFresh(strVarGimbal); 
 //		Char_ReFresh(strVarShoot); 
@@ -524,12 +542,14 @@ void client_ui_task(void const *pvParameters)
 //		Char_ReFresh(strVarReferee);
 		
 		Char_ReFresh(strSpin);
+		vTaskDelay(10);
 		Char_ReFresh(strFric);
+		vTaskDelay(10);
 //		Char_ReFresh(strRef);
 	  //UI 初始创建 + 发送结束
 		
 		//fifo发送使能
-		uart6_poll_dma_tx();
+//		uart6_poll_dma_tx();
 		
 		//底盘 对位线计算 初始化 左
 		ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
@@ -544,20 +564,20 @@ void client_ui_task(void const *pvParameters)
 		ui_info.chassis_drive_pos_line_right_var_endX = Chassis_Drive_Pos_Line_Right_End_X;
 		
 		//保证动态UI的第一次创建
-		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-	  {
-		  vTaskDelay(1);
-			uart6_poll_dma_tx();
-		}
+//		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+//	  {
+//		  vTaskDelay(1);
+//			uart6_poll_dma_tx();
+//		}
 		/*	大装甲板宽 230mm 
 		*/
 		
 		client_static_ui_draw_all();
-		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-	  {
-		  vTaskDelay(1);
-			uart6_poll_dma_tx();
-		}
+//		while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+//	  {
+//		  vTaskDelay(1);
+//			uart6_poll_dma_tx();
+//		}
 		
 		while (1)
     {
@@ -630,8 +650,10 @@ void client_ui_task(void const *pvParameters)
 				//****在这里 上面 加/改了东西之后记得要在ui_dynamic_crt_send_fuc() 里也加/改****
 				
 				//静态-发送 挪走了
-			if(get_para_hz_time_freq_signal_FreeRTOS(10))
+			//if(get_para_hz_time_freq_signal_FreeRTOS(10))
+			if(xTaskGetTickCount() - ui_dynamic_draw_TimeStamp > 2000)
 			{
+				ui_dynamic_draw_TimeStamp = xTaskGetTickCount();
 				//动态的修改 发送
 				UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
 				UI_ReFresh(2, fCapPct, superCapLine);
@@ -661,12 +683,12 @@ void client_ui_task(void const *pvParameters)
 //				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
 				//fifo发送使能
-				uart6_poll_dma_tx();
-				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-				{
-					vTaskDelay(1);
-					uart6_poll_dma_tx();
-				}
+//				uart6_poll_dma_tx();
+//				while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+//				{
+//					vTaskDelay(1);
+//					uart6_poll_dma_tx();
+//				}
 			}
 				
 				//定时创建一次动态的--------------
@@ -675,12 +697,12 @@ void client_ui_task(void const *pvParameters)
 						ui_dynamic_crt_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 						ui_dynamic_crt_send_fuc(); //到时间了, 在客户端创建一次动态的图像
 						//fifo发送使能
-						uart6_poll_dma_tx();
-						while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
-						{
-							vTaskDelay(1);
-							uart6_poll_dma_tx();
-						}
+//						uart6_poll_dma_tx();
+//						while(!(get_uart6_ui_send_status()==0)) // get_uart1_embed_send_status
+//						{
+//							vTaskDelay(1);
+//							uart6_poll_dma_tx();
+//						}
 				}
 				
 //				temp_time_check_RTOS = xTaskGetTickCount();
@@ -1573,6 +1595,8 @@ int UI_ReFresh(int cnt,...)
    }
    
    va_end(ap);
+	 
+	 client_ui_force_send();
    
    UI_Seq++;                                                         //包序号+1
    return 0;
@@ -1689,7 +1713,8 @@ int Char_ReFresh(String_Data string_Data)
       framepoint++;                                                  //发送CRC16校验值
    }
    
-   
+   client_ui_force_send();
+	 
    UI_Seq++;                                                         //包序号+1
    return 0;
 }
