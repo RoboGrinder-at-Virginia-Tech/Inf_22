@@ -22,6 +22,7 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "user_lib.h"
 #include <string.h>
 #include "prog_msg_utility.h"
+#include "bsp_usart.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
@@ -985,6 +986,7 @@ void UI_SendByte(unsigned char ch)
 
 //	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
 //	HAL_UART_Transmit_DMA(&huart6, (uint8_t*)&ch, 1);
+//	usart6_tx_dma_enable((uint8_t*)&ch, 1);
 	
 	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
 	{

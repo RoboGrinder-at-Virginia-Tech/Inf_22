@@ -154,6 +154,7 @@ int main(void)
     cali_param_init();
     remote_control_init();
     usart1_tx_dma_init();
+		usart6_tx_dma_init();
 		
 	//SZL 3-27-2022
 	superCap_comm_bothway_init();
