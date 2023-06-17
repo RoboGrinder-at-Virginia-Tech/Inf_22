@@ -21,6 +21,7 @@ RM自定义UI协议       基于RM2020学生串口通信协议V1.3
 #include "miniPC_msg.h"
 #include "user_lib.h"
 #include <string.h>
+#include "prog_msg_utility.h"
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
 uint32_t client_ui_task_high_water;
@@ -83,7 +84,7 @@ uint32_t client_ui_count_ref = 0;
 uint8_t client_ui_test_flag = 1;
 
 uint32_t ui_dynamic_crt_send_TimeStamp;
-const uint16_t ui_dynamic_crt_sendFreq = 50; //1; //1000;
+const uint16_t ui_dynamic_crt_sendFreq = 50; //100; //50; //1; //1000;
 //const uint16_t ui_dynamic_crt_sendFreq = 100;
 
 uint16_t ui_cv_circle_size_debug = TopLeft_Cir_on_cv_DET_Pen_Size;
@@ -379,7 +380,9 @@ void client_ui_task(void const *pvParameters)
 		//炮塔 球 和 枪 线 捆绑动态图像
 		Circle_Draw(&turretCir, "026", UI_Graph_ADD, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
 		Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
-				
+		
+	if(1)//get_para_hz_time_freq_signal_FreeRTOS(100))
+	{
 		UI_ReFresh(5, chassisLine, turretCir, gunLine, fCapVolt, chassisLightBar); //chassisLine, turretCir, gunLine需捆绑发送
 		UI_ReFresh(2, fCapPct, superCapLine);
 //		UI_ReFresh(1, superCapLine);
@@ -401,6 +404,7 @@ void client_ui_task(void const *pvParameters)
 		Char_ReFresh(strFric);
 //		Char_ReFresh(strRef);
 	  //UI 初始创建 + 发送结束
+	}
 		
 		//底盘 对位线计算 初始化 左
 		ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
@@ -556,6 +560,8 @@ void client_ui_task(void const *pvParameters)
 				
 				//****在这里 上面 加/改了东西之后记得要在ui_dynamic_crt_send_fuc() 里也加/改****
 				
+				if(1)//get_para_hz_time_freq_signal_FreeRTOS(100))get_para_hz_time_freq_signal_FreeRTOS(100))
+			{
 				//完成绘制 开始发送 先发静态
 				//refresh UI and String(Char)
 //				UI_ReFresh(2, turretCir, gunLine);
@@ -611,6 +617,7 @@ void client_ui_task(void const *pvParameters)
 //				Circle_Draw(&turretCir, "026", UI_Graph_Change, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
 //				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 //				UI_ReFresh(2, turretCir, gunLine);
+			}
 				
 				//定时创建一次动态的--------------
 				if(xTaskGetTickCount() - ui_dynamic_crt_sendFreq > ui_dynamic_crt_send_TimeStamp)
@@ -962,16 +969,29 @@ void ui_dynamic_crt_send_fuc()
 
 
 /****************************************串口驱动映射************************************/
+/*
+	for(int i=0;i<sizeof(ext_draw_crosshair_t);i++)
+	{	
+		while(USART_GetFlagStatus(USART3,USART_FLAG_TXE)==RESET);
+		USART_SendData(USART3,(uint8_t)ClienTxBuffer[i]);
+		while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET);
+	}
+	
+	//   while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);	
+	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
+*/
 void UI_SendByte(unsigned char ch)
 {
-//   USART_SendData(USART3,ch);
-//   while (USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);	
-	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
-//	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
-//	{
-//		vTaskDelay(1);
-//	}
-//	HAL_UART_Transmit_IT(&huart6, (uint8_t*)&ch, 1);
+
+//	HAL_UART_Transmit(&huart6, (uint8_t*)&ch, 1,99999);
+//	HAL_UART_Transmit_DMA(&huart6, (uint8_t*)&ch, 1);
+	
+	while(HAL_UART_GetState(&huart6) == HAL_UART_STATE_BUSY_TX)
+	{
+		vTaskDelay(1);
+	}
+	HAL_UART_Transmit_IT(&huart6, (uint8_t*)&ch, 1);
+	
 	//while(!(huart6.Instance->SR))
 //	while(!(__HAL_UART_GET_FLAG(&huart6, UART_FLAG_TC) == 1))
 //	{
