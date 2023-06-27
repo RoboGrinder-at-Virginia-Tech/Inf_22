@@ -60,10 +60,10 @@ typedef enum
 } pc_chassis_mode_e;
 typedef __packed struct
 {
-  int16_t vx_mm; // forward/back
+  int16_t vx_mm_wrt_gimbal; // forward/back
 //: m/s * 1000 <-->mm/s 
 
-  int16_t vy_mm; // left/right
+  int16_t vy_mm_wrt_gimbal; // left/right
   int16_t vw_mm; // ccw positive
 //vw_mm: radian/s * 1000
 
@@ -77,10 +77,10 @@ Embedded -> miniPC
 */
 typedef __packed struct
 {
-  int16_t vx_mm; // forward/back
+  int16_t vx_mm_wrt_gimbal; // forward/back
 //: m/s * 1000 <-->mm/s 
 
-  int16_t vy_mm; // left/right
+  int16_t vy_mm_wrt_gimbal; // left/right
   int16_t vw_mm; // ccw positive
 //vw_mm: radian/s * 1000
 
@@ -140,6 +140,9 @@ decimal val = hex val
 107=0x6B                BLUE_SENTRY
 */
     uint8_t robot_id;
+		
+//		int16_t yaw_rate; //= rad/s * 10000
+		fp32 yaw_rate;
 }embed_gimbal_info_t; //GIMBAL_INFO_CMD_ID
 /*---------------------------------------------------- Raw Data Msg - End Above ----------------------------------------------------*/
 
@@ -170,9 +173,9 @@ typedef struct
 	const fp32* quat_ptr; //const fp32 *get_INS_gimbal_quat(void)
 	const shoot_control_t* shoot_control_ptr;
 	
-	fp32 s_vx_m; // m/s
-	fp32 s_vy_m; // m/s
-	fp32 s_vw_m; // radian/s
+	fp32 vx_wrt_gimbal; // 云台朝向 vx m/s
+	fp32 vy_wrt_gimbal; // 云台朝向 vy m/s
+	fp32 vw_wrt_chassis; // 底盘 radian/s
 	
 	uint8_t energy_buff_pct; //get_superCap_charge_pwr
 	
@@ -184,6 +187,8 @@ typedef struct
   fp32 shoot_bullet_speed; // = m/s
 
   uint8_t robot_id;
+	
+	fp32 gimbal_yaw_rate; // 云台 yaw角速度 = rad/s
 	
 	/* ------------------ sensor & information sent to pc END ------------------*/
 }embed_msg_to_pc_t;
@@ -228,6 +233,7 @@ typedef struct
 	0 no cmd; happens when cv offline; old: cv_status
 	1 cmd for gimbal AID
 	2 cmd for gimbal LOCK
+	--6-25-2023修改: 由于辅助瞄准和绝对坐标瞄准同时发送 1 和 2会频繁切换, 但是0只在掉线时出现
 	*/
 	uint8_t cv_gimbal_sts;
 	
@@ -257,6 +263,8 @@ fp32 get_yawMove_aid(uint8_t enable_not_detect_set_zero);
 fp32 get_pitchMove_aid(uint8_t enable_not_detect_set_zero);
 fp32 get_yawMove_absolute(void);
 fp32 get_pitchMove_absolute(void);
+bool_t is_enemy_detected_with_pc_toe(void);
+bool_t is_enemy_detected(void);
 uint8_t get_enemy_detected(void);
 uint8_t get_shootCommand(void);
 uint8_t get_cv_gimbal_sts(void);

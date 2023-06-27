@@ -543,7 +543,7 @@ void client_ui_task(void const *pvParameters)
 				Line_Draw(&gunLine, "027", UI_Graph_Change, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 				
 				//CV是否识别到目标
-				if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
+				if(is_enemy_detected_with_pc_toe()) //(miniPC_info.enemy_detected == 1)
 				{
 					Circle_Draw(&gEnemyDetected_circle, "990", UI_Graph_Change, 4, UI_Color_Green, ui_cv_circle_size_debug, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
 				}
@@ -914,7 +914,7 @@ void ui_dynamic_crt_send_fuc()
 		Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 				
 		//CV是否识别到目标
-		if(get_enemy_detected() == 1) //(miniPC_info.enemy_detected == 1)
+		if(is_enemy_detected_with_pc_toe()) //(miniPC_info.enemy_detected == 1)
 		{
 			Circle_Draw(&gEnemyDetected_circle, "990", UI_Graph_ADD, 4, UI_Color_Green, ui_cv_circle_size_debug, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
 		}
