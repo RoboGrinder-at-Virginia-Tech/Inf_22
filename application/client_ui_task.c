@@ -57,7 +57,7 @@ Float_Data fProjSLim, fDis; //左上角
 
 //方框
 Graph_Data gChassisSts_box, gSPINSts_box;//右上角
-Graph_Data gCVSts_box, gGunSts_box, gABoxSts_box;//左上角
+Graph_Data gCVSts_box, gGunSts_box; //7-4去掉弹舱盖 gABoxSts_box;//左上角
 Graph_Data gEnemyDetected_circle, gCVfb_sts_box;
 
 //超级电容能量框
@@ -355,7 +355,7 @@ void client_ui_task(void const *pvParameters)
 		//左上角---还未改
 		Rectangle_Draw(&gCVSts_box, "995", UI_Graph_ADD, 4, UI_Color_Cyan, 3, 240, 850, 330, 815);
 		Rectangle_Draw(&gGunSts_box, "994", UI_Graph_ADD, 4, UI_Color_Cyan, 3, 240, 810, 330, 775);
-		Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_ADD, 4, UI_Color_Cyan, 3, 240, 770, 330, 735);
+//		Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_ADD, 4, UI_Color_Cyan, 3, 240, 770, 330, 735);
 		
 		//左上角 CV反馈状态
 		Rectangle_Draw(&gCVfb_sts_box, "989", UI_Graph_ADD, 4, UI_Color_White, 3, TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X, TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_Y, TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_X, TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_Y);
@@ -387,10 +387,11 @@ void client_ui_task(void const *pvParameters)
 //  	UI_ReFresh(2, fCapVolt, fCapPct);
 //		UI_ReFresh(1, chassisLightBar);
 //		UI_ReFresh(5, chassisLightBar, superCapLine, chassisLine, fCapVolt, fCapPct);
-		UI_ReFresh(2, fProjSLim, fDis);
-		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
-		//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
-		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+//		UI_ReFresh(2, fProjSLim, fDis);
+		UI_ReFresh(1, fDis); // 7-4去掉弹舱
+//		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
+//		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+		UI_ReFresh(7, gEnemyDetected_circle, gCVfb_sts_box, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, fProjSLim); // 7-4去掉弹舱
 //		Char_ReFresh(strVarChassis); // 5-26-2023 不显示那么详细
 //		Char_ReFresh(strVarGimbal); 
 //		Char_ReFresh(strVarShoot); 
@@ -525,7 +526,7 @@ void client_ui_task(void const *pvParameters)
 				//左上角---还未改
 				Rectangle_Draw(&gCVSts_box, "995", UI_Graph_Change, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
 				Rectangle_Draw(&gGunSts_box, "994", UI_Graph_Change, 4, UI_Color_Cyan, 3, ui_info.box_gun_sts_coord[0], ui_info.box_gun_sts_coord[1], ui_info.box_gun_sts_coord[2], ui_info.box_gun_sts_coord[3]);
-				Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_Change, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
+//				Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_Change, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
 				
 				
 				Float_Draw(&fProjSLim, "992", UI_Graph_Change, 4, UI_Color_Main, 20, 2, 3, 240, 720, ui_info.enemy_dis);
@@ -590,11 +591,11 @@ void client_ui_task(void const *pvParameters)
 //				UI_ReFresh(2, superCapLine, chassisLine);
 //				UI_ReFresh(2, fCapVolt, fCapPct);
 //				UI_ReFresh(1, chassisLightBar);
-//				UI_ReFresh(5, chassisLightBar, superCapLine, chassisLine, fCapVolt, fCapPct);
-				UI_ReFresh(2, fProjSLim, fDis);
-				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
-				//UI_ReFresh(5, fCapVolt, fCapPct, fProjSLim, fDis, gEnemyDetected_circle);
-				UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+//				UI_ReFresh(2, fProjSLim, fDis);
+				UI_ReFresh(1, fDis); // 7-4去掉弹舱
+//				UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
+//		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+				UI_ReFresh(7, gEnemyDetected_circle, gCVfb_sts_box, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, fProjSLim); // 7-4去掉弹舱
 //				// 5-26-2023 不显示那么详细
 //				Char_ReFresh(strVarChassis);
 //				Char_ReFresh(strVarGimbal); 
@@ -725,7 +726,7 @@ void ui_coord_update()
 		 ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_LOCK_END_Y;
 	 }
 	 
-	 //CV feedback 状态机
+	 //CV feedback 状态机 - 7-4-2023修改为: cv_gimbal_st只有0-cvOFF或其它-cvNORMAL
 	 if(get_cv_gimbal_sts() == 0) //(miniPC_info.cv_status == 0)
 	 {
 		 ui_info.ui_cv_feedback_sts = cvOFF;
@@ -734,22 +735,30 @@ void ui_coord_update()
 		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_X;
 		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_Y;
 	 }
-	 else if(get_cv_gimbal_sts() == 1) //(miniPC_info.cv_status == 1)
+	 else
 	 {
-		 ui_info.ui_cv_feedback_sts = cvAID;
+		 ui_info.ui_cv_feedback_sts = cvNORMAL; //对应的框也将会是一个大框
 		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_X;
 		 ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_Y;
-		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_X;
-		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_Y;
-	 }
-	 else if(get_cv_gimbal_sts() == 2) //(miniPC_info.cv_status == 2)
-	 {
-		 ui_info.ui_cv_feedback_sts = cvLOCK;
-		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_START_X;
-		 ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_START_Y;
 		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_X;
 		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_Y;
 	 }
+//	 else if(get_cv_gimbal_sts() == 1) //(miniPC_info.cv_status == 1)
+//	 {
+//		 ui_info.ui_cv_feedback_sts = cvAID;
+//		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_X;
+//		 ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_Y;
+//		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_X;
+//		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_AID_END_Y;
+//	 }
+//	 else if(get_cv_gimbal_sts() == 2) //(miniPC_info.cv_status == 2)
+//	 {
+//		 ui_info.ui_cv_feedback_sts = cvLOCK;
+//		 ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_START_X;
+//		 ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_START_Y;
+//		 ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_X;
+//		 ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_Y;
+//	 }
 	 
 	 //CV状态机掉线提示
 	 if(toe_is_error(PC_TOE))
@@ -793,25 +802,25 @@ void ui_coord_update()
 		 Char_Draw(&strFric, "979", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
 	 }
 	 
-	 //Ammo Box 状态机 状态
-	 if(get_ammoBox_sts() == ammoOFF)
-	 {
-		 ui_info.ui_ammoBox_sts = ammoOFF;
-		 //ui_info.box_ammoBox_sts_coord
-		 ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OFF_START_X;
-		 ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OFF_START_Y;
-		 ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OFF_END_X;
-		 ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OFF_END_Y;
-	 }
-	 else if(get_ammoBox_sts() == ammoOPEN)
-	 {
-		 ui_info.ui_ammoBox_sts = ammoOPEN;
-		 //ui_info.box_ammoBox_sts_coord
-		 ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OPEN_START_X;
-		 ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OPEN_START_Y;
-		 ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OPEN_END_X;
-		 ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OPEN_END_Y;
-	 }
+//	 //Ammo Box 状态机 状态
+//	 if(get_ammoBox_sts() == ammoOFF)
+//	 {
+//		 ui_info.ui_ammoBox_sts = ammoOFF;
+//		 //ui_info.box_ammoBox_sts_coord
+//		 ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OFF_START_X;
+//		 ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OFF_START_Y;
+//		 ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OFF_END_X;
+//		 ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OFF_END_Y;
+//	 }
+//	 else if(get_ammoBox_sts() == ammoOPEN)
+//	 {
+//		 ui_info.ui_ammoBox_sts = ammoOPEN;
+//		 //ui_info.box_ammoBox_sts_coord
+//		 ui_info.box_ammoBox_sts_coord[0] = TopLeft_REC_on_ammo_OPEN_START_X;
+//		 ui_info.box_ammoBox_sts_coord[1] = TopLeft_REC_on_ammo_OPEN_START_Y;
+//		 ui_info.box_ammoBox_sts_coord[2] = TopLeft_REC_on_ammo_OPEN_END_X;
+//		 ui_info.box_ammoBox_sts_coord[3] = TopLeft_REC_on_ammo_OPEN_END_Y;
+//	 }
 
 	 //开始整数字相关的东西 即插即用的超级电容控制板 判断
 //	 ui_info.cap_pct = get_current_cap_voltage();
@@ -897,7 +906,7 @@ void ui_dynamic_crt_send_fuc()
 		//左上角---还未改
 		Rectangle_Draw(&gCVSts_box, "995", UI_Graph_ADD, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
 		Rectangle_Draw(&gGunSts_box, "994", UI_Graph_ADD, 4, UI_Color_Cyan, 3, ui_info.box_gun_sts_coord[0], ui_info.box_gun_sts_coord[1], ui_info.box_gun_sts_coord[2], ui_info.box_gun_sts_coord[3]);
-		Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_ADD, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
+//		Rectangle_Draw(&gABoxSts_box, "993", UI_Graph_ADD, 4, UI_Color_Cyan, 3, ui_info.box_ammoBox_sts_coord[0], ui_info.box_ammoBox_sts_coord[1], ui_info.box_ammoBox_sts_coord[2], ui_info.box_ammoBox_sts_coord[3]);
 		
 		Float_Draw(&fProjSLim, "992", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 720, ui_info.proj_speed_limit);
 		Float_Draw(&fDis, "991", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 680, ui_info.enemy_dis);
@@ -933,11 +942,11 @@ void ui_dynamic_crt_send_fuc()
 //		UI_ReFresh(1, superCapLine);
 //		UI_ReFresh(2, superCapLine, chassisLine);
 //		UI_ReFresh(2, fCapVolt, fCapPct);
-//		UI_ReFresh(1, chassisLightBar);
-//		UI_ReFresh(5, chassisLightBar, superCapLine, chassisLine, fCapVolt, fCapPct);
-		UI_ReFresh(2, fProjSLim, fDis);
+//		UI_ReFresh(2, fProjSLim, fDis);
+		UI_ReFresh(1, fDis); // 7-4去掉弹舱
 		UI_ReFresh(2, gEnemyDetected_circle, gCVfb_sts_box);
-		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+//		UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+		UI_ReFresh(7, gEnemyDetected_circle, gCVfb_sts_box, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, fProjSLim); // 7-4去掉弹舱
 //		// 5-26-2023 不显示那么详细
 //		Char_ReFresh(strVarChassis);
 //	  Char_ReFresh(strVarGimbal); 

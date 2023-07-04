@@ -169,7 +169,7 @@ typedef struct
 } String_Data;                  //打印字符串数据
 
 #pragma pack()
-//UI_ReFresh(5, gChassisSts_box, gSPINSts_box, gCVSts_box, gGunSts_box, gABoxSts_box);
+
 typedef enum
 {
 		NORM,
@@ -185,6 +185,7 @@ typedef enum
 typedef enum
 {
 		cvOFF,
+		cvNORMAL, //新增 cv_gimbal_st只有0-cvOFF或其它-cvNORMAL
 		cvAID,
 		cvLOCK
 }ui_cv_sts_e;
