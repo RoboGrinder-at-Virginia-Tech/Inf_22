@@ -137,13 +137,13 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     50 //30//50//60//5-24之前:40//30
+#define SHOOT_HEAT_REMAIN_VALUE     30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{10}
 
 /* 其它热量相关宏定义 - 本地计算热量 */
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
-#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //5
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //5 1v1参数20; 3v3参数{10}
 /*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 //Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级

@@ -280,7 +280,22 @@ int16_t shoot_control_loop(void)
 				//有PID位置外环后, 连发按标定的射频
 				shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-				shoot_bullet_control_continuous_17mm(10);
+			
+				shoot_bullet_control_continuous_17mm(8); // 3v3 改程序 为 6
+				
+//				if(toe_is_error(REFEREE_TOE))
+//				{
+//					shoot_bullet_control_continuous_17mm(6);
+//				}
+//				else
+//				{
+//					if(shoot_control.heat_limit >= )
+//					{
+//					}
+//					else
+//					{
+//					}
+				}
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -602,14 +617,14 @@ static void shoot_set_mode(void)
 		shoot_heat_update_calculate(&shoot_control);
 		//17mm ref热量限制
     get_shooter_id1_17mm_heat_limit_and_heat(&shoot_control.heat_limit, &shoot_control.heat);
-//		//只用裁判系统数据的超热量保护
-//    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
-//    {
-//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-//        {
-//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-//        }
-//    }
+		//只用裁判系统数据的超热量保护
+    if(!toe_is_error(REFEREE_TOE) && (shoot_control.heat + SHOOT_HEAT_REMAIN_VALUE > shoot_control.heat_limit))
+    {
+        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+        {
+            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+        }
+    }
 		//调试: 难道referee uart掉线后 就没有热量保护了?
 		
 //		//未使用实时里程计的超热量保护 - 只是开发时的一个测试未移植到其他机器人
