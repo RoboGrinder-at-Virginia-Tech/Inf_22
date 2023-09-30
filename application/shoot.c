@@ -281,7 +281,7 @@ int16_t shoot_control_loop(void)
 				shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
 			
-				shoot_bullet_control_continuous_17mm(6); // 3v3 改程序 为 5 6 - 1v1程序是8
+				shoot_bullet_control_continuous_17mm(8); // 3v3 改程序 为 5 6 - 1v1程序是8
 				
 //				if(toe_is_error(REFEREE_TOE))
 //				{
