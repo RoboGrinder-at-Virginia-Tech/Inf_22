@@ -33,7 +33,7 @@
 #include "remote_control.h"
 
 //miniPC YAW绝对位置角度环 PID miniPC_absolute_angle_pid
-#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KP 15.0f //15.0f
+#define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KP 20.0f //15.0f //10-1之前是15.0
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KI 0.02f //0.02f
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_KD  0.0f
 #define YAW_MINIPC_ABSOLUTE_ANGLE_PID_MAX_OUT 10.0f
