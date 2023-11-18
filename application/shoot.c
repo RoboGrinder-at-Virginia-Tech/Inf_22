@@ -637,14 +637,14 @@ static void shoot_set_mode(void)
 //        }
 //    }
 		
-		//使用实时里程计的超热量保护
-		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
-    {
-        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
-        {
-            shoot_control.shoot_mode =SHOOT_READY_BULLET;
-        }
-    }
+//		//使用实时里程计的超热量保护
+//		if(shoot_control.rt_odom_local_heat[0] + LOCAL_SHOOT_HEAT_REMAIN_VALUE >= (fp32)shoot_control.local_heat_limit)
+//    {
+//        if(shoot_control.shoot_mode == SHOOT_BULLET || shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
+//        {
+//            shoot_control.shoot_mode =SHOOT_READY_BULLET;
+//        }
+//    }
 		
 //    //如果云台状态是 无力状态，就关闭射击
 //    if (gimbal_cmd_to_shoot_stop())
