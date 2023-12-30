@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 11.5;//目前 ICRA Only
+fp32 temp_speed_setALL = 14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -233,6 +233,9 @@ int16_t shoot_control_loop(void)
 		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
+	 //弹速测试 12-28
+	 shoot_control.currentLIM_shoot_speed_17mm = (fp32)temp_speed_setALL;
+	 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm;
 	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
@@ -363,7 +366,8 @@ int16_t shoot_control_loop(void)
 				shoot_control.currentLeft_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				shoot_control.currentRight_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				
-				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面
+//				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
+				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
     }
 
     shoot_control.fric_pwm1 = (uint16_t)(shoot_control.fric1_ramp.out);// + 19);
