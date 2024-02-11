@@ -103,7 +103,7 @@ void init_embed_to_pc_comm_struct_data(void)
 	//init information pckg
 	embed_msg_to_pc.chassis_move_ptr = get_chassis_pointer();
 	embed_msg_to_pc.gimbal_control_ptr = get_gimbal_pointer();
-	embed_msg_to_pc.quat_ptr = get_INS_gimbal_quat(); //get_INS_quat(); //get_INS_gimbal_quat();
+	embed_msg_to_pc.quat_ptr = get_INS_gimbal_quat(); //get_INS_quat()
 	embed_msg_to_pc.shoot_control_ptr = get_robot_shoot_control();
 	
 	embed_send_protocol.p_header = &pc_send_header;
@@ -125,7 +125,7 @@ fp32 get_yawMove_aid(uint8_t enable_not_detect_set_zero)
 {
 	if(enable_not_detect_set_zero)
 	{
-		if(get_enemy_detected())
+		if(is_enemy_detected_with_pc_toe())
 		{
 			return pc_info.yawMove_aid;
 		}
@@ -145,7 +145,7 @@ fp32 get_pitchMove_aid(uint8_t enable_not_detect_set_zero)
 {
 	if(enable_not_detect_set_zero)
 	{
-		if(get_enemy_detected())
+		if(is_enemy_detected_with_pc_toe())
 		{
 			return pc_info.pitchMove_aid;
 		}
@@ -172,15 +172,40 @@ fp32 get_pitchMove_absolute()
 	return pc_info.pitchMove_absolute;
 }
 
-//uint8_t enemy_detected;
-uint8_t get_enemy_detected()
+//uint8_t enemy_detected_with_pc_toe
+/*true - enemy detected; false - NOT detected*/
+bool_t is_enemy_detected_with_pc_toe()
 {
 	if(toe_is_error(PC_TOE))
 	{
 		return 0;
 	}
 	
+	return (pc_info.enemy_detected == 0xff);
+}
+/*不考虑掉线的情况 - 直接判断enemy_detected*/
+bool_t is_enemy_detected()
+{
+	return (pc_info.enemy_detected == 0xff);
+}
+//原始数据 enemy_detected
+uint8_t get_enemy_detected()
+{
 	return pc_info.enemy_detected;
+}
+
+/*当裁判系统掉线时不开火*/
+uint8_t get_shootCommand_with_referee_toe()
+{
+	if(toe_is_error(REFEREE_TOE))
+	{
+		return 0x00; //不开火
+	}
+	else
+	{
+		return pc_info.shootCommand;
+	}
+	
 }
 
 //uint8_t shootCommand;
@@ -211,8 +236,8 @@ uint8_t get_autoAimFlag()
 
 void cmd_process_pc_cmd_chassis_control(void)
 {
-	pc_info.vx_m = (fp32)pc_cmd_chassis_control.vx_mm / 1000.0f;
-	pc_info.vy_m = (fp32)pc_cmd_chassis_control.vy_mm / 1000.0f;
+	pc_info.vx_m = (fp32)pc_cmd_chassis_control.vx_mm_wrt_gimbal / 1000.0f;
+	pc_info.vy_m = (fp32)pc_cmd_chassis_control.vy_mm_wrt_gimbal / 1000.0f;
 	pc_info.vw_m = (fp32)pc_cmd_chassis_control.vw_mm / 1000.0f;
 	
 	if(pc_cmd_chassis_control.chassis_mode == 0)
@@ -240,10 +265,10 @@ void cmd_process_pc_cmd_gimbal_ctrl_aid(void) //TODO添加数据合理性判断
 	first_order_filter_cali(&pc_info.yawMove_aid_filter, pc_cmd_gimbal_ctrl_aid.yaw);
 	first_order_filter_cali(&pc_info.pitchMove_aid_filter, pc_cmd_gimbal_ctrl_aid.pitch);
 	
-//	pc_info.yawMove_aid = 0.003f * (fp32)pc_cmd_gimbal_ctrl_aid.yaw / 10000.0f; //003f 008f
-//	pc_info.pitchMove_aid = 0.008f * (fp32)pc_cmd_gimbal_ctrl_aid.pitch / 10000.0f; //008f 010f
-	pc_info.yawMove_aid = 0.003f * (fp32)pc_info.yawMove_aid_filter.out / 10000.0f; //003f 008f
-	pc_info.pitchMove_aid = 0.008f * (fp32)pc_info.pitchMove_aid_filter.out / 10000.0f; //008f 010f
+	pc_info.yawMove_aid = 0.0010f * (fp32)pc_cmd_gimbal_ctrl_aid.yaw / 10000.0f; //003f 008f 0015f - 0005f
+	pc_info.pitchMove_aid = 0.001f * (fp32)pc_cmd_gimbal_ctrl_aid.pitch / 10000.0f; //008f 004f 002f - 0005f
+//	pc_info.yawMove_aid = 0.003f * (fp32)pc_info.yawMove_aid_filter.out / 10000.0f; //003f 008f
+//	pc_info.pitchMove_aid = 0.008f * (fp32)pc_info.pitchMove_aid_filter.out / 10000.0f; //008f 010f
 	
 	pc_info.enemy_detected = pc_cmd_gimbal_ctrl_aid.is_detect;
 	pc_info.shootCommand = pc_cmd_gimbal_ctrl_aid.shoot;
@@ -360,12 +385,12 @@ void embed_all_info_update_from_sensor()
 
   uint8_t robot_id;
 	*/
-	embed_msg_to_pc.s_vx_m = embed_msg_to_pc.chassis_move_ptr->vx;
-	embed_msg_to_pc.s_vy_m = embed_msg_to_pc.chassis_move_ptr->vy;
-	embed_msg_to_pc.s_vw_m = embed_msg_to_pc.chassis_move_ptr->wz;
+	embed_msg_to_pc.vx_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vx_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vx;
+	embed_msg_to_pc.vy_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vy_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vy;
+	embed_msg_to_pc.vw_wrt_chassis = embed_msg_to_pc.chassis_move_ptr->wz;
 	embed_msg_to_pc.energy_buff_pct = (uint8_t) get_current_cap_pct();
-	embed_msg_to_pc.yaw_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_yaw_motor.relative_angle;
-	embed_msg_to_pc.pitch_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_pitch_motor.relative_angle;
+	embed_msg_to_pc.yaw_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_yaw_motor.absolute_angle; //6-22修改relative_angle
+	embed_msg_to_pc.pitch_relative_angle = embed_msg_to_pc.gimbal_control_ptr->gimbal_pitch_motor.absolute_angle; //relative_angle
 	
 	embed_msg_to_pc.quat[0] = embed_msg_to_pc.quat_ptr[0];
 	embed_msg_to_pc.quat[1] = embed_msg_to_pc.quat_ptr[1];
@@ -374,18 +399,28 @@ void embed_all_info_update_from_sensor()
 	
 	// = (uint16_t)(shoot_control.predict_shoot_speed*10); //anticipated predicated bullet speed
 	embed_msg_to_pc.shoot_bullet_speed = embed_msg_to_pc.shoot_control_ptr->predict_shoot_speed;
-	embed_msg_to_pc.robot_id = RED_STANDARD_1; //TODO: whether get from ref or hardcode
 	
+	// 7-7-2023 保证身份安全
+	if(toe_is_error(REFEREE_TOE))
+	{
+		embed_msg_to_pc.robot_id = 0x00;
+	}
+	else
+	{
+		embed_msg_to_pc.robot_id = get_robot_id(); //RED_STANDARD_1; //TODO: whether get from ref or hardcode - fail safe
+	}
 	
+	//6-25-2023 新增云台角速度 原始数据单位为 rad/s
+	embed_msg_to_pc.gimbal_yaw_rate = embed_msg_to_pc.gimbal_control_ptr->gimbal_yaw_motor.motor_gyro;
 	
 }
 
 void embed_chassis_info_msg_data_update(embed_chassis_info_t* embed_chassis_info_ptr, embed_msg_to_pc_t* embed_msg_to_pc_ptr)
 {	
 	//m/s * 1000 <-->mm/s 
-	embed_chassis_info_ptr->vx_mm = (int16_t) (embed_msg_to_pc_ptr->s_vx_m * 1000.0f);
-	embed_chassis_info_ptr->vy_mm = (int16_t) (embed_msg_to_pc_ptr->s_vy_m * 1000.0f);
-	embed_chassis_info_ptr->vw_mm = (int16_t) (embed_msg_to_pc_ptr->s_vw_m * 1000.0f);
+	embed_chassis_info_ptr->vx_mm_wrt_gimbal = (int16_t) (embed_msg_to_pc_ptr->vx_wrt_gimbal * 1000.0f);
+	embed_chassis_info_ptr->vy_mm_wrt_gimbal = (int16_t) (embed_msg_to_pc_ptr->vy_wrt_gimbal * 1000.0f);
+	embed_chassis_info_ptr->vw_mm = (int16_t) (embed_msg_to_pc_ptr->vw_wrt_chassis * 1000.0f);
 	
 	embed_chassis_info_ptr->energy_buff_pct = embed_msg_to_pc_ptr->energy_buff_pct;
 	
@@ -416,8 +451,10 @@ void embed_gimbal_info_msg_data_update(embed_gimbal_info_t* embed_gimbal_info_pt
 			embed_gimbal_info_ptr->quat[i] = (uint16_t) ( (embed_msg_to_pc_ptr->quat[i]+1) * 10000.0f ); //(quat[i]+1)*10000; linear trans.
 	}
 	
-	embed_gimbal_info_ptr->robot_id = embed_msg_to_pc_ptr->robot_id;
 	embed_gimbal_info_ptr->shoot_bullet_speed = (uint16_t) (embed_msg_to_pc_ptr->shoot_bullet_speed * 10.0f);
+	embed_gimbal_info_ptr->robot_id = embed_msg_to_pc_ptr->robot_id;
+//	embed_gimbal_info_ptr->yaw_rate = (uint16_t) (embed_msg_to_pc_ptr->gimbal_control_ptr->gimbal_yaw_motor.motor_gyro * 10000.0f); //= rad/s * 10000
+	embed_gimbal_info_ptr->yaw_rate = embed_msg_to_pc_ptr->gimbal_control_ptr->gimbal_yaw_motor.motor_gyro;
 }
 
 /**

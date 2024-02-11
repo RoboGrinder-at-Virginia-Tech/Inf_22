@@ -495,7 +495,8 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 						
 							sCap23_info.Vin_f = sCap23_info.PowerData[0]; //输入电压
 							sCap23_info.Vbank_f = sCap23_info.PowerData[1];//电容电压
-							sCap23_info.Vchassis_f = sCap23_info.PowerData[2];//给底盘电压
+//							sCap23_info.Vchassis_f = sCap23_info.PowerData[2];//给底盘电压
+							sCap23_info.Cap_fb_set_power = sCap23_info.PowerData[2];//6-14修改 超级电容返回的当前充电功率
 							sCap23_info.Ichassis_f = sCap23_info.PowerData[3];//底盘电流
 						
 							//计算容量

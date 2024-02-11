@@ -185,7 +185,7 @@ void MX_FREERTOS_Init(void) {
     osThreadDef(ChassisTask, chassis_task, osPriorityAboveNormal, 0, 512);
     chassisTaskHandle = osThreadCreate(osThread(ChassisTask), NULL);
 
-    osThreadDef(DETECT, detect_task, osPriorityNormal, 0, 256);
+    osThreadDef(DETECT, detect_task, osPriorityAboveNormal, 0, 256); // osPriorityNormal <- 原来; osPriorityHigh osPriorityAboveNormal
     detect_handle = osThreadCreate(osThread(DETECT), NULL);
 
     osThreadDef(gimbalTask, gimbal_task, osPriorityHigh, 0, 512);
@@ -198,7 +198,7 @@ void MX_FREERTOS_Init(void) {
     led_RGB_flow_handle = osThreadCreate(osThread(led), NULL);
 
 
-    osThreadDef(OLED, oled_task, osPriorityHigh, 0, 256);//osPriorityLow   osPriorityNormal osPriorityHigh
+    osThreadDef(OLED, oled_task, osPriorityNormal, 0, 256);//osPriorityLow   osPriorityNormal osPriorityHigh
     oled_handle = osThreadCreate(osThread(OLED), NULL);
 
 
@@ -215,7 +215,7 @@ void MX_FREERTOS_Init(void) {
     embed_send_communication_task_handle = osThreadCreate(osThread(EMBEDTX), NULL);
 
 		//Created task is either usb_task or usb_ano_task; Never both at the same time
-    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 128);
+    osThreadDef(USBTask, usb_task, osPriorityNormal, 0, 512); //从128改为512
     usb_task_handle = osThreadCreate(osThread(USBTask), NULL);
 		
 //		osThreadDef(USBANOTask, usb_ano_task, osPriorityHigh, 0, 512); //osPriorityNormal osPriorityHigh 128
@@ -227,7 +227,7 @@ void MX_FREERTOS_Init(void) {
     osThreadDef(SERVO, servo_task, osPriorityNormal, 0, 128);
     servo_task_handle = osThreadCreate(osThread(SERVO), NULL);
 
-		osThreadDef(UI, client_ui_task, osPriorityNormal, 0, 512);
+		osThreadDef(UI, client_ui_task, osPriorityBelowNormal, 0, 512); //osPriorityBelowNormal osPriorityNormal
 		client_ui_task_handle =  osThreadCreate(osThread(UI), NULL);
   /* USER CODE END RTOS_THREADS */
 

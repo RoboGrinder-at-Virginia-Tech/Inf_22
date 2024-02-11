@@ -117,7 +117,7 @@ SZL 5-21-2022 重新算
 #define MAX_WHEEL_SPEED 8.0f
 //chassis forward or back max speed
 //底盘运动过程最大前进速度
-#define NORMAL_MAX_CHASSIS_SPEED_X 5.0f //PR test 2.0
+#define NORMAL_MAX_CHASSIS_SPEED_X 5.0f
 //PR 底盘线性油门
 #define TURBO_SPEED 3.5f //全油门模式速度
 #define TURBO_ACC_STEP 0.05f //油门步进（加速度控制）
@@ -128,6 +128,10 @@ SZL 5-21-2022 重新算
 #define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
 #define SPIN_SPEED 5.0f //3.0f //4.8f//3.8f//3.3f//5-24-2022之前3.6f//6.0f //小陀螺速度
 /*
+7-4-2023: 基于之前测试:
+#define SPIN_SPEED 3.0f - 小陀螺时不会消耗太多功率
+#define SPIN_SPEED 4.8f - 快很多
+-------------------------------------------
 原始的是: #define SPIN_SPEED 6.0f //小陀螺速度
 //PR 底盘线性油门
 #define TURBO_SPEED 2.8f //全油门模式速度
@@ -144,7 +148,7 @@ SZL 5-21-2022 重新算
 /*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f; CHASSIS_WZ_SET_SCALE 0.1f*/
 //chassis left or right max speed
 //底盘运动过程最大平移速度
-#define NORMAL_MAX_CHASSIS_SPEED_Y 2.3f//又有点太快1.9f//5-24 9:10 am 1.2f//3.0f
+#define NORMAL_MAX_CHASSIS_SPEED_Y 2.3f
 
 #define CHASSIS_WZ_SET_SCALE 0.1f
 
@@ -224,7 +228,11 @@ typedef struct
   fp32 chassis_relative_angle;      //the relative angle between chassis and gimbal.底盘与云台的相对角度，单位 rad
   fp32 chassis_relative_angle_set;  //the set relative angle.设置相对云台控制角度
   fp32 chassis_yaw_set;             
-
+	
+	//6-25-2023: 新增云台朝向的速度x y - 注意云台旋转是yaw rate, 底盘wz只管底盘
+	fp32 vx_gimbal_orientation;
+	fp32 vy_gimbal_orientation;
+	
   fp32 vx_max_speed;  //max forward speed, unit m/s.前进方向最大速度 单位m/s
   fp32 vx_min_speed;  //max backward speed, unit m/s.后退方向最大速度 单位m/s
   fp32 vy_max_speed;  //max letf speed, unit m/s.左方向最大速度 单位m/s

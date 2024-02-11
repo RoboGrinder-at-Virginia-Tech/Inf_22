@@ -23,7 +23,9 @@
 #include "detect_task.h"
 #include "voltage_task.h"
 
+#include "SuperCap_comm.h"
 #include "prog_msg_utility.h"
+#include "stdio.h"
 
 #define OLED_CONTROL_TIME 10
 #define REFRESH_RATE    10
@@ -82,20 +84,20 @@ void oled_task(void const * argument)
             OLED_init();
         }
 				
-//				if(toe_is_error(OLED_TOE))
-//        {
-//            OLED_init();
-//        }
+				if(toe_is_error(OLED_TOE))
+        {
+            OLED_init();
+        }
 				
 				
         if(now_oled_errror == 0)//now_oled_errror == 0)
         {
             refresh_tick++;
             //10Hz refresh
-//            if(refresh_tick > configTICK_RATE_HZ / (OLED_CONTROL_TIME * REFRESH_RATE))
-//            {
-					  if(xTaskGetTickCount() - 100 > oled_refresh_TimeStamp)//100
-						{
+            if(refresh_tick > configTICK_RATE_HZ / (OLED_CONTROL_TIME * REFRESH_RATE))
+            {
+//					  if(xTaskGetTickCount() - 100 > oled_refresh_TimeStamp)//100
+//						{
 							  oled_refresh_TimeStamp = xTaskGetTickCount();
                 refresh_tick = 0;
                 OLED_operate_gram(PEN_CLEAR);
@@ -114,8 +116,18 @@ void oled_task(void const * argument)
                     OLED_printf(3, 2, "%d", get_battery_percentage());
                 }
 
-                OLED_show_string(90, 27, (uint8_t*)"DBUS");
-                OLED_show_graphic(115, 27, &check_box[error_list_local[DBUS_TOE].error_exist]);
+//                OLED_show_string(90, 27, (uint8_t*)"DBUS");
+//                OLED_show_graphic(115, 27, &check_box[error_list_local[DBUS_TOE].error_exist]);
+								//显示在靠近右下角
+								OLED_show_string(90, 50, (uint8_t*)"DBUS");
+                OLED_show_graphic(115, 50, &check_box[error_list_local[DBUS_TOE].error_exist]);
+								
+								//添加两种超级电容在线状态框和电压 - 在DBUS旁边 - TODO: cap电压数据限制
+								char cap_vol_str[20];
+								sprintf(cap_vol_str, "%.1f", get_current_cap_voltage());
+								OLED_show_string(30, 50, (uint8_t*)"SP");
+								OLED_show_string(30+20, 50, (uint8_t*)cap_vol_str);
+                OLED_show_graphic(50+25, 50, &check_box[error_list_local[SCAP_23_TOR].error_exist]);
 								
 								//在电池旁边 显示Fric L和Fric R的连接状态
 								/*电池logo 估计长度: 32; 宽度: 15*/
@@ -132,7 +144,7 @@ void oled_task(void const * argument)
 								OLED_show_string(96+6, 0, (uint8_t*)util_1s_time_cnt_toString());
 								
                 for(i = CHASSIS_MOTOR1_TOE; i < TRIGGER_MOTOR_TOE + 1; i++)
-                {
+                {		//第一排的7个设备
                     show_col = ((i-1) * 32) % 128;
                     show_row = 15 + (i-1) / 4 * 12;
                     OLED_show_char(show_col, show_row, 'M');
