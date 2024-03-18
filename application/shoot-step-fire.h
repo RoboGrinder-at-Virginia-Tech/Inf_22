@@ -66,7 +66,7 @@
 #define FULL_COUNT                  18
 //拨弹速度
 #define TRIGGER_SPEED               10.0f
-#define CONTINUE_TRIGGER_SPEED      9.0f//12.0f//9.0f
+#define CONTINUE_TRIGGER_SPEED      12.0f//9.0f
 #define READY_TRIGGER_SPEED         5.0f
 
 #define KEY_OFF_JUGUE_TIME          500
@@ -74,7 +74,7 @@
 #define SWITCH_TRIGGER_OFF          1
 
 //卡单时间 以及反转时间
-#define BLOCK_TRIGGER_SPEED         0.08f //0.5f //之前的参数是1.0f
+#define BLOCK_TRIGGER_SPEED         0.09f //1.0f
 #define BLOCK_TIME                  400 //700
 #define REVERSE_TIME                200 //500
 #define REVERSE_SPEED_LIMIT         13.0f
@@ -116,7 +116,7 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  7000.0f
 */
 //拨弹轮电机PID 外环PID
-#define TRIGGER_ANGLE_PID_OUTER_KP        40.0f //50.0 //30.0f //25.0f
+#define TRIGGER_ANGLE_PID_OUTER_KP        50.0f //40.0f //50.0 //30.0f //25.0f
 #define TRIGGER_ANGLE_PID_OUTER_KI        0.0f
 #define TRIGGER_ANGLE_PID_OUTER_KD        5.5f
 
@@ -126,9 +126,9 @@ Original PID parameter
 外环的输出是内环的输入 内环输入单位是rad/s 
 */
 //拨弹轮电机PID  这个是速度环的PID - 600 or 800Kp
-#define TRIGGER_SPEED_IN_PID_KP        1850.0f //1800.0f //1500.0f //650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
-#define TRIGGER_SPEED_IN_PID_KI        0.05f //0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
-#define TRIGGER_SPEED_IN_PID_KD        0.0f //0.1f //TRIGGER_ANGLE_PID_KD
+#define TRIGGER_SPEED_IN_PID_KP        650.0f //800.0f//100.0f//800.0f//600//800.0f TRIGGER_ANGLE_PID_KP
+#define TRIGGER_SPEED_IN_PID_KI        0.25f //0.5f//1.0//0.5f TRIGGER_ANGLE_PID_KI
+#define TRIGGER_SPEED_IN_PID_KD        0.1f //TRIGGER_ANGLE_PID_KD
 
 #define TRIGGER_BULLET_PID_MAX_OUT  10000.0f
 #define TRIGGER_BULLET_PID_MAX_IOUT 9000.0f//9000.0f 
@@ -137,18 +137,18 @@ Original PID parameter
 #define TRIGGER_READY_PID_MAX_IOUT  5000.0f//7000.0f
 
 /*直接 - 裁判系统 原始值是#define SHOOT_HEAT_REMAIN_VALUE     30*/
-#define SHOOT_HEAT_REMAIN_VALUE     10 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
+#define SHOOT_HEAT_REMAIN_VALUE     20 //30 //50 //30//50//60//5-24之前:40//30: 1v1参数30; 3v3参数{20}
 
 /* 其它热量相关宏定义 - 本地计算热量 */
 #define ONE17mm_BULLET_HEAT_AMOUNT 10
 #define MIN_LOCAL_HEAT 0
 #define MAX_LOCAL_HEAT 500
-#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 10 //20 //5 1v1参数20; 3v3参数{10}
+#define LOCAL_SHOOT_HEAT_REMAIN_VALUE 20 //20 //5 1v1参数20; 3v3参数{10}
 /*2022 infantry; 拨盘有9个洞, 2pi/9 = 0.698131701f; 为了保证不过冲发弹set 0.67f*/
 #define RAD_ANGLE_FOR_EACH_HOLE_HEAT_CALC 0.698131701f
 //Local heat安全值, 裁判系统离线时的安全值 - 2022步兵 冷却模式一级
-#define LOCAL_HEAT_LIMIT_SAFE_VAL 280 //50
-#define LOCAL_CD_RATE_SAFE_VAL 25 //40
+#define LOCAL_HEAT_LIMIT_SAFE_VAL 50
+#define LOCAL_CD_RATE_SAFE_VAL 40
 
 /*
 12-28-2021 SZL添加 PID M3508 屁股 shooter 电机 2个
@@ -179,7 +179,7 @@ M3508_RIGHT_FRICTION_PID_MAX_OUT = M3508_LEFT_FRICTION_PID_MAX_OUT = TRIGGER_REA
 
 
 //SZL 5-15-2022 referee speed limit
-#define INITIAL_PROJECTILE_SPEED_LIMIT_17mm 30
+#define INITIAL_PROJECTILE_SPEED_LIMIT_17mm 15
 
 //ICRA 子弹速度上线 为 18m/s
 #define ICRA_PROJECTILE_SPEED_LIMIT 18

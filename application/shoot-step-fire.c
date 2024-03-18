@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 24; //26; //24; //14
+fp32 temp_speed_setALL = 14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -203,38 +203,37 @@ int16_t shoot_control_loop(void)
 	 }
 	 
 	 /*记得添加 数据超出最大合理数值时的操作*/
-	 if(shoot_control.referee_current_shooter_17mm_speed_limit > 30)
+	 if(shoot_control.referee_current_shooter_17mm_speed_limit > 18)
 	 {
-		 shoot_control.referee_current_shooter_17mm_speed_limit = 30;
+		 shoot_control.referee_current_shooter_17mm_speed_limit = 18;
 	 }
 	 
 	 //17mm 的两档
 	 //shoot_control.referee_current_shooter_17mm_speed_limit = 18;//强制使其=18 用于调试-----------------------------------------------------------------------------------------------
-	 if(shoot_control.referee_current_shooter_17mm_speed_limit == 30)
+	 if(shoot_control.referee_current_shooter_17mm_speed_limit == 15)
 	 {
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(23.0f);//待定----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(15 - 3.0);//待定----------------------------
+		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 		 /*1) 发给ZYZ那 15.5 测出来14.5
 		   2) 发给ZYZ那 14.0 测出来 14.0
 		 */
 	 }
+	 else if(shoot_control.referee_current_shooter_17mm_speed_limit == 18)
+	 {//6-15之前的自瞄一直是按这个测试的
+		 // 18- 4.5 为 RMUL 实际 16.7-17.1 - .3 m/s 单速标定 SZL
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(18 - 4.5);
+		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 3;
+		 /*
+		 1) 发给ZYZ那 16.5 测出来 16.5
+		 */
+	 }
 	 else
 	 {//默认射速15
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(23.0f);//待定-----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(15 - 3.0);//待定-----------------------------
+		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
-//	 else if(shoot_control.referee_current_shooter_17mm_speed_limit == 18)
-//	 {//6-15之前的自瞄一直是按这个测试的  --- 保留注释
-//		 // 18- 4.5 为 RMUL 实际 16.7-17.1 - .3 m/s 单速标定 SZL
-//		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(18 - 4.5);
-//		 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm + 3;
-//		 /*
-//		 1) 发给ZYZ那 16.5 测出来 16.5
-//		 */
-//	 }
-	 
-	 //弹速测试 12-28 ---- this section only for debug
+	 //弹速测试 12-28
 	 shoot_control.currentLIM_shoot_speed_17mm = (fp32)temp_speed_setALL;
 	 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm;
 	 
@@ -278,19 +277,14 @@ int16_t shoot_control_loop(void)
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
 //        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
-        shoot_control.trigger_speed_set = 5.5f; //(8.0f/9.0f)*(2.0f*PI);
-			  //5.5f; //CONTINUE_TRIGGER_SPEED; //角速度
-			
-        trigger_motor_turn_back_17mm();
+//        shoot_control.trigger_speed_set = CONTINUE_TRIGGER_SPEED;
+//        trigger_motor_turn_back_17mm();
 			
 				//有PID位置外环后, 连发按标定的射频
 				shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
 			
-				//shoot_bullet_control_continuous_17mm(8); // 3v3 改程序 为 5 6 - 1v1程序是8 
-				/*
-			    射频为8 - 共9个洞 - => (8/9) * 2PI = 5.5850 rad/s
-			  */
+				shoot_bullet_control_continuous_17mm(8); // 3v3 改程序 为 5 6 - 1v1程序是8
 				
 //				if(toe_is_error(REFEREE_TOE))
 //				{
@@ -333,8 +327,7 @@ int16_t shoot_control_loop(void)
 			//先刹车 -然后在0电流
 			shoot_control.currentLeft_speed_set = M3508_FRIC_STOP;
 			shoot_control.currentRight_speed_set = M3508_FRIC_STOP;
-			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
-//			M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
+			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);
 			//先刹车然后0电流
 			if(shoot_control.left_fricMotor.fricW_speed < 1.1f && shoot_control.right_fricMotor.fricW_speed < 1.1f)
 			{
@@ -345,12 +338,12 @@ int16_t shoot_control_loop(void)
     {
         shoot_laser_on(); //激光开启
 			
-//				//5-27-2023增加串级PID----
-//			  if(shoot_control.block_flag == 0)
-//				{ //退弹不用串级PID
-////					shoot_control.speed_set = PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
-//					shoot_control.speed_set = shoot_PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
-//        }
+				//5-27-2023增加串级PID----
+			  if(shoot_control.block_flag == 0)
+				{ //退弹不用串级PID
+//					shoot_control.speed_set = PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
+					shoot_control.speed_set = shoot_PID_calc(&shoot_control.trigger_motor_angle_pid, shoot_control.angle, shoot_control.set_angle);
+        }
 				
         //计算拨弹轮电机PID
 //        PID_calc(&shoot_control.trigger_motor_pid, shoot_control.speed, shoot_control.speed_set);
@@ -373,8 +366,8 @@ int16_t shoot_control_loop(void)
 				shoot_control.currentLeft_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				shoot_control.currentRight_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				
-				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
-//				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
+//				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
+				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
     }
 
     shoot_control.fric_pwm1 = (uint16_t)(shoot_control.fric1_ramp.out);// + 19);
@@ -810,32 +803,32 @@ static void shoot_feedback_update(void)
 		
 }
 
-//老的模糊位置控制 -的退弹 5-27-2023注释
-static void trigger_motor_turn_back_17mm(void)
-{
-    if( shoot_control.block_time < BLOCK_TIME)
-    {
-        shoot_control.speed_set = shoot_control.trigger_speed_set;
-    }
-    else
-    {
-        shoot_control.speed_set = -shoot_control.trigger_speed_set;
-    }
+////老的模糊位置控制 -的退弹 5-27-2023注释
+//static void trigger_motor_turn_back_17mm(void)
+//{
+//    if( shoot_control.block_time < BLOCK_TIME)
+//    {
+//        shoot_control.speed_set = shoot_control.trigger_speed_set;
+//    }
+//    else
+//    {
+//        shoot_control.speed_set = -shoot_control.trigger_speed_set;
+//    }
 
-    if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
-    {
-        shoot_control.block_time++;
-        shoot_control.reverse_time = 0;
-    }
-    else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
-    {
-        shoot_control.reverse_time++;
-    }
-    else
-    {
-        shoot_control.block_time = 0;
-    }
-}
+//    if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
+//    {
+//        shoot_control.block_time++;
+//        shoot_control.reverse_time = 0;
+//    }
+//    else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
+//    {
+//        shoot_control.reverse_time++;
+//    }
+//    else
+//    {
+//        shoot_control.block_time = 0;
+//    }
+//}
 
 ///**
 //  * @brief          射击控制，控制拨弹电机角度，完成一次发射 老的模糊位置控制 5-27-2023注释
@@ -879,56 +872,56 @@ static void trigger_motor_turn_back_17mm(void)
 //   
 //}
 
-////速度环控制 退弹 新的速度环退弹
-//static void trigger_motor_turn_back_17mm(void)
-//{
-//    if( shoot_control.block_time < BLOCK_TIME)
-//    {//未发生堵转
-//        //shoot_control.speed_set = shoot_control.trigger_speed_set;
-//				shoot_control.block_flag = 0;
-//    }
-//    else
-//    {		//发生堵转
-////				PID_clear(&shoot_control.trigger_motor_pid);
-//				shoot_PID_clear(&shoot_control.trigger_motor_pid);
-//				shoot_control.block_flag = 1;//block_flag=1表示发生堵转; block_flag=0表示未发生堵转或已完成堵转清除
-//        shoot_control.speed_set = -shoot_control.trigger_speed_set;
-//    }
+//速度环控制 退弹 新的速度环退弹
+static void trigger_motor_turn_back_17mm(void)
+{
+    if( shoot_control.block_time < BLOCK_TIME)
+    {//未发生堵转
+        //shoot_control.speed_set = shoot_control.trigger_speed_set;
+				shoot_control.block_flag = 0;
+    }
+    else
+    {		//发生堵转
+//				PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_control.block_flag = 1;//block_flag=1表示发生堵转; block_flag=0表示未发生堵转或已完成堵转清除
+        shoot_control.speed_set = -shoot_control.trigger_speed_set;
+    }
 
-//		//检测堵转时间
-//    if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
-//    {
-//        shoot_control.block_time++;//发生堵转开始计时
-//        shoot_control.reverse_time = 0;
-//    }
-//    else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
-//    {
-//        shoot_control.reverse_time++;//开始反转 开始计时反转时间
-//    }
-//    else
-//    {//完成反转
-////				PID_clear(&shoot_control.trigger_motor_pid);
-//				shoot_PID_clear(&shoot_control.trigger_motor_pid);
-//				shoot_control.block_flag = 0;
-//        shoot_control.block_time = 0;	
-//    }
-//		
-//		if(shoot_control.last_block_flag == 0 && shoot_control.block_flag == 1)
-//		{//刚发生堵转
-//			shoot_control.total_bullets_fired--; //当前子弹未打出去
-//			shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT;
-//		}
-//		
-//		if(shoot_control.last_block_flag == 1 && shoot_control.block_flag == 0)
-//		{//完成一次堵转清除
-//			//放弃当前的打弹请求
-//			shoot_control.set_angle = shoot_control.angle;
-//		}
-//		
-//		shoot_control.last_block_flag = shoot_control.block_flag;
-//		/*block_flag = 1发生堵转
-//			block_flag = 0未发生堵转*/
-//}
+		//检测堵转时间
+    if(fabs(shoot_control.speed) < BLOCK_TRIGGER_SPEED && shoot_control.block_time < BLOCK_TIME)
+    {
+        shoot_control.block_time++;//发生堵转开始计时
+        shoot_control.reverse_time = 0;
+    }
+    else if (shoot_control.block_time == BLOCK_TIME && shoot_control.reverse_time < REVERSE_TIME)
+    {
+        shoot_control.reverse_time++;//开始反转 开始计时反转时间
+    }
+    else
+    {//完成反转
+//				PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_PID_clear(&shoot_control.trigger_motor_pid);
+				shoot_control.block_flag = 0;
+        shoot_control.block_time = 0;	
+    }
+		
+		if(shoot_control.last_block_flag == 0 && shoot_control.block_flag == 1)
+		{//刚发生堵转
+			shoot_control.total_bullets_fired--; //当前子弹未打出去
+			shoot_control.local_heat -= ONE17mm_BULLET_HEAT_AMOUNT;
+		}
+		
+		if(shoot_control.last_block_flag == 1 && shoot_control.block_flag == 0)
+		{//完成一次堵转清除
+			//放弃当前的打弹请求
+			shoot_control.set_angle = shoot_control.angle;
+		}
+		
+		shoot_control.last_block_flag = shoot_control.block_flag;
+		/*block_flag = 1发生堵转
+			block_flag = 0未发生堵转*/
+}
 
 /**
   * @brief          射击控制，控制拨弹电机角度，完成一次发射, 精确的角度环PID
