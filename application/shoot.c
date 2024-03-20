@@ -1226,7 +1226,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 			shoot_heat->rt_odom_local_heat[0] = 0.0f;
 		}
 			 
-		shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+		shoot_control.temp_debug+=0.1f;// += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
 			 
 		//更新时间戳
 		shoot_control.local_last_cd_timestamp = xTaskGetTickCount();

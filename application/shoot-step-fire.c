@@ -327,7 +327,8 @@ int16_t shoot_control_loop(void)
 			//先刹车 -然后在0电流
 			shoot_control.currentLeft_speed_set = M3508_FRIC_STOP;
 			shoot_control.currentRight_speed_set = M3508_FRIC_STOP;
-			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);
+			M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
+//				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
 			//先刹车然后0电流
 			if(shoot_control.left_fricMotor.fricW_speed < 1.1f && shoot_control.right_fricMotor.fricW_speed < 1.1f)
 			{
@@ -366,8 +367,8 @@ int16_t shoot_control_loop(void)
 				shoot_control.currentLeft_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				shoot_control.currentRight_speed_set = shoot_control.currentLIM_shoot_speed_17mm;
 				
-//				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
-				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
+				M3508_fric_wheel_spin_control(-shoot_control.currentLeft_speed_set, shoot_control.currentRight_speed_set);//放在里面 - 老步兵
+//				M3508_fric_wheel_spin_control(shoot_control.currentLeft_speed_set, -shoot_control.currentRight_speed_set);//放在里面
     }
 
     shoot_control.fric_pwm1 = (uint16_t)(shoot_control.fric1_ramp.out);// + 19);
@@ -1219,7 +1220,7 @@ uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat)
 			shoot_heat->rt_odom_local_heat[0] = 0.0f;
 		}
 			 
-		shoot_control.temp_debug += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
+		shoot_control.temp_debug+=0.1f;// += ((fp32) (xTaskGetTickCount() - shoot_control.local_last_cd_timestamp)) / ((fp32) Tick_INCREASE_FREQ_FREE_RTOS_BASED);
 			 
 		//更新时间戳
 		shoot_control.local_last_cd_timestamp = xTaskGetTickCount();
