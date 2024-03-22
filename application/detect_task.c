@@ -288,6 +288,7 @@ static void detect_init(uint32_t time)
 						{1000, 40, 15},   //MiniPC 串口通信
 						{200, 200, 14},   //SuperCap SZL-3-12-2022 {30, 50, 14},  
 						{2000, 40, 14},   //sCap_23 2023新的超级电容 {2000, 100, 14}
+						{2000, 40, 14},  //第三代超级电容
 						{2000, 2000, 14},		//雾列 超级电容 {90, 90, 14},
 						{10, 10, 12},		//shooter L
 						{10, 10, 12},		//shooter R
@@ -327,6 +328,11 @@ static void detect_init(uint32_t time)
 		error_list[SCAP_23_TOR].data_is_error_fun = sCap23_is_data_error_proc;
 		error_list[SCAP_23_TOR].solve_lost_fun = sCap23_offline_proc;
 		error_list[SCAP_23_TOR].solve_data_error_fun = NULL;
+		
+		//SZL 3-19-2024 PR新超级电容
+		error_list[GEN3CAP_TOE].data_is_error_fun = gen3Cap_is_data_error_proc;
+		error_list[GEN3CAP_TOE].solve_lost_fun = gen3Cap_offline_proc;
+		error_list[GEN3CAP_TOE].solve_data_error_fun = NULL;
 		
 		//雾列超级电容 相关函数
 		error_list[WULIE_CAP_TOE].data_is_error_fun = wulie_Cap_is_data_error_proc;
