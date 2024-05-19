@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 24; //26; //24; //14
+fp32 temp_speed_setALL = 22; //26; //24; //14
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -212,7 +212,7 @@ int16_t shoot_control_loop(void)
 	 //shoot_control.referee_current_shooter_17mm_speed_limit = 18;//强制使其=18 用于调试-----------------------------------------------------------------------------------------------
 	 if(shoot_control.referee_current_shooter_17mm_speed_limit == 30)
 	 {
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(23.0f);//待定----------------------------
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定----------------------------
 		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 		 /*1) 发给ZYZ那 15.5 测出来14.5
 		   2) 发给ZYZ那 14.0 测出来 14.0
@@ -220,7 +220,7 @@ int16_t shoot_control_loop(void)
 	 }
 	 else
 	 {//默认射速15
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(23.0f);//待定-----------------------------
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定-----------------------------
 		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
@@ -236,7 +236,7 @@ int16_t shoot_control_loop(void)
 	 
 	 //弹速测试 12-28 ---- this section only for debug
 	 shoot_control.currentLIM_shoot_speed_17mm = (fp32)temp_speed_setALL;
-	 shoot_control.predict_shoot_speed = shoot_control.currentLIM_shoot_speed_17mm;
+	 shoot_control.predict_shoot_speed = 28.0f;
 	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
@@ -278,7 +278,7 @@ int16_t shoot_control_loop(void)
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
 //        //设置拨弹轮的拨动速度,并开启堵转反转处理 5-31-2023前老代码
-        shoot_control.trigger_speed_set = 5.5f; //(8.0f/9.0f)*(2.0f*PI);
+        shoot_control.trigger_speed_set = 8.37f; //(8.0f/9.0f)*(2.0f*PI);
 			  //5.5f; //CONTINUE_TRIGGER_SPEED; //角速度
 			
         trigger_motor_turn_back_17mm();
